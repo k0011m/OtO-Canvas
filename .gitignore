@@ -1,0 +1,30 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# Test artifacts
+playwright-report/
+test-results/
+blob-report/
+
+# Local configuration
+.env
+.env.*
+!.env.example
+*.local
+
+# TypeScript-generated files
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+vitest.config.js
+vitest.config.d.ts
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

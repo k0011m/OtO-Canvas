@@ -1,0 +1,22 @@
+{
+  "name": "OtoCanvas — おとのキャンバス",
+  "short_name": "OtoCanvas",
+  "description": "かたちを描いて、音楽と幾何学アートを育てる子ども向け音楽キャンバス",
+  "lang": "ja",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f7f4ed",
+  "theme_color": "#6c63ff",
+  "categories": ["music", "entertainment", "education"],
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

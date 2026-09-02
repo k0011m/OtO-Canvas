@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">OtoCanvas</title>
+  <desc id="description">丸、三角、線がリズムを奏でる幾何学アイコン</desc>
+  <rect width="512" height="512" rx="112" fill="#f7f4ed"/>
+  <circle cx="172" cy="190" r="92" fill="#f4b942"/>
+  <path d="M319 90 433 287H205Z" fill="#e56b6f"/>
+  <path d="M94 359c74-74 136 75 210 0s109 4 128 36" fill="none" stroke="#4d96a9" stroke-linecap="round" stroke-width="42"/>
+  <circle cx="396" cy="121" r="25" fill="#6c63ff"/>
+</svg>
