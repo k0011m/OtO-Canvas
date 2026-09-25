@@ -41,6 +41,10 @@ describe("renderMusicEventsToWav", () => {
       expect(Math.abs(output.getInt16(44 + index * 2, true))).toBeLessThan(32_200);
     }
     expect(output.getInt16(44 + 4 * 2, true) / 32_767).toBeGreaterThan(0.14);
+    // 小信号では旧出力の約2.5倍となり、ピーク付近だけが制限されることを確認する。
+    const quiet = new DataView(await (await encodePcm16Wav(new Float32Array([0.01]), 8_000)).arrayBuffer());
+    const previousQuietLevel = 0.98 * Math.tanh(0.01 * 1.6);
+    expect(quiet.getInt16(44, true) / 32_767 / previousQuietLevel).toBeCloseTo(2.5, 2);
     const muted = new DataView(await (await encodePcm16Wav(samples, 8_000, { masterGain: 0 })).arrayBuffer());
     for (let offset = 44; offset < muted.byteLength; offset += 2) {
       expect(muted.getInt16(offset, true)).toBe(0);

@@ -76,6 +76,7 @@ export class AudioEngine {
   private context: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private compressor: DynamicsCompressorNode | null = null;
+  private outputBoost: GainNode | null = null;
   private limiter: DynamicsCompressorNode | null = null;
   private captureDestination: MediaStreamAudioDestinationNode | null = null;
   private volume = DEFAULT_MASTER_VOLUME;
@@ -453,13 +454,16 @@ export class AudioEngine {
     }
   }
 
-  /** 音量を確保しつつ、コンプレッサーと最終リミッターで重なった音のピークを抑える。 */
+  /** 圧縮後の音を2.5倍に増幅し、再生・BGM・録音へピークを抑えた共通出力を渡す。 */
   private buildOutputGraph(context: AudioContext): void {
     const masterGain = context.createGain();
     const compressor = context.createDynamicsCompressor();
+    const outputBoost = context.createGain();
     const limiter = context.createDynamicsCompressor();
 
     masterGain.gain.value = this.volume * MAX_MASTER_GAIN;
+    // 圧縮前に増幅すると増幅分が圧縮されるため、コンプレッサーの後で音量を上げる。
+    outputBoost.gain.value = 2.5;
 
     compressor.threshold.value = -18;
     compressor.knee.value = 18;
@@ -474,17 +478,19 @@ export class AudioEngine {
     limiter.release.value = 0.08;
 
     masterGain.connect(compressor);
-    compressor.connect(limiter);
+    compressor.connect(outputBoost);
+    outputBoost.connect(limiter);
     limiter.connect(context.destination);
 
     this.masterGain = masterGain;
     this.compressor = compressor;
+    this.outputBoost = outputBoost;
     this.limiter = limiter;
   }
 
   private disconnectOutputGraph(): void {
     this.stopCaptureStream();
-    for (const node of [this.masterGain, this.compressor, this.limiter]) {
+    for (const node of [this.masterGain, this.compressor, this.outputBoost, this.limiter]) {
       try {
         node?.disconnect();
       } catch {
@@ -493,6 +499,7 @@ export class AudioEngine {
     }
     this.masterGain = null;
     this.compressor = null;
+    this.outputBoost = null;
     this.limiter = null;
   }
 
