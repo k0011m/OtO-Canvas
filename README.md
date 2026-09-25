@@ -101,6 +101,14 @@ OtoCanvasには、役割の異なる二つの選択があります。
 - GitHub Pagesだけで公開できる静的構成
 
 
+## 公開先とデプロイ確認
+
+- 本番の `https://oto-canvas.com/` はCloudflare Pagesの `oto-canvas` プロジェクトで配信します。GitHub Pagesの公開成功だけでは、本番の更新完了を意味しません。
+- Cloudflare PagesはGitHubの `k0011m/OtO-Canvas`、productionブランチ `main` を使用します。ビルドコマンドは `npm run build`、出力ディレクトリは `dist`、ルートディレクトリはリポジトリ直下です。
+- push後はCloudflareのDeploymentsで対象コミットのProductionデプロイ成功を確認し、本番URLで編集画面を確認します。配信HTMLはビルド済みの `assets/*.js`・`assets/*.css` を参照し、`/src/main.tsx` を参照していないことを確認します。
+- Git連携の切断警告がある場合は、GitHub Appの既存リポジトリアクセスと連携状態を確認します。GitHubの本人確認はアカウント所有者が行い、認証情報をチャットやリポジトリへ記録しません。
+- 2026-09-26：Cloudflareの空欄だったBuild command / Build outputを上記の値へ修正し、本節を追加。Git連携には切断警告が残り、本人確認待ちのため本番への最新変更の反映は未確認です。
+
 ## 技術スタック
 
 | 領域 | 技術 | 役割 |
