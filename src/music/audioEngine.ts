@@ -454,7 +454,7 @@ export class AudioEngine {
     }
   }
 
-  /** 圧縮後の音を2.5倍に増幅し、再生・BGM・録音へピークを抑えた共通出力を渡す。 */
+  /** 圧縮後の音を4倍に増幅し、再生・BGM・録音へピークを抑えた共通出力を渡す。 */
   private buildOutputGraph(context: AudioContext): void {
     const masterGain = context.createGain();
     const compressor = context.createDynamicsCompressor();
@@ -463,7 +463,7 @@ export class AudioEngine {
 
     masterGain.gain.value = this.volume * MAX_MASTER_GAIN;
     // 圧縮前に増幅すると増幅分が圧縮されるため、コンプレッサーの後で音量を上げる。
-    outputBoost.gain.value = 2.5;
+    outputBoost.gain.value = 4;
 
     compressor.threshold.value = -18;
     compressor.knee.value = 18;

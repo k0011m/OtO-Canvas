@@ -353,8 +353,8 @@ export async function encodePcm16Wav(
     for (let index = start; index < end; index += 1) {
       const source = Number.isFinite(samples[index]) ? samples[index] : 0;
       // 音量を上げてもPCM上限で波形を切らないよう、ソフトリミットに2%の余裕を残す。
-      // 再生と同じ2.5倍の増幅を追加し、重なった音は既存のピーク制限へ渡す。
-      const limited = 0.98 * Math.tanh(source * masterGain * 1.6 * 2.5);
+      // 再生と同じ4倍の増幅を追加し、重なった音は既存のピーク制限へ渡す。
+      const limited = 0.98 * Math.tanh(source * masterGain * 1.6 * 4);
       const sample = clamp(limited, -1, 1);
       view.setInt16(
         44 + index * 2,

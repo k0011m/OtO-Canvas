@@ -58,12 +58,14 @@
 .scene-switcher .copy-scene { min-width: 100px; padding: 0 12px; background: var(--surface); font-weight: 800; }
 
 /* Local project shelf */
-.gallery-screen { overflow: auto; padding: 28px clamp(20px, 5vw, 72px) 60px; }
+/* 外側のグリッドの最小幅に引っ張られず、作品を画面幅内で縦に並べる。 */
+.screen.gallery-screen { display: block; overflow-x: hidden; overflow-y: auto; padding: max(20px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); }
 .gallery-heading { display: flex; align-items: center; gap: 18px; max-width: 1180px; width: 100%; margin: 0 auto 28px; }
-.gallery-heading > div { flex: 1; }
+.gallery-heading > div { flex: 1; min-width: 0; }
 .gallery-heading h2 { margin: 0; font-size: clamp(28px, 5vw, 54px); }
 .gallery-heading p { margin: 5px 0 0; opacity: .65; }
-.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; width: 100%; max-width: 1180px; margin: auto; }
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 20px; width: 100%; max-width: 1180px; margin: 0 auto; }
+.gallery-grid > * { min-width: 0; }
 .project-card { overflow: hidden; border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); border-radius: 26px; background: var(--surface); box-shadow: 0 16px 44px rgb(20 20 20 / 9%); }
 .project-open { width: 100%; padding: 0; border: 0; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
 .project-open canvas { display: block; width: 100%; aspect-ratio: 5 / 3; }
@@ -71,7 +73,7 @@
 .project-open strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .project-open small { flex: none; opacity: .58; }
 .project-actions { display: flex; gap: 6px; padding: 0 12px 13px; }
-.project-actions button { flex: 1; min-height: 36px; border: 0; border-radius: 12px; background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--ink); font-weight: 750; cursor: pointer; }
+.project-actions button { flex: 1; min-width: 0; min-height: 44px; padding: 4px; border: 0; border-radius: 12px; background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--ink); font-size: 14px; font-weight: 750; white-space: nowrap; cursor: pointer; }
 .gallery-empty { display: grid; place-items: center; gap: 24px; min-height: 55vh; font-size: 20px; }
 .title-input { width: min(240px, 45vw); padding: 10px 13px; border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; }
 
@@ -127,7 +129,9 @@ button:focus-visible,
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 100svh;
+  /* モバイルのアドレスバー開閉や縦横切替後も、表示領域の高さに追従する。 */
+  height: 100dvh;
+  min-height: 0;
   color: var(--ink);
   background: var(--bg);
   transition: background-color 500ms ease, color 500ms ease;
@@ -1154,6 +1158,10 @@ button:focus-visible,
 }
 
 @media (max-width: 760px) {
+  .gallery-heading { gap: 12px; }
+  .gallery-heading h2 { font-size: clamp(24px, 6vw, 36px); }
+  .gallery-heading p { font-size: 12px; overflow-wrap: anywhere; }
+  .gallery-empty { font-size: 16px; text-align: center; }
   .screen { padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); }
   .world-grid { grid-template-columns: 1fr; }
   .world-card { grid-template-columns: 42% 1fr; grid-template-rows: 1fr; align-items: center; min-height: 150px; border-radius: 26px; }
@@ -1184,6 +1192,10 @@ button:focus-visible,
   .mood-card:hover,
   .mood-card:focus-visible { transform: translateX(4px) scale(1.005); }
   .shape-count { display: none; }
+}
+
+@media (max-width: 540px) and (orientation: portrait) {
+  .gallery-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-height: 640px) and (orientation: landscape) {
