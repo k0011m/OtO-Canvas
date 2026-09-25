@@ -8,9 +8,10 @@ import {
 } from "react";
 import { CanvasEditor } from "../canvas/CanvasEditor";
 import { ProjectThumbnail } from "./ProjectThumbnail";
+import { useFullscreen } from "./useFullscreen";
 import { downloadJacketPng, downloadRecordedVideo } from "../export/artworkExporter";
 import { exportAndDownloadWav } from "../export/wavExporter";
-import { audioEngine } from "../music/audioEngine";
+import { audioEngine, DEFAULT_MASTER_VOLUME } from "../music/audioEngine";
 import { buildArrangement, createProject, getSectionAtBeat } from "../music/arranger";
 import { buildBackingTrack } from "../music/backingTrack";
 import {
@@ -30,6 +31,7 @@ import {
   BARS,
   BPM,
   DURATION_SECONDS,
+  MAX_SHAPES_PER_SCENE,
   SHAPE_COLOR_PALETTE,
   STAMP_SHAPE_KINDS,
   TOTAL_BEATS,
@@ -184,6 +186,13 @@ function formatClock(seconds: number): string {
 }
 
 export function App() {
+  const { expanded, toggleFullscreen } = useFullscreen();
+  // 小さい画面ではキャンバスを広く使い、丸ボタンから必要なときにツールを開く。
+  const [toolsOpen, setToolsOpen] = useState(() =>
+    !window.matchMedia("(max-width: 760px), (max-height: 500px)").matches);
+  const toolToggleRef = useRef<HTMLButtonElement | null>(null);
+  const toolDrawerRef = useRef<HTMLDivElement | null>(null);
+  const toolSwipeStart = useRef<number | null>(null);
   const [screen, setScreen] = useState<Screen>("start");
   const [worldId, setWorldId] = useState<WorldId>("soft");
   const [shapes, setShapes] = useState<CanvasShape[]>([]);
@@ -198,7 +207,8 @@ export function App() {
   const [restoredProject, setRestoredProject] = useState<Awaited<ReturnType<typeof loadLatestProject>>>(null);
   const [parentOpen, setParentOpen] = useState(false);
   const [lowPower, setLowPower] = useState(false);
-  const [volume, setVolume] = useState(0.35);
+  const [volume, setVolume] = useState(DEFAULT_MASTER_VOLUME);
+  const [audioReady, setAudioReady] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
@@ -216,6 +226,16 @@ export function App() {
   const lastLiveShapeAtRef = useRef(0);
 
   const theme = WORLDS[worldId];
+  // 画面外へ収納したツールには、キーボードや読み上げの操作が入らないようにする。
+  useEffect(() => {
+    if (toolDrawerRef.current) toolDrawerRef.current.inert = !toolsOpen;
+  }, [toolsOpen, screen]);
+
+  // 閉じたパネルにフォーカスを残さず、再び開ける丸ボタンへ戻す。
+  const closeTools = useCallback(() => {
+    toolToggleRef.current?.focus({ preventScroll: true });
+    setToolsOpen(false);
+  }, []);
   const events = useMemo(
     () => buildArrangement(shapes, seedRef.current, worldId),
     [remixVersion, shapes, worldId],
@@ -268,6 +288,23 @@ export function App() {
   useEffect(() => {
     audioEngine.setMasterVolume(volume);
   }, [volume]);
+
+  const screenBgmEnabled = screen !== "perform";
+  // 作品の再生中は専用BGMを止め、選択・編集へ戻ったときだけ再開する。
+  useEffect(() => {
+    if (!audioReady || !screenBgmEnabled) return;
+    // 非表示タブでは鳴らさず、戻ったときは現在の音世界で再開する。
+    const updateScreenBgm = () => {
+      if (document.hidden) audioEngine.stopScreenBgm();
+      else audioEngine.startScreenBgm(worldId);
+    };
+    updateScreenBgm();
+    document.addEventListener("visibilitychange", updateScreenBgm);
+    return () => {
+      document.removeEventListener("visibilitychange", updateScreenBgm);
+      audioEngine.stopScreenBgm();
+    };
+  }, [audioReady, screenBgmEnabled, worldId]);
 
   useEffect(() => {
     if (screen === "start" || screen === "world") return undefined;
@@ -324,6 +361,7 @@ export function App() {
   const startAudio = useCallback(async () => {
     try {
       await audioEngine.unlock();
+      setAudioReady(true);
       return true;
     } catch {
       showToast("おとの じゅんびが できませんでした");
@@ -449,6 +487,8 @@ export function App() {
       }
       if (!(await startAudio())) return;
 
+      audioEngine.stopScreenBgm();
+
       const performanceEvents = [
         ...events,
         ...buildBackingTrack(worldId, mood, seedRef.current),
@@ -559,8 +599,8 @@ export function App() {
     void beginPerformance();
   }, [beginPerformance]);
 
+  // 作品棚・完了画面から新規作成へ移っても、画面BGMは継続する。
   const newProject = useCallback(() => {
-    audioEngine.stop();
     projectIdRef.current = createId("project");
     createdAtRef.current = Date.now();
     seedRef.current = seedFromText(projectIdRef.current);
@@ -604,9 +644,10 @@ export function App() {
   }, [commitActiveShapes, currentScene, shapes, showToast]);
 
   const openGallery = useCallback(async () => {
+    await startAudio();
     setGalleryProjects(await listProjects());
     setScreen("gallery");
-  }, []);
+  }, [startAudio]);
 
   const loadFromGallery = useCallback(async (project: OtoProject) => {
     await startAudio();
@@ -712,7 +753,7 @@ export function App() {
   const remainingSeconds = Math.max(0, DURATION_SECONDS * (1 - playback.progress));
 
   return (
-    <main className="app-shell" style={worldStyle(worldId)}>
+    <main className={`app-shell${expanded ? " app-shell--expanded" : ""}`} style={worldStyle(worldId)}>
       {screen === "start" && (
         <section className="screen start-screen" aria-labelledby="start-title">
           <button
@@ -824,7 +865,7 @@ export function App() {
       )}
 
       {screen === "create" && (
-        <section className="screen create-screen" aria-label="おとをつくる">
+        <section className="screen create-screen" aria-label="おとをつくる" data-tools-open={toolsOpen}>
           <header className="top-bar">
             <div>
               <button className="icon-button" type="button" onClick={() => setScreen("world")} aria-label="おとの世界を選び直す">
@@ -882,57 +923,16 @@ export function App() {
               onPreview={(shape) => audioEngine.previewShape(shape, worldId)}
             />
             {activeShapes.length === 0 && (
-              <p className="canvas-hint">かたちを えらんで<br />ひろいところに おいてみよう</p>
+              <p className="canvas-hint">{toolsOpen
+                ? <>かたちを えらんで<br />ひろいところに おいてみよう</>
+                : <>ひだりしたの まるから<br />かたちを えらんでね</>}</p>
             )}
             <span className="shape-count" aria-live="polite">
-              {activeRelationships > 0 ? `♪ ${activeRelationships}コンボ · ` : ""}{activeShapes.length} / 20
+              {activeRelationships > 0 ? `♪ ${activeRelationships}コンボ · ` : ""}{activeShapes.length} / {MAX_SHAPES_PER_SCENE}
             </span>
 
-            <nav className="tool-dock" aria-label="かたちを選ぶ">
-              {CREATION_TOOLS.map((kind) => (
-                <button
-                  key={kind}
-                  className="tool-button"
-                  type="button"
-                  data-testid={`tool-${kind}`}
-                  aria-label={`${SHAPE_LABELS[kind]}・${SHAPE_INSTRUMENT_LABELS[kind]}`}
-                  aria-pressed={selectedKind === kind}
-                  onClick={() => {
-                    setSelectedKind(kind);
-                    setSelectedId(null);
-                    showToast(`${SHAPE_LABELS[kind]}は ${SHAPE_INSTRUMENT_LABELS[kind]}の おと`);
-                    audioEngine.previewShape(
-                      {
-                        id: `tool-${kind}`,
-                        kind,
-                        position: { x: 0.5, y: 0.5 },
-                        size: 0.2,
-                        rotation: 0,
-                        colorId: selectedColorId,
-                        patternId: `${kind}-1`,
-                        zIndex: 0,
-                        points: kind === "pen" ? [{ x: -0.3, y: 0.2 }, { x: 0, y: -0.2 }, { x: 0.3, y: 0.1 }] : undefined,
-                      },
-                      worldId,
-                    );
-                  }}
-                >
-                  <ToolIcon kind={kind} />
-                </button>
-              ))}
-              <button
-                ref={playButtonRef}
-                className="play-button"
-                type="button"
-                data-testid="play-button"
-                aria-label="できた曲を再生する"
-                onClick={openMoodPicker}
-              >
-                <span className="play-icon" aria-hidden="true" />
-              </button>
-            </nav>
 
-            {selectedId && (
+            {selectedId && toolsOpen && (
               <div className="selection-controls" aria-label="選んだ形の色・大きさ・向きを変える">
                 <div className="property-group">
                   <span className="property-label">いろ</span>
@@ -999,6 +999,82 @@ export function App() {
               </div>
             )}
           </div>
+          <footer className="creation-playback">
+            <button
+              ref={toolToggleRef}
+              className="tool-toggle"
+              type="button"
+              data-testid="tools-toggle"
+              aria-label={toolsOpen ? "図形ツールをしまう" : "図形ツールを開く"}
+              aria-expanded={toolsOpen}
+              aria-controls="shape-tool-drawer"
+              onClick={() => setToolsOpen((open) => !open)}
+            >
+              <ToolIcon kind={selectedKind} />
+            </button>
+            <button className="fullscreen-button" type="button" aria-label={expanded ? "最大化を解除" : "画面を最大化"}
+              aria-pressed={expanded} onClick={() => void toggleFullscreen()}>
+              <span aria-hidden="true">{expanded ? "⊡" : "⛶"}</span>
+              <small>{expanded ? "もどす" : "ひろげる"}</small>
+            </button>
+            <button
+              ref={playButtonRef}
+              className="play-button"
+              type="button"
+              data-testid="play-button"
+              aria-label="できた曲を再生する"
+              onClick={openMoodPicker}
+            >
+              <span className="play-icon" aria-hidden="true" />
+              <span>さいせい</span>
+            </button>
+          </footer>
+          <div ref={toolDrawerRef} id="shape-tool-drawer" className="tool-drawer" data-open={toolsOpen} aria-hidden={!toolsOpen}
+            onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); closeTools(); } }}>
+            {/* タップと下向きスワイプのどちらでも、ツールを画面外へ収納できる。 */}
+            <button className="tool-drawer-handle" type="button" onClick={closeTools} aria-label="図形ツールをしまう"
+              onPointerDown={(event) => { toolSwipeStart.current = event.clientY; event.currentTarget.setPointerCapture(event.pointerId); }}
+              onPointerUp={(event) => {
+                if (toolSwipeStart.current !== null && event.clientY - toolSwipeStart.current > 28) closeTools();
+                toolSwipeStart.current = null;
+              }}
+              onPointerCancel={() => { toolSwipeStart.current = null; }}>
+              <span className="drawer-grip" aria-hidden="true" /><span>かたち</span><small>⌄ しまう</small>
+            </button>
+            <nav className="tool-dock" aria-label="かたちを選ぶ">
+              {CREATION_TOOLS.map((kind) => (
+                <button
+                  key={kind}
+                  className="tool-button"
+                  type="button"
+                  data-testid={`tool-${kind}`}
+                  aria-label={`${SHAPE_LABELS[kind]}・${SHAPE_INSTRUMENT_LABELS[kind]}`}
+                  aria-pressed={selectedKind === kind}
+                  onClick={() => {
+                    setSelectedKind(kind);
+                    setSelectedId(null);
+                    showToast(`${SHAPE_LABELS[kind]}は ${SHAPE_INSTRUMENT_LABELS[kind]}の おと`);
+                    audioEngine.previewShape(
+                      {
+                        id: `tool-${kind}`,
+                        kind,
+                        position: { x: 0.5, y: 0.5 },
+                        size: 0.2,
+                        rotation: 0,
+                        colorId: selectedColorId,
+                        patternId: `${kind}-1`,
+                        zIndex: 0,
+                        points: kind === "pen" ? [{ x: -0.3, y: 0.2 }, { x: 0, y: -0.2 }, { x: 0.3, y: 0.1 }] : undefined,
+                      },
+                      worldId,
+                    );
+                  }}
+                >
+                  <ToolIcon kind={kind} />
+                </button>
+              ))}
+            </nav>
+          </div>
         </section>
       )}
 
@@ -1023,6 +1099,12 @@ export function App() {
               <span className="section-badge">{SECTION_LABELS[playback.section]}</span>
               <span className="mood-badge">{activeMood.name} · {activeMood.bgm}</span>
             </div>
+            <div className="performance-actions">
+            <button className="fullscreen-button" type="button" aria-label={expanded ? "最大化を解除" : "画面を最大化"}
+              aria-pressed={expanded} onClick={() => void toggleFullscreen()}>
+              <span aria-hidden="true">{expanded ? "⊡" : "⛶"}</span>
+              <small>{expanded ? "もどす" : "ひろげる"}</small>
+            </button>
             <button
               className="icon-button"
               type="button"
@@ -1032,6 +1114,7 @@ export function App() {
             >
               {playback.playing ? "Ⅱ" : "▶"}
             </button>
+            </div>
           </div>
           <p className="conduct-hint">さわって おとを うごかそう · あと {formatClock(remainingSeconds)}</p>
           <div className="progress-track" role="progressbar" aria-label="曲の進み具合" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(playback.progress * 100)}>
@@ -1163,11 +1246,11 @@ export function App() {
                 />
               </label>
               <label className="setting-row">
-                <span><strong>音量</strong><small>最初から大きな音にはなりません</small></span>
+                <span><strong>音量</strong><small>音の大きさを調整できます</small></span>
                 <input
                   type="range"
                   min="0"
-                  max="0.7"
+                  max="1"
                   step="0.05"
                   value={volume}
                   aria-label="音量"
@@ -1193,6 +1276,12 @@ export function App() {
         </div>
       )}
 
+      {expanded && screen !== "create" && screen !== "perform" && (
+        <button className="fullscreen-button fullscreen-exit" type="button" aria-label="最大化を解除"
+          onClick={() => void toggleFullscreen()}>
+          <span aria-hidden="true">⊡</span><small>もどす</small>
+        </button>
+      )}
       {toast && <div className="toast" role="status">{toast}</div>}
     </main>
   );

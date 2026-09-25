@@ -318,7 +318,7 @@ function writeAscii(view: DataView, offset: number, value: string): void {
   }
 }
 
-/** Encodes mono floating-point samples as a standard 16-bit PCM WAV Blob. */
+/** 音量を適用し、重なった音のピークを滑らかに抑えて16ビットPCM WAVへ変換する。 */
 export async function encodePcm16Wav(
   samples: Float32Array,
   sampleRate: number,
@@ -343,8 +343,7 @@ export async function encodePcm16Wav(
   writeAscii(view, 36, "data");
   view.setUint32(40, dataBytes, true);
 
-  const masterGain = clamp(finiteOr(options.masterGain, 0.72), 0, 1);
-  const limiterNormalization = Math.tanh(1.35);
+  const masterGain = clamp(finiteOr(options.masterGain, 1), 0, 1);
   const chunkSize = 131_072;
 
   for (let start = 0; start < samples.length; start += chunkSize) {
@@ -353,7 +352,8 @@ export async function encodePcm16Wav(
 
     for (let index = start; index < end; index += 1) {
       const source = Number.isFinite(samples[index]) ? samples[index] : 0;
-      const limited = Math.tanh(source * masterGain * 1.35) / limiterNormalization;
+      // 音量を上げてもPCM上限で波形を切らないよう、ソフトリミットに2%の余裕を残す。
+      const limited = 0.98 * Math.tanh(source * masterGain * 1.6);
       const sample = clamp(limited, -1, 1);
       view.setInt16(
         44 + index * 2,

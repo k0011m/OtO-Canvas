@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderMusicEventsToWav } from "../src/export/wavExporter";
+import { encodePcm16Wav, renderMusicEventsToWav } from "../src/export/wavExporter";
 import type { InstrumentId, MusicEvent } from "../src/types/project";
 
 const INSTRUMENTS: readonly InstrumentId[] = [
@@ -33,6 +33,20 @@ function eventFor(instrumentId: InstrumentId, index: number): MusicEvent {
 }
 
 describe("renderMusicEventsToWav", () => {
+  // 大音量の重なりでもPCM上限へ張り付かず、小さな音は増幅し、ミュートは無音に保つ。
+  it("boosts quiet samples while retaining peak headroom and mute", async () => {
+    const samples = new Float32Array([-10, -2, -0.1, 0, 0.1, 2, 10]);
+    const output = new DataView(await (await encodePcm16Wav(samples, 8_000)).arrayBuffer());
+    for (let index = 0; index < samples.length; index += 1) {
+      expect(Math.abs(output.getInt16(44 + index * 2, true))).toBeLessThan(32_200);
+    }
+    expect(output.getInt16(44 + 4 * 2, true) / 32_767).toBeGreaterThan(0.14);
+    const muted = new DataView(await (await encodePcm16Wav(samples, 8_000, { masterGain: 0 })).arrayBuffer());
+    for (let offset = 44; offset < muted.byteLength; offset += 2) {
+      expect(muted.getInt16(offset, true)).toBe(0);
+    }
+  });
+
   it("renders every current and legacy instrument into a valid finite PCM WAV", async () => {
     const progress: number[] = [];
     const durationSeconds = 0.12;

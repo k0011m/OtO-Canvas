@@ -19,7 +19,7 @@
 .scene-switcher {
   position: absolute;
   z-index: 7;
-  top: 16px;
+  top: max(86px, calc(env(safe-area-inset-top) + 76px));
   left: 50%;
   display: flex;
   gap: 8px;
@@ -76,7 +76,7 @@
 .title-input { width: min(240px, 45vw); padding: 10px 13px; border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; }
 
 @media (max-width: 720px) {
-  .scene-switcher { top: 8px; gap: 3px; padding: 4px; }
+  .scene-switcher { top: max(74px, calc(env(safe-area-inset-top) + 66px)); gap: 3px; padding: 4px; }
   .scene-switcher button { min-width: 62px; min-height: 42px; }
   .scene-switcher .copy-scene { position: absolute; top: 50px; right: 0; }
   .gallery-heading { align-items: flex-start; flex-wrap: wrap; }
@@ -396,11 +396,18 @@ button:focus-visible,
 .back-button { justify-self: start; }
 
 .create-screen {
-  grid-template-rows: auto minmax(0, 1fr);
+  display: block;
   padding: 0;
+  overflow: hidden;
 }
 
+.app-shell { height: 100dvh; min-height: 100dvh; }
+.app-shell--expanded .create-screen .top-bar { display: none; }
+.app-shell--expanded .scene-switcher { top: max(12px, env(safe-area-inset-top)); }
+
 .top-bar {
+  position: absolute;
+  inset: 0 0 auto;
   z-index: 10;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -410,7 +417,9 @@ button:focus-visible,
   pointer-events: none;
 }
 
-.top-bar > * { pointer-events: auto; }
+/* 操作ボタンの間の透明な領域は、背後のキャンバスへ入力を通す。 */
+.top-bar > * { pointer-events: none; }
+.top-bar button { pointer-events: auto; }
 .top-bar-center { text-align: center; }
 .top-bar-center strong { display: block; font-size: 1.05rem; }
 .top-bar-center span { display: block; font-size: .72rem; font-weight: 750; opacity: .5; letter-spacing: .08em; }
@@ -431,14 +440,14 @@ button:focus-visible,
 .icon-button:disabled { cursor: not-allowed; opacity: .3; transform: none; }
 
 .canvas-stage {
-  position: relative;
+  position: absolute;
+  inset: 0;
   min-height: 0;
-  margin: 0 clamp(10px, 2vw, 24px) clamp(10px, 2vw, 24px);
+  margin: 0;
   overflow: hidden;
-  border: 1.5px solid color-mix(in srgb, var(--ink) 9%, transparent);
-  border-radius: clamp(26px, 4vw, 42px);
+  border: 0;
+  border-radius: 0;
   background: var(--surface);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.7), var(--soft-shadow);
 }
 
 .canvas-stage::before {
@@ -463,22 +472,53 @@ button:focus-visible,
 
 .editor-canvas-wrap { position: absolute; inset: 0; }
 
-.tool-dock {
+.tool-drawer {
   position: absolute;
-  z-index: 8;
+  z-index: 12;
   left: 50%;
-  bottom: max(18px, env(safe-area-inset-bottom));
-  display: grid;
-  grid-template-columns: repeat(5, minmax(46px, 54px));
-  align-items: center;
-  gap: 7px;
-  padding: 8px;
+  bottom: calc(90px + env(safe-area-inset-bottom));
+  width: min(330px, calc(100% - 24px));
+  padding: 6px;
   border: 1.5px solid color-mix(in srgb, var(--ink) 10%, transparent);
   border-radius: 26px;
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
   box-shadow: var(--shadow);
   backdrop-filter: blur(12px);
   transform: translateX(-50%);
+  transition: transform 650ms cubic-bezier(.22, 1, .36, 1), visibility 0s;
+}
+
+/* 下端より先へ移動させ、閉じている間は見えないツールへの操作も防ぐ。 */
+.tool-drawer[data-open="false"] {
+  transform: translate(-50%, calc(100% + 120px + env(safe-area-inset-bottom)));
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 650ms cubic-bezier(.22, 1, .36, 1), visibility 0s 650ms;
+}
+
+.tool-drawer-handle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  padding: 12px 12px 4px;
+  border: 0;
+  border-radius: 20px;
+  background: transparent;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: none;
+}
+.tool-drawer-handle small { opacity: .65; }
+.drawer-grip { position: absolute; top: 3px; left: calc(50% - 18px); width: 36px; height: 4px; border-radius: 9px; background: var(--ink); opacity: .2; }
+.tool-dock {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: center;
+  gap: 7px;
+  padding: 6px;
 }
 
 .tool-button {
@@ -506,16 +546,50 @@ button:focus-visible,
 .tool-shape-pen { position: relative; width: 37px; height: 11px; border-radius: 999px; background: var(--line); transform: rotate(-38deg); }
 .tool-shape-pen::after { content: ""; position: absolute; right: -5px; top: 1px; width: 9px; height: 9px; border-radius: 50%; background: var(--triangle); }
 
+.creation-playback {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 max(18px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+  pointer-events: none;
+}
+.creation-playback button { pointer-events: auto; }
+.creation-playback .play-button { margin-left: auto; }
+.tool-toggle { display: grid; place-items: center; width: 52px; height: 52px; flex: none; border: 2px solid var(--accent); border-radius: 50%; background: var(--surface); box-shadow: var(--soft-shadow); cursor: pointer; }
+.fullscreen-button { display: grid; place-items: center; min-width: 52px; min-height: 52px; padding: 4px 8px; border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent); border-radius: 16px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.fullscreen-button > span { font-size: 24px; line-height: 1; }
+.fullscreen-button small { font-size: 10px; font-weight: 750; }
+.fullscreen-exit { position: absolute; z-index: 15; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); }
+.performance-actions { display: flex; align-items: center; gap: 8px; }
+
 .play-button {
-  width: 100%;
-  aspect-ratio: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-width: 164px;
+  min-height: 60px;
+  padding: 12px 24px;
+  border-radius: 22px;
+  font-size: 1.2rem;
+  font-weight: 850;
+}
+
+.play-button .play-icon {
+  margin-left: 0;
+  border-top-width: 12px;
+  border-bottom-width: 12px;
+  border-left-width: 19px;
 }
 
 .selection-controls {
   position: absolute;
   z-index: 8;
   right: max(16px, env(safe-area-inset-right));
-  bottom: max(18px, env(safe-area-inset-bottom));
+  bottom: max(90px, calc(env(safe-area-inset-bottom) + 76px));
   display: grid;
   width: min(210px, calc(100% - 32px));
   gap: 10px;
@@ -603,7 +677,7 @@ button:focus-visible,
   position: absolute;
   z-index: 5;
   left: 22px;
-  bottom: 21px;
+  bottom: max(86px, calc(env(safe-area-inset-bottom) + 76px));
   padding: 8px 12px;
   border-radius: 99px;
   background: color-mix(in srgb, var(--surface) 84%, transparent);
@@ -1087,13 +1161,14 @@ button:focus-visible,
   .world-preview .preview-triangle { border-left-width: 34px; border-right-width: 34px; border-bottom-width: 62px; }
   .finish-screen { grid-template-columns: 1fr; grid-template-rows: minmax(300px, 48vh) auto; }
   .finish-content { padding: 6px 4px 28px; }
-  .top-bar-center span { display: none; }
-  .top-bar { grid-template-columns: 1fr auto 1fr; min-height: 66px; }
-  .canvas-stage { margin: 0 8px 8px; border-radius: 25px; }
-  .tool-dock { right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); left: 10px; grid-template-columns: repeat(5, minmax(40px, 1fr)); gap: 6px; padding: 7px; transform: none; }
-  .tool-button,
-  .play-button { max-width: 52px; justify-self: center; }
-  .selection-controls { right: 10px; bottom: max(132px, calc(env(safe-area-inset-bottom) + 126px)); width: 188px; padding: 10px; border-radius: 20px; }
+  .top-bar-center { display: none; }
+  .top-bar { grid-template-columns: auto 1fr; min-height: 66px; padding-left: 12px; padding-right: 12px; }
+  .top-bar-actions { gap: 6px; }
+  .tool-dock { gap: 6px; padding: 6px; }
+  .tool-button { max-width: 52px; justify-self: center; }
+  .create-screen { padding: 0; }
+  .creation-playback { gap: 8px; padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+  .selection-controls { right: 10px; bottom: calc(300px + env(safe-area-inset-bottom)); max-height: calc(100% - 390px - env(safe-area-inset-bottom) - env(safe-area-inset-top)); overflow-y: auto; width: 188px; padding: 10px; border-radius: 20px; }
   .property-group { grid-template-columns: 52px 1fr; }
   .performance-back { min-height: 52px; padding: 0 15px; }
   .performance-badges { gap: 4px; }
@@ -1117,8 +1192,10 @@ button:focus-visible,
   .brand-shapes { height: 90px; }
   .brand-lockup h1 { font-size: 2.5rem; }
   .start-center { gap: 11px; }
-  .tool-dock { grid-template-columns: repeat(10, 44px); }
-  .selection-controls { bottom: 78px; }
+  .tool-drawer { left: max(12px, env(safe-area-inset-left)); transform: none; }
+  .tool-drawer[data-open="false"] { transform: translateY(calc(100% + 120px + env(safe-area-inset-bottom))); }
+  /* 上下のボタンに重ならない範囲で編集項目をスクロールできるようにする。 */
+  .selection-controls { bottom: max(90px, calc(env(safe-area-inset-bottom) + 76px)); max-height: calc(100% - 170px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y: auto; }
   .mood-overlay { padding: 8px; }
   .mood-dialog { max-height: calc(100svh - 16px); padding: 14px 18px 17px; border-radius: 24px; }
   .mood-dialog-heading { align-items: center; margin-bottom: 10px; }
@@ -1135,6 +1212,7 @@ button:focus-visible,
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .tool-drawer { transition-delay: 0s !important; }
   *, *::before, *::after {
     scroll-behavior: auto !important;
     animation-duration: .01ms !important;

@@ -14,6 +14,7 @@ import type {
   WheelEvent as ReactWheelEvent,
 } from "react";
 import type { CanvasShape, Point, ShapeKind, WorldTheme } from "../types/project";
+import { MAX_SHAPES_PER_SCENE } from "../types/project";
 import { createId } from "../utils/id";
 import {
   clampShapePosition,
@@ -70,7 +71,6 @@ interface MeasuredViewport extends CanvasViewport {
   dpr: number;
 }
 
-const MAX_SHAPES = 20;
 const MOVE_THRESHOLD_PX = 3;
 const TAP_THRESHOLD_PX = 12;
 
@@ -294,8 +294,8 @@ export function CanvasEditor({
   const addShape = useCallback(
     (position: CanvasShape["position"]): void => {
       if (disabled) return;
-      if (shapes.length >= MAX_SHAPES) {
-        setStatus("図形は20こまでです");
+      if (shapes.length >= MAX_SHAPES_PER_SCENE) {
+        setStatus(`図形は${MAX_SHAPES_PER_SCENE}こまでです`);
         return;
       }
 
@@ -395,8 +395,8 @@ export function CanvasEditor({
 
       const point = pointFromClient(event.clientX, event.clientY);
       if (selectedKind === "pen") {
-        if (shapes.length >= MAX_SHAPES) {
-          setStatus("図形は20こまでです");
+        if (shapes.length >= MAX_SHAPES_PER_SCENE) {
+          setStatus(`図形は${MAX_SHAPES_PER_SCENE}こまでです`);
           return;
         }
         const shapeId = createId("shape");
@@ -737,7 +737,7 @@ export function CanvasEditor({
         position: "relative",
         width: "100%",
         height: "100%",
-        minHeight: 300,
+        minHeight: 0,
         overflow: "hidden",
         borderRadius: "inherit",
         background: theme.background,

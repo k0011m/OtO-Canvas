@@ -19,6 +19,7 @@ import {
   shapesForScene,
 } from "./creativeRules";
 import { getSectionAtBar, getSectionDefinition } from "./sections";
+import { buildInstrumentPhrases, voiceBudgetEnd } from "./instrumentPhrases";
 
 export { getSectionAtBeat } from "./sections";
 
@@ -275,38 +276,23 @@ function compareEvents(left: MusicEvent, right: MusicEvent): number {
   return shapeDifference !== 0 ? shapeDifference : left.id.localeCompare(right.id);
 }
 
-/**
- * Caps both same-onset events and sustained polyphony at eight voices. Events
- * already sounding keep their slot, which avoids audible note stealing.
- */
+/** 全楽器のフレーズを先に確保し、残りの枠へ元の図形音・コンボを加える。 */
 function limitPolyphony(events: readonly MusicEvent[]): MusicEvent[] {
-  const ordered = [...events].sort(compareEvents);
+  const ordered = [...events].sort((left, right) =>
+    Number(right.id.startsWith("part-")) - Number(left.id.startsWith("part-")) || compareEvents(left, right));
   const accepted: MusicEvent[] = [];
-  let activeEnds: number[] = [];
-  let cursor = 0;
-
-  while (cursor < ordered.length) {
-    const beat = (ordered[cursor] as MusicEvent).beat;
-    activeEnds = activeEnds.filter((endBeat) => endBeat > beat + Number.EPSILON);
-
-    let groupEnd = cursor + 1;
-    while (groupEnd < ordered.length && (ordered[groupEnd] as MusicEvent).beat === beat) {
-      groupEnd += 1;
-    }
-
-    const capacity = Math.max(0, MAX_SIMULTANEOUS_EVENTS - activeEnds.length);
-    for (const event of ordered.slice(cursor, groupEnd).slice(0, capacity)) {
-      accepted.push(event);
-      activeEnds.push(event.beat + event.durationBeats);
-    }
-
-    cursor = groupEnd;
+  for (const event of ordered) {
+    const end = voiceBudgetEnd(event);
+    const overlaps = accepted.filter((other) => other.beat < end && voiceBudgetEnd(other) > event.beat);
+    const checkpoints = [event.beat, ...overlaps.map((other) => other.beat).filter((beat) => beat > event.beat)];
+    const fits = checkpoints.every((beat) => overlaps.filter((other) =>
+      other.beat <= beat && voiceBudgetEnd(other) > beat).length < MAX_SIMULTANEOUS_EVENTS);
+    if (fits) accepted.push(event);
   }
-
   return accepted.sort(compareEvents);
 }
 
-/** Builds the fixed 12-bar (48-beat) deterministic arrangement. */
+/** 図形の元音と楽器別フレーズを組み合わせ、全楽器が参加する12小節の曲へ編曲する。 */
 export function buildArrangement(
   shapes: readonly CanvasShape[],
   seed: number,
@@ -355,6 +341,7 @@ export function buildArrangement(
 
     const barEvents = candidates.slice(candidateCountAtBarStart);
     candidates.push(...buildRelationshipEvents(sceneShapes, barEvents, bar, worldId));
+    candidates.push(...buildInstrumentPhrases(motif, bar, safeSeed, worldId));
   }
 
   return limitPolyphony(candidates);

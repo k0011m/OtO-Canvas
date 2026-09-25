@@ -9,9 +9,11 @@ import type {
 import { instrumentForShape } from "./shapeMapper";
 import { colorSoundProfile } from "./creativeRules";
 import { getSectionAtBeat } from "./sections";
+import { buildBackingTrack } from "./backingTrack";
 
-const DEFAULT_MASTER_VOLUME = 0.35;
-const MAX_MASTER_GAIN = 0.5;
+// UIと音声エンジンで初期音量をそろえ、試聴・再生・MV録音へ共通適用する。
+export const DEFAULT_MASTER_VOLUME = 0.7;
+const MAX_MASTER_GAIN = 0.75;
 const MAX_POLYPHONY = 8;
 const LOOK_AHEAD_SECONDS = 0.12;
 const SCHEDULER_INTERVAL_MS = 25;
@@ -79,6 +81,7 @@ export class AudioEngine {
   private volume = DEFAULT_MASTER_VOLUME;
 
   private playbackState: AudioEngineState = "stopped";
+  private screenBgmPlaying = false;
   private events: readonly MusicEvent[] = [];
   private callbacks: AudioEngineCallbacks = {};
   private bpm: number = BPM;
@@ -223,6 +226,26 @@ export class AudioEngine {
     });
   }
 
+  /** 選択・編集用の控えめなBGMを繰り返し、図形の試聴と同じ音量設定で鳴らす。 */
+  startScreenBgm(worldId: WorldId): void {
+    if (!this.isUnlocked) return;
+    const events = buildBackingTrack(worldId, "float", 20260926).map((event) => ({
+      ...event,
+      velocity: event.velocity * 0.75,
+    }));
+    // 再生の完了通知で次の周回を開始し、停止時は既存のタイマー解除を利用する。
+    const playLoop = () => {
+      this.start(events, { onEnded: playLoop });
+      this.screenBgmPlaying = true;
+    };
+    playLoop();
+  }
+
+  /** 画面BGMだけを停止し、画面遷移後に始まった作品の再生には触れない。 */
+  stopScreenBgm(): void {
+    if (this.screenBgmPlaying) this.stop();
+  }
+
   start(
     events: readonly MusicEvent[],
     options?: PlaybackOptions,
@@ -238,6 +261,7 @@ export class AudioEngine {
     legacyCallbacks: AudioEngineCallbacks = {},
   ): void {
     const context = this.requireRunningContext();
+    this.screenBgmPlaying = false;
     const options: PlaybackOptions =
       typeof optionsOrBpm === "number"
         ? { bpm: optionsOrBpm, ...legacyCallbacks }
@@ -330,6 +354,7 @@ export class AudioEngine {
   }
 
   stop(): void {
+    this.screenBgmPlaying = false;
     if (this.playbackState === "disposed") {
       return;
     }
@@ -428,6 +453,7 @@ export class AudioEngine {
     }
   }
 
+  /** 音量を確保しつつ、コンプレッサーと最終リミッターで重なった音のピークを抑える。 */
   private buildOutputGraph(context: AudioContext): void {
     const masterGain = context.createGain();
     const compressor = context.createDynamicsCompressor();
@@ -435,7 +461,7 @@ export class AudioEngine {
 
     masterGain.gain.value = this.volume * MAX_MASTER_GAIN;
 
-    compressor.threshold.value = -24;
+    compressor.threshold.value = -18;
     compressor.knee.value = 18;
     compressor.ratio.value = 8;
     compressor.attack.value = 0.004;

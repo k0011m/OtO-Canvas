@@ -108,6 +108,7 @@ export interface PlaybackSnapshot {
 }
 
 export const BPM = 96 as const;
+export const MAX_SHAPES_PER_SCENE = 50 as const;
 export const BARS = 12 as const;
 export const TOTAL_BEATS = BARS * 4;
 export const DURATION_SECONDS = (TOTAL_BEATS * 60) / BPM;
