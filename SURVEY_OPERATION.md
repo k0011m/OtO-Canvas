@@ -1,0 +1,56 @@
+# 体験アンケートの運用
+
+## 回答と集計
+
+- 回答画面: https://oto-canvas.com/?survey=1
+- 管理者集計: https://oto-canvas.com/?survey=admin
+- アプリの完成画面と「おとなの方へ」から回答画面へ移動できます。
+- 子どもは「どうだった」「また遊びたい」の2問だけ。3択の顔と任意の読み上げ、未回答で次へ進む操作を用意します。「好きなところ」「困ったところ」は子どもには聞きません。
+- 保護者は年齢・月齢・端末経験・利用端末・モード・初回かどうか・操作の見つけやすさ・手助け・難易度・家庭利用・親設定・任意自由記述を回答します。
+- 送信前に保護者が利用目的へ同意し、最終確認画面から親子1組をまとめて送信します。氏名・連絡先・画像・作品・カメラ情報は収集しません。自由記述にも個人情報を書かない案内を表示します。結果は改善と発表用の集計に利用します。自由記述の公開を許諾する同意ではありません。
+- 管理キーを知る管理者だけが回答一覧を取得できます。年齢・モードで絞り込み、質問別の件数・割合、任意自由記述を閲覧し、絞り込んだ回答をCSV保存できます。子どもの未回答は分母から除外し、別に表示。判断できないは独立した回答として集計します。手助けは複数選択の件数表示です。
+- 回答IDは送信単位です。同じ子の複数回回答を判別する識別子は収集しないため、発表では「回答組数」と表現してください。割合だけでなく分母を併記し、短時間の体験を発達・教育効果の証明として扱わないでください。
+
+## 公開環境
+
+Cloudflare Pages FunctionsとD1を使用します。静的ファイルだけを配置したGitHub Pagesではアンケートの送信・集計APIは動きません。
+
+1. D1データベース `otocanvas-survey` を作成し、`migrations/0001_survey.sql`を実行します。
+2. `wrangler.jsonc`の`SURVEY_DB`バインドを使います。現在のdatabase_idは公開環境のリソース識別子で、認証情報ではありません。別アカウントへ複製する場合は差し替えてください。
+3. Cloudflare Pages → oto-canvas → Settings → Variables and Secretsで、ProductionのSecretとして`SURVEY_ADMIN_KEY`を設定します。24〜512文字のランダムなキー（32文字以上を推奨）を管理者自身が入力し、パスワード管理ツール等で保管してください。ソースコード、URL、チャット、公開環境変数へ入れないでください。
+4. mainの変更をデプロイします。Secret変更時も再デプロイが必要です。管理画面で同じキーを入力します。管理キーはブラウザ永続保存せずメモリだけで保持します。ログアウトか画面を閉じると消えます。キーが漏れた場合はSecretを更新・再デプロイしてください。
+5. Preview環境へ本番データ用キーを複製しないでください。キーなしの環境は送信503、集計401で閉じます。
+
+現時点では回答の自動削除・管理画面からの削除・個人ごとのログイン機能はありません。調査終了後の保管と削除は管理者がD1で管理してください。CSVは自由記述を含むので管理者の手元で扱い、発表資料には集計結果を使ってください。
+
+## 通信・障害時
+
+- 投稿は同一OriginのJSONだけ受理し、20KB上限、選択肢・数値・自由記述1,000文字上限をサーバー側で検証。未知のフィールドは破棄します。
+- APIはno-store。Service Workerは`/api/`を除外します。オフライン時は送信済みと表示せず、画面に回答を残します。明示送信時に同じタブのsessionStorageへ再送用回答を置き、成功時に消します。タブを閉じると失われる場合があります。
+- `response_id`一意制約で通信再試行による重複を防ぎます。ネットワーク単位で1時間120件を上限とし、IP自体は回答DBへ保存しません。時間単位の鍵付きハッシュを送信制限テーブルへ一時保持します。期限切れの行は次の受信時に削除します。Cloudflare自身のアクセスログ等はサービス側の設定に従います。
+- 管理APIはBearerキーをサーバー側でダイジェスト比較し、認証後に250件ずつ返します。画面は全ページを取得し終えるまで集計を表示しません。CSVはUTF-8 BOM付きで、自由記述の数式実行を抑止します。
+
+## ローカル開発・検証
+
+`npm install`、`npm run dev`で通常アプリと回答画面のUIを編集できます。送信・集計の動作にはPages Functionsが必要です。
+
+```sh
+npm run build
+npx wrangler d1 migrations apply otocanvas-survey --local
+npx wrangler pages dev dist --port 4187 --binding SURVEY_ADMIN_KEY=local-test-only-survey-key-123456
+```
+
+http://localhost:4187/?survey=1 で確認してください。上記はローカル専用の公開テスト値です。本番に使わないでください。環境ファイルは不要です。
+
+```sh
+npx vitest run tests/survey.test.ts
+npx playwright test --config playwright.survey.config.ts
+```
+
+自動テストの回答はローカルD1だけへ保存します。公開D1にテスト回答を混ぜません。
+
+## 変更履歴
+
+- 2026-09-26: `src/survey/SurveyApp.tsx`・`survey.css`に2問の子ども回答、親回答、管理集計を実装。`model.ts`は回答形式・検証・CSVを共有。`src/main.tsx`のquery分岐と`src/app/App.tsx`の入口を追加。
+- `functions/api/survey.ts`の`onRequestPost`が受信・制限・D1保存、`authorized`が管理認証。`functions/api/survey/admin.ts`の`onRequestGet`が認証済みのページ取得。`migrations/0001_survey.sql`で回答と送信制限テーブルを定義。
+- `wrangler.jsonc`、Wrangler開発依存、`.gitignore`を追加・更新。`public/sw.js`はAPIをキャッシュ対象外に変更。`tests/survey.test.ts`と`e2e-survey/survey.spec.ts`が検証・認証・重複防止・再送・スマホUI・CSVを検証します。

@@ -1337,7 +1337,8 @@ export function App() {
               <h2 id="finish-title">できた！</h2>
               <p>{shapes.length}この かたちから、30びょうの おとが うまれました。</p>
             </div>
-            <div className="finish-actions">
+          <div className="finish-actions">
+              <a className="quiet-button" href="/?survey=1">体験アンケート（おとなの方と）</a>
               {cameraChoice === "on" && <button className="action-card" type="button" onClick={() => setCameraOpen(true)}>✌ できた！ しゃしんを とる</button>}
               <button className="action-card primary" type="button" onClick={replay}>
                 <span className="action-icon">▶</span>もういちど みる
@@ -1433,6 +1434,7 @@ export function App() {
               const project = currentFileProject();
               if (project?.shapes.length) await saveProject(project, { requirePersistent: true });
             }} />
+            <p><a href="/?survey=1">体験アンケートに回答する</a></p>
             <fieldset className="creation-settings">
               <legend>できた記念の写真</legend>
               <p>完成画面で子どもが選んだときだけ、内カメラで撮影します。写真は端末へ保存でき、閉じるとアプリ内から消えます。ピースの自動認識は行いません。許可の確認時にも一度カメラへ接続し、すぐ停止します。</p>

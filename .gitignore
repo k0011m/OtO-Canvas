@@ -31,3 +31,9 @@ Thumbs.db
 
 # 音素材加工用の一時出力
 .tmp/
+
+# アンケート開発用の秘密情報・ローカルDBと共有成果物
+.dev.vars
+.dev.vars.*
+.wrangler/
+share/

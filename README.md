@@ -388,3 +388,7 @@ OtoCanvas本体は[MIT License](./LICENSE)で提供します。利用中のOSS�
 - `src/app/ProgramEditor.tsx`と専用の`e2e/program-editor.spec.ts`を削除し、`src/styles/global.css`から新しい動きブロック専用レイアウトを除去。音階エディタの全画面表示は維持します。
 - 既存作品を破壊しないため、保存済み`scenePrograms`の読み込み・保存・再生互換性は維持します。新規の動きプログラムは作れません。通常の動きを選び直すと、その場面は動き1つに戻ります。
 - `e2e/sound-program.spec.ts`で動きプログラムの入口・実行表示が消えたことと音階・BGM・保存・本番再生を確認します。
+
+### 2026-09-26：体験アンケートと管理者集計
+
+同じサイトの`/?survey=1`に子ども2問と親向けアンケート、`/?survey=admin`に認証付き集計を追加しました。開発意図・項目・Cloudflare D1/Pages Functionsの設定・管理キー・再送と個人情報の扱いは[SURVEY_OPERATION.md](./SURVEY_OPERATION.md)を参照してください。通常の制作機能は引き続きブラウザ内で動作しますが、アンケートの送信と集計にはオンラインのCloudflareバックエンドが必要です。既存の共有ZIPにはこの追加機能は含まれていません。

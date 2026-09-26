@@ -81,6 +81,8 @@ async function respond(request) {
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
+  // 回答と管理APIはオフラインキャッシュを経由させず、常にサーバーへ送る。
+  if (url.pathname.startsWith("/api/")) return;
   if (request.method !== "GET" || request.headers.has("range") || url.origin !== SCOPE_URL.origin || !url.href.startsWith(SCOPE_URL.href)) return;
   event.respondWith(respond(request));
 });

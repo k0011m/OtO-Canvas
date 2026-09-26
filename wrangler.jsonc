@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "oto-canvas",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2025-09-01",
+  "d1_databases": [
+    {
+      "binding": "SURVEY_DB",
+      "database_name": "otocanvas-survey",
+      "database_id": "1a98e944-c16a-4877-8ac5-5bd1ac749b19",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
