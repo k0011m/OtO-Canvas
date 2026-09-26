@@ -360,8 +360,8 @@ function clearFallback(): void {
   }
 }
 
-/** Saves a defensive copy and returns the exact stored value. */
-export async function saveProject(project: OtoProject): Promise<OtoProject> {
+/** 再読み込み前は永続保存を必須にでき、メモリだけの保存を成功扱いしない。 */
+export async function saveProject(project: OtoProject, options: { requirePersistent?: boolean } = {}): Promise<OtoProject> {
   if (!isOtoProject(project)) {
     throw new TypeError("Cannot save an invalid or unsupported OtoCanvas project.");
   }
@@ -376,6 +376,14 @@ export async function saveProject(project: OtoProject): Promise<OtoProject> {
     deleteFromFallback(stored.id);
   } catch {
     saveToFallback(stored);
+    if (options.requirePersistent) {
+      let persisted = false;
+      try {
+        const envelope = JSON.parse(browserStorage()?.getItem(FALLBACK_STORAGE_KEY) ?? "null");
+        persisted = envelope?.projects?.some((item: OtoProject) => item.id === stored.id && item.updatedAt === stored.updatedAt) === true;
+      } catch { /* 容量不足や保存禁止の場合は呼び出し元で再読み込みを止める。 */ }
+      if (!persisted) throw new Error("端末へ保存できません。先に作品ファイルを書き出してください。");
+    }
   }
 
   return cloneProject(stored);
@@ -429,6 +437,7 @@ export async function deleteProject(id: string): Promise<void> {
   deleteFromFallback(id);
 }
 
+/** 保存先を消した後にも残る作品を確認し、削除失敗を画面へ返す。 */
 export async function clearProjects(): Promise<void> {
   try {
     await idbClear();
@@ -436,6 +445,7 @@ export async function clearProjects(): Promise<void> {
     // IndexedDB may be unavailable; always clear the active fallback too.
   }
   clearFallback();
+  if ((await listProjects()).length > 0) throw new Error("保存データを削除できませんでした。");
 }
 
 export const projectStore = {

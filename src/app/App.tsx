@@ -9,6 +9,9 @@ import {
 import { CanvasEditor } from "../canvas/CanvasEditor";
 import { ProjectThumbnail } from "./ProjectThumbnail";
 import { useFullscreen } from "./useFullscreen";
+import { CelebrationCamera } from "./CelebrationCamera";
+import { loadCameraChoice, saveCameraChoice, openFrontCamera } from "../storage/cameraSettings";
+import { downloadFile, serializeProject, parseProjectFile, MAX_PROJECT_FILE_BYTES } from "../export/projectFile";
 import { loadCreationMode, saveCreationMode, type CreationMode } from "../storage/parentSettings";
 import { downloadJacketPng, downloadRecordedVideo } from "../export/artworkExporter";
 import { exportAndDownloadWav } from "../export/wavExporter";
@@ -198,6 +201,16 @@ export function App() {
   const [playback, setPlayback] = useState<PlaybackSnapshot>(EMPTY_PLAYBACK);
   const [restoredProject, setRestoredProject] = useState<Awaited<ReturnType<typeof loadLatestProject>>>(null);
   const [parentOpen, setParentOpen] = useState(false);
+  const [cameraChoice, setCameraChoice] = useState(loadCameraChoice);
+  const [cameraIntro, setCameraIntro] = useState(() => loadCameraChoice() === "ask");
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraBusy, setCameraBusy] = useState(false);
+  const [cameraMessage, setCameraMessage] = useState("");
+  const cameraRequestRef = useRef(0);
+  const [fileMessage, setFileMessage] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [maintenanceBusy, setMaintenanceBusy] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [lowPower, setLowPower] = useState(false);
   const [volume, setVolume] = useState(DEFAULT_MASTER_VOLUME);
   const [audioReady, setAudioReady] = useState(false);
@@ -261,6 +274,48 @@ export function App() {
       setToast((current) => (current === message ? null : current));
     }, 2100);
   }, []);
+
+  /** カメラを使わない選択は撮影中にも反映し、子どもの画面から入口を消す。 */
+  const disableCamera = useCallback(() => {
+    cameraRequestRef.current += 1;
+    setCameraChoice("off");
+    const saved = saveCameraChoice("off");
+    setCameraOpen(false); setCameraIntro(false); setCameraBusy(false);
+    setCameraMessage(saved ? "撮影機能を非表示にしました。" : "この画面では非表示にしました。設定は保存できませんでした。");
+  }, []);
+
+  /** 保護者の明示操作でだけ権限を求め、確認用ストリームは直ちに閉じる。 */
+  const enableCamera = useCallback(async () => {
+    const request = ++cameraRequestRef.current;
+    setCameraBusy(true); setCameraMessage("");
+    try {
+      const stream = await openFrontCamera();
+      stream.getTracks().forEach((track) => track.stop());
+      if (request !== cameraRequestRef.current) return;
+      setCameraChoice("on"); setCameraIntro(false);
+      setCameraMessage(saveCameraChoice("on") ? "撮影機能を有効にしました。" : "今回のみ有効です。設定は保存できませんでした。");
+    } catch {
+      if (request !== cameraRequestRef.current) return;
+      disableCamera();
+      setCameraMessage("カメラを許可できなかったため、撮影機能を非表示にしました。再度使う場合はブラウザのサイト設定でカメラを許可してください。");
+    } finally { if (request === cameraRequestRef.current) setCameraBusy(false); }
+  }, [disableCamera]);
+
+  /** ブラウザ側で権限を取り消した場合も、再要求せず撮影ボタンを隠す。 */
+  useEffect(() => {
+    if (cameraChoice !== "on" || !navigator.permissions) return;
+    let active = true;
+    let status: PermissionStatus | undefined;
+    const check = () => { if (active && status?.state === "denied") disableCamera(); };
+    void navigator.permissions.query({ name: "camera" as PermissionName }).then((result) => {
+      if (!active) return;
+      status = result; check(); result.addEventListener("change", check);
+    }).catch(() => { /* 権限照会がないブラウザは撮影時の結果で判断する。 */ });
+    return () => { active = false; status?.removeEventListener("change", check); };
+  }, [cameraChoice, disableCamera]);
+
+  /** 撮影ダイアログの終了でストリームと未保存の写真を解放する。 */
+  const closeCamera = useCallback(() => setCameraOpen(false), []);
 
   /** 表示する道具だけを切り替え、既存作品の場面・動きは削除しない。 */
   const changeCreationMode = useCallback((mode: CreationMode) => {
@@ -770,10 +825,63 @@ export function App() {
 
   const deleteSavedData = useCallback(async () => {
     if (!window.confirm("このたんまつに ほぞんした作品を すべて消しますか？")) return;
-    await clearProjects();
-    setRestoredProject(null);
-    showToast("ほぞんデータを けしました");
-  }, [showToast]);
+    if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
+    audioEngine.stop(); audioEngine.stopScreenBgm();
+    setCameraOpen(false);
+    newProject(); setScreen("start");
+    try {
+      await clearProjects();
+      setRestoredProject(null); setGalleryProjects([]);
+      showToast("ほぞんデータを けしました");
+    } catch { setFileMessage("作品をすべて削除できませんでした。ブラウザの保存設定を確認してください。"); }
+  }, [showToast, newProject]);
+
+  /** ロゴ画面では最後の保存作品、それ以外は現在編集中の作品をファイルにする。 */
+  const currentFileProject = useCallback(() => screen === "start" ? restoredProject : createProject(shapes, seedRef.current, worldId, {
+    id: projectIdRef.current, title: projectTitle, timestamp: createdAtRef.current, sceneCount, sceneMoods,
+  }), [screen, restoredProject, shapes, worldId, projectTitle, sceneCount, sceneMoods]);
+
+  /** 専用ファイルに書き出し、写真と親向け設定は含めない。 */
+  const exportProjectFile = useCallback(() => {
+    const project = currentFileProject();
+    if (!project) return;
+    downloadFile(new Blob([serializeProject(project)], { type: "application/json" }), "my-work.otocanvas");
+    setFileMessage("作品ファイルを書き出しました。");
+  }, [currentFileProject]);
+
+  /** 読み込んだ作品は別IDで追加し、現在の作品を上書きせず編集画面へ渡す。 */
+  const importProjectFile = useCallback(async (file: File) => {
+    setImporting(true); setFileMessage("");
+    try {
+      if (file.size > MAX_PROJECT_FILE_BYTES) throw new Error("ファイルは10MB以下にしてください。");
+      const imported = parseProjectFile(await file.text());
+      const previous = currentFileProject();
+      if (previous?.shapes.length) await saveProject(previous, { requirePersistent: true });
+      const project = createProject(imported.shapes, imported.seed, imported.worldId, {
+        id: createId("project"), title: imported.title, sceneCount: imported.sceneCount, sceneMoods: imported.sceneMoods,
+      });
+      await saveProject(project, { requirePersistent: true });
+      await loadFromGallery(project);
+      setParentOpen(false); showToast("さくひんを よみこみました");
+    } catch (error) { setFileMessage(error instanceof Error ? error.message : "読み込めませんでした。"); }
+    finally { setImporting(false); }
+  }, [currentFileProject, loadFromGallery, showToast]);
+
+  /** アプリ専用キャッシュだけを削除し、再読み込みで作業メモリを解放する。 */
+  const clearCacheAndRestart = useCallback(async () => {
+    if (!window.confirm("作品を保存してアプリのキャッシュを消し、再読み込みします。未保存の記念写真は消えます。続けますか？")) return;
+    setMaintenanceBusy(true);
+    try {
+      const project = currentFileProject();
+      if (project?.shapes.length) await saveProject(project, { requirePersistent: true });
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.filter((key) => key.startsWith("oto-canvas-shell-")).map((key) => caches.delete(key)));
+      }
+      audioEngine.stop(); audioEngine.stopScreenBgm(); setCameraOpen(false);
+      window.location.reload();
+    } catch { setFileMessage("キャッシュを整理できませんでした。作品ファイルの書き出し後にもう一度お試しください。"); setMaintenanceBusy(false); }
+  }, [currentFileProject]);
 
   const remainingSeconds = Math.max(0, DURATION_SECONDS * (1 - playback.progress));
 
@@ -1179,6 +1287,7 @@ export function App() {
               <p>{shapes.length}この かたちから、30びょうの おとが うまれました。</p>
             </div>
             <div className="finish-actions">
+              {cameraChoice === "on" && <button className="action-card" type="button" onClick={() => setCameraOpen(true)}>✌ できた！ しゃしんを とる</button>}
               <button className="action-card primary" type="button" onClick={replay}>
                 <span className="action-icon">▶</span>もういちど みる
               </button>
@@ -1269,7 +1378,15 @@ export function App() {
               <h2 id="parent-title">おとなの方へ</h2>
               <button className="icon-button" type="button" onClick={() => setParentOpen(false)} aria-label="閉じる">×</button>
             </header>
-            <p>作品はこの端末の中だけに保存されます。ログイン、広告、カメラ、マイク、外部送信はありません。</p>
+            <p>作品と設定はこのブラウザに保存されます。撮影は保護者が許可した場合だけ使えます。写真・作品は送信せず、マイクは使いません。</p>
+            <fieldset className="creation-settings">
+              <legend>できた記念の写真</legend>
+              <p>完成画面で子どもが選んだときだけ、内カメラで撮影します。写真は端末へ保存でき、閉じるとアプリ内から消えます。ピースの自動認識は行いません。許可の確認時にも一度カメラへ接続し、すぐ停止します。</p>
+              <p>ブラウザに選択肢がある場合は「このサイトへのアクセス時は許可」などを選ぶと次回がスムーズです。許可の期間はブラウザが管理し、アプリから固定できません。オフにしてもブラウザ自体の許可は解除されません。</p>
+              <p>現在：{cameraChoice === "on" ? "有効" : "非表示"}</p>
+              <div className="camera-actions"><button className="pill-button" disabled={cameraBusy || cameraChoice === "on"} onClick={() => void enableCamera()}>{cameraBusy ? "許可を確認中…" : "説明に同意してカメラを許可"}</button><button className="pill-button" onClick={disableCamera}>使わない</button></div>
+              {cameraMessage && <p role="status">{cameraMessage}</p>}
+            </fieldset>
             <fieldset className="creation-settings">
               <legend>子どもに表示する機能</legend>
               <p>興味や慣れ具合に合わせて選べます。いつでも変更できます。</p>
@@ -1287,6 +1404,14 @@ export function App() {
               {settingsSaved !== null && <p className="settings-save-status" role="status">{settingsSaved ? "このブラウザに設定を保存しました。" : "設定を保存できませんでした。今開いている間だけ適用します。"}</p>}
             </fieldset>
             <div className="parent-grid">
+              <div className="setting-row"><span><strong>編集できる作品ファイル</strong><small>.otocanvas形式。図形・色・場面・動きを保存します。写真・親向け設定は含みません。</small></span></div>
+              <div className="camera-actions">
+                <button className="pill-button" disabled={importing || (!shapes.length && !restoredProject)} onClick={exportProjectFile}>作品を書き出す</button>
+                <button className="pill-button" disabled={importing} onClick={() => fileInputRef.current?.click()}>{importing ? "読込中…" : "作品を読み込む"}</button>
+                <input ref={fileInputRef} type="file" accept=".otocanvas" aria-label="作品ファイル" hidden onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void importProjectFile(file); }} />
+              </div>
+              {fileMessage && <p role="status">{fileMessage}</p>}
+              <div className="setting-row"><span><strong>キャッシュ・作業メモリ</strong><small>作品と設定は残して再読み込み。アプリのキャッシュが対象です。ブラウザ全体のキャッシュや端末のメモリは消せません。</small></span><button className="pill-button" disabled={maintenanceBusy || importing} onClick={() => void clearCacheAndRestart()}>整理する</button></div>
               <label className="setting-row">
                 <span><strong>作品のなまえ</strong><small>作品棚とジャケットに表示します</small></span>
                 <input
@@ -1333,6 +1458,16 @@ export function App() {
           <span aria-hidden="true">⊡</span><small>もどす</small>
         </button>
       )}
+
+      {cameraIntro && <div className="parent-overlay"><section className="parent-panel" role="dialog" aria-modal="true" aria-labelledby="camera-intro-title">
+        <h2 id="camera-intro-title">保護者の方へ：記念写真について</h2>
+        <p>お子さまが作品を完成させたとき、内カメラでピースの記念写真を撮れます。撮影は任意で、完成画面のボタンを押したときだけ映像を表示します。</p>
+        <p>写真・映像は送信しません。マイクは使いません。写真は「ほぞん」で端末へ書き出せます。閉じるとアプリ内の写真は消えます。許可の確認時にも一度カメラへ接続し、すぐ停止します。</p>
+        <p>次の許可画面で、選べる場合は「このサイトへのアクセス時は許可」などを選んでください。許可が続く期間はブラウザによって異なります。</p>
+        <p>「使わない」または権限を拒否すると、子どもの画面には撮影機能を表示しません。あとから「おとなの方へ」で変更できます。</p>
+        <div className="camera-actions"><button className="pill-button" disabled={cameraBusy} onClick={() => void enableCamera()}>{cameraBusy ? "許可を確認中…" : "同意してカメラを許可"}</button><button className="pill-button" onClick={disableCamera}>使わないではじめる</button></div>
+      </section></div>}
+      {cameraOpen && cameraChoice === "on" && <CelebrationCamera onClose={closeCamera} onDenied={disableCamera} />}
       {toast && <div className="toast" role="status">{toast}</div>}
     </main>
   );
