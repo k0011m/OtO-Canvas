@@ -1136,7 +1136,10 @@ button:focus-visible,
   .world-card { grid-template-columns: 42% 1fr; grid-template-rows: 1fr; align-items: center; min-height: 150px; border-radius: 26px; }
   .world-preview { min-height: 120px; }
   .world-preview .preview-triangle { border-left-width: 34px; border-right-width: 34px; border-bottom-width: 62px; }
-  .finish-screen { grid-template-columns: 1fr; grid-template-rows: minmax(300px, 48vh) auto; }
+  /* 画像の最低高さで行を突き抜けないよう、画像と説明を通常の縦並びにする。 */
+  .finish-screen { display: flex; flex-direction: column; gap: 24px; }
+  .finish-art { flex: 0 0 auto; min-height: 0; height: clamp(220px, 48svh, 480px); }
+  .finish-content { flex: 0 0 auto; }
   .finish-content { padding: 6px 4px 28px; }
   .top-bar-center { display: none; }
   .top-bar { grid-template-columns: auto 1fr; min-height: 66px; padding-left: 12px; padding-right: 12px; }

@@ -224,6 +224,7 @@ export function App() {
   const [parentOpen, setParentOpen] = useState(false);
   const [cameraChoice, setCameraChoice] = useState(loadCameraChoice);
   const [cameraIntro, setCameraIntro] = useState(() => loadCameraChoice() === "ask");
+  const [parentConfirmed, setParentConfirmed] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraBusy, setCameraBusy] = useState(false);
   const [cameraMessage, setCameraMessage] = useState("");
@@ -918,7 +919,7 @@ export function App() {
 
   return (
     <main className={`app-shell${expanded ? " app-shell--expanded" : ""}`} style={worldStyle(worldId)}>
-      {screen === "start" && (
+      {screen === "start" && !cameraIntro && (
         <section className="screen start-screen" aria-labelledby="start-title">
           <button
             className="quiet-button parent-entry"
@@ -1513,12 +1514,36 @@ export function App() {
       )}
 
       {cameraIntro && <div className="parent-overlay"><section className="parent-panel" role="dialog" aria-modal="true" aria-labelledby="camera-intro-title">
-        <h2 id="camera-intro-title">保護者の方へ：記念写真について</h2>
+        {!parentConfirmed ? <>
+          <h2 id="camera-intro-title">おとなのひとに<br />見せてね！</h2>
+          <p>あそぶ じゅんびを するよ。<br />おうちの ひとに わたしてね。</p>
+          <button className="pill-button" autoFocus onClick={() => setParentConfirmed(true)}>おとなの方：設定へすすむ</button>
+        </> : <>
+        <h2 id="camera-intro-title">保護者の方へ：はじめの設定</h2>
+        <p>お子さまの興味や慣れ具合に合わせて、表示する道具を選べます。設定はこのブラウザに保存され、あとからロゴ画面の「おとなの方へ」で変更できます。</p>
+        <fieldset className="creation-settings">
+          <legend>遊び方・難易度</legend>
+          <label className="creation-mode-option">
+            <input type="radio" name="intro-creation-mode" checked={creationMode === "basic"} onChange={() => changeCreationMode("basic")} />
+            <span><strong>図形と色であそぶ</strong><small>はじめてのお子さまに。図形を置いて色を変えるだけ。音楽と動きはおまかせです。</small></span>
+          </label>
+          <label className="creation-mode-option">
+            <input type="radio" name="intro-creation-mode" checked={creationMode === "motion"} onChange={() => changeCreationMode("motion")} />
+            <span><strong>動きも編集する</strong><small>動きも選びたいお子さまに。1〜10の場面と15種類の動きを組み合わせます。</small></span>
+          </label>
+          <label className="creation-mode-option">
+            <input type="radio" name="intro-creation-mode" checked={creationMode === "program"} onChange={() => changeCreationMode("program")} />
+            <span><strong>プログラミングであそぶ</strong><small>6〜8歳向け。動きの順番・くり返しや、図形のドレミと鳴らす順番を作れます。</small></span>
+          </label>
+          {settingsSaved === false && <p role="status">設定を保存できませんでした。今開いている間だけ適用します。</p>}
+        </fieldset>
+        <h3>記念写真とカメラ</h3>
         <p>お子さまが作品を完成させたとき、内カメラでピースの記念写真を撮れます。撮影は任意で、完成画面のボタンを押したときだけ映像を表示します。</p>
         <p>写真・映像は送信しません。マイクは使いません。写真は「ほぞん」で端末へ書き出せます。閉じるとアプリ内の写真は消えます。許可の確認時にも一度カメラへ接続し、すぐ停止します。</p>
         <p>次の許可画面で、選べる場合は「このサイトへのアクセス時は許可」などを選んでください。許可が続く期間はブラウザによって異なります。</p>
         <p>「使わない」または権限を拒否すると、子どもの画面には撮影機能を表示しません。あとから「おとなの方へ」で変更できます。</p>
         <div className="camera-actions"><button className="pill-button" disabled={cameraBusy} onClick={() => void enableCamera()}>{cameraBusy ? "許可を確認中…" : "同意してカメラを許可"}</button><button className="pill-button" onClick={disableCamera}>使わないではじめる</button></div>
+        </>}
       </section></div>}
       {programOpen && screen === "create" && creationMode === "program" && <ProgramEditor
         program={scenePrograms[currentScene] ?? null} fallback={sceneMoods[currentScene] ?? "float"} seconds={30 / sceneCount}

@@ -34,13 +34,41 @@ async function finishWork(page: Page) {
 
 test.describe("first visit camera choice", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
-  test("decline hides camera without requesting permission", async ({ page }) => {
+  test("first launch hands over to parent and preserves difficulty", async ({ page }, info) => {
+    await page.setViewportSize({ width: 360, height: 640 });
     await mockCamera(page);
     await page.goto("/");
+    await expect(page.getByRole("heading", { name: /おとなのひとに\s*見せてね！/ })).toBeVisible();
+    await page.screenshot({ path: info.outputPath("first-launch.png") });
+    await expect(page.getByTestId("start-button")).toHaveCount(0);
+    expect(await page.evaluate(() => (window as any).cameraCalls.length)).toBe(0);
+    await page.getByRole("button", { name: "おとなの方：設定へすすむ" }).click();
+    await page.getByRole("radio", { name: /図形と色であそぶ/ }).check();
     await page.getByRole("button", { name: "使わないではじめる" }).click();
     await page.reload();
-    await expect(page.getByRole("heading", { name: "保護者の方へ：記念写真について" })).toHaveCount(0);
+    await expect(page.getByTestId("start-button")).toBeVisible();
+    await page.getByRole("button", { name: "おとなの方へ", exact: true }).click();
+    await expect(page.getByRole("radio", { name: /図形と色であそぶ/ })).toBeChecked();
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await expect(page.getByRole("button", { name: "おとなの方：設定へすすむ" })).toBeVisible();
+  });
+  test("decline hides camera without requesting permission", async ({ page }, info) => {
+    await mockCamera(page);
+    await page.goto("/");
+    await page.getByRole("button", { name: "おとなの方：設定へすすむ" }).click();
+    await page.getByRole("button", { name: "使わないではじめる" }).click();
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "保護者の方へ：はじめの設定" })).toHaveCount(0);
     await finishWork(page);
+    // 画面の向き・高さを変えても、画像と見出しの領域が交差しないことを確認する。
+    for (const size of [{ width: 390, height: 650 }, { width: 360, height: 540 }, { width: 740, height: 360 }, { width: 844, height: 390 }]) {
+      await page.setViewportSize(size);
+      const art = await page.locator(".finish-art").boundingBox();
+      const title = await page.locator("#finish-title").boundingBox();
+      expect(art && title && (art.y + art.height <= title.y || art.x + art.width <= title.x)).toBeTruthy();
+      await page.screenshot({ path: info.outputPath(`finish-${size.width}-${size.height}.png`) });
+    }
     await expect(page.getByRole("button", { name: /しゃしんを とる/ })).toHaveCount(0);
     expect(await page.evaluate(() => (window as any).cameraCalls.length)).toBe(0);
   });
@@ -48,8 +76,9 @@ test.describe("first visit camera choice", () => {
   test("permission denial hides camera and can be changed in parent settings", async ({ page }) => {
     await mockCamera(page, true);
     await page.goto("/");
+    await page.getByRole("button", { name: "おとなの方：設定へすすむ" }).click();
     await page.getByRole("button", { name: "同意してカメラを許可", exact: true }).click();
-    await expect(page.getByRole("heading", { name: "保護者の方へ：記念写真について" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "保護者の方へ：はじめの設定" })).toHaveCount(0);
     expect(await page.evaluate(() => localStorage.getItem("otocanvas.camera.v1"))).toBe("off");
     await page.getByRole("button", { name: "おとなの方へ", exact: true }).click();
     await expect(page.getByRole("button", { name: "説明に同意してカメラを許可" })).toBeEnabled();
@@ -63,6 +92,7 @@ test.describe("first visit camera choice", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await mockCamera(page);
     await page.goto("/");
+    await page.getByRole("button", { name: "おとなの方：設定へすすむ" }).click();
     await page.getByRole("button", { name: "同意してカメラを許可", exact: true }).click();
     await finishWork(page);
     await page.getByRole("button", { name: /しゃしんを とる/ }).click();
@@ -116,6 +146,7 @@ test("project file round trip and cache cleanup preserve work", async ({ page })
   expect(keys).not.toContain("oto-canvas-shell-test"); expect(keys).toContain("unrelated-cache");
   await page.getByRole("button", { name: "おとな向け設定" }).click();
   await page.getByRole("button", { name: "すべて消す", exact: true }).click();
+  await expect(page.getByText("ほぞんデータを けしました", { exact: true })).toBeVisible();
   await page.reload();
   await expect(page.getByRole("button", { name: "つづきから" })).toHaveCount(0);
 });
