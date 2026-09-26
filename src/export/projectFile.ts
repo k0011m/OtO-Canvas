@@ -1,3 +1,4 @@
+import { copySoundPrograms } from "../music/soundProgram";
 import type { OtoProject } from "../types/project";
 import { isOtoProject } from "../storage/projectStore";
 
@@ -44,9 +45,10 @@ export function parseProjectFile(text: string): OtoProject {
     createdAt: project.createdAt, updatedAt: project.updatedAt, seed: project.seed,
     worldId: project.worldId, bpm: 96, bars: 12, sceneCount: project.sceneCount,
     sceneMoods: project.sceneMoods?.slice(), events: [],
+    sceneSoundPrograms: copySoundPrograms(project.sceneSoundPrograms),
     scenePrograms: project.scenePrograms?.map((program) => program ? { moves: [...program.moves], repeat: program.repeat } : null),
     shapes: project.shapes.map((s) => ({ id: s.id, kind: s.kind, position: { ...s.position }, size: s.size,
-      rotation: s.rotation, colorId: s.colorId, patternId: s.patternId, zIndex: s.zIndex, scene: s.scene,
+      soundNote: s.soundNote, rotation: s.rotation, colorId: s.colorId, patternId: s.patternId, zIndex: s.zIndex, scene: s.scene,
       points: s.points?.map((p) => ({ x: p.x, y: p.y })) })),
   };
 }

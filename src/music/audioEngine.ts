@@ -1,3 +1,4 @@
+import { NOTE_MIDI, soundProgramInstrument } from "./soundProgram";
 import { BPM, TOTAL_BEATS } from "../types/project";
 import type {
   CanvasShape,
@@ -200,7 +201,7 @@ export class AudioEngine {
     );
   }
 
-  /** Plays a short, safe preview derived from a canvas shape. */
+  /** 割り当て済みの音階を優先し、編集時も本番と同じ音で試聴する。 */
   previewShape(shape: CanvasShape, worldId: WorldId): boolean {
     const context = this.runningContextOrNull();
     if (!context) {
@@ -216,8 +217,8 @@ export class AudioEngine {
     const shiftedIndex = scaleIndex + profile.degreeOffset;
     const octave = Math.floor(shiftedIndex / PENTATONIC.length);
     const pitchIndex = ((shiftedIndex % PENTATONIC.length) + PENTATONIC.length) % PENTATONIC.length;
-    const midiNote = root + (PENTATONIC[pitchIndex] ?? 0) + octave * 12;
-    const instrumentId = instrumentForShape(shape);
+    const midiNote = shape.soundNote === undefined ? root + (PENTATONIC[pitchIndex] ?? 0) + octave * 12 : NOTE_MIDI[shape.soundNote];
+    const instrumentId = shape.soundNote === undefined ? instrumentForShape(shape) : soundProgramInstrument(shape, worldId);
 
     return this.triggerInstrument({
       soundWorld: worldId,

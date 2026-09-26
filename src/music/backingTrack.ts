@@ -1,3 +1,4 @@
+import type { SceneSoundPrograms } from "./soundProgram";
 import type { AnimationMood } from "../visuals/animationMood";
 import { backingMood } from "../visuals/animationMood";
 import { normalizeSceneCount } from "./creativeRules";
@@ -261,10 +262,11 @@ export function buildBackingTrack(
     );
 }
 
-/** 各場面の動きに合う伴奏を、その場面の時間内へ切り出す。 */
-export function buildSceneBackingTrack(worldId: WorldId, moods: readonly AnimationMood[], count: number, seed: number): MusicEvent[] {
+/** 手動の音プログラムは指定音を聴き分けられるよう伴奏を休み、他の場面には動きに合う伴奏を付ける。 */
+export function buildSceneBackingTrack(worldId: WorldId, moods: readonly AnimationMood[], count: number, seed: number, programs?: SceneSoundPrograms): MusicEvent[] {
   const total = normalizeSceneCount(count);
   return Array.from({ length: total }, (_, scene) => {
+    if (programs?.[scene]) return [];
     const start = scene * TOTAL_BEATS / total;
     const end = (scene + 1) * TOTAL_BEATS / total;
     return buildBackingTrack(worldId, moods[scene] ?? "float", seed)

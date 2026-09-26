@@ -1215,3 +1215,21 @@ button:focus-visible,
     transition-duration: .01ms !important;
   }
 }
+
+/* 音のプログラムはスマホでも縦に読み進め、各操作を44px以上に保つ。 */
+.sound-editor { width: min(780px, calc(100vw - 24px)); }
+.sound-shape-list, .sound-note-picker, .sound-sequence { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+.sound-note-picker { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.sound-editor button { min-height: 48px; font-weight: 700; }
+.sound-shape-list > button, .sound-note-picker > button, .sound-sequence > li { border: 2px solid #d8d1c5; border-radius: 16px; background: #fffdf8; color: #252525; padding: 8px; }
+.sound-editor button[aria-pressed="true"], .sound-sequence > li[aria-current="step"] { border-color: #6c50de; background: #e9e1ff; box-shadow: 0 0 0 2px #6c50de; }
+.sound-shape { display: flex; flex-direction: column; align-items: center; }
+.sound-shape canvas { width: 64px; height: 64px; }
+.sound-shape strong { border-bottom: 4px solid; font-size: 14px; }
+.sound-sequence { padding: 0; list-style: none; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); }
+.sound-sequence > li > button { width: 100%; background: transparent; border: 0; color: #252525; }
+.sound-sequence .program-step-actions { display: flex; justify-content: center; gap: 4px; }
+.sound-sequence .program-step-actions button { min-width: 44px; padding: 4px; }
+.sound-program-playing { position: absolute; top: 90px; left: 50%; transform: translateX(-50%); padding: 10px 16px; border-radius: 20px; background: #fffdf8; color: #252525; font-weight: 800; white-space: nowrap; pointer-events: none; }
+@media (max-width: 420px) { .sound-editor { padding: 18px; } .sound-sequence { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.scene-controls [data-testid="scene-program"], .scene-controls [data-testid="sound-program"] { flex: 1; min-width: 0; font-size: 12px; line-height: 1.3; overflow-wrap: anywhere; }

@@ -1,3 +1,4 @@
+import { isSoundNote, isSceneSoundPrograms } from "../music/soundProgram";
 import {
   BARS,
   type CanvasShape,
@@ -75,6 +76,7 @@ function isCanvasShape(value: unknown): value is CanvasShape {
   return (
     typeof value.id === "string" &&
     value.id.length > 0 &&
+    (value.soundNote === undefined || isSoundNote(value.soundNote)) &&
     typeof value.kind === "string" &&
     SHAPE_KINDS.has(value.kind) &&
     isFiniteNumber(value.position.x) &&
@@ -135,6 +137,7 @@ function hasProjectMetadata(value: unknown): value is Record<string, unknown> {
 export function isOtoProject(value: unknown): value is OtoProject {
   return (
     hasProjectMetadata(value) &&
+    (value.sceneSoundPrograms === undefined || isSceneSoundPrograms(value.sceneSoundPrograms)) &&
     (value.scenePrograms === undefined || isScenePrograms(value.scenePrograms)) &&
     (value.sceneCount === undefined || (Number.isInteger(value.sceneCount) && Number(value.sceneCount) >= 1 && Number(value.sceneCount) <= 10)) &&
     (value.sceneMoods === undefined || (Array.isArray(value.sceneMoods) && value.sceneMoods.length <= 10 && value.sceneMoods.every(isAnimationMood))) &&

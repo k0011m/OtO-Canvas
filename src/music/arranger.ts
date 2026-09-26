@@ -1,3 +1,4 @@
+import { applySoundPrograms, copySoundPrograms, type SceneSoundPrograms } from "./soundProgram";
 import {
   BARS,
   BPM,
@@ -35,6 +36,7 @@ export interface BarVariation {
 }
 
 export interface CreateProjectOptions {
+  sceneSoundPrograms?: SceneSoundPrograms;
   scenePrograms?: OtoProject["scenePrograms"];
   sceneCount?: number;
   sceneMoods?: OtoProject["sceneMoods"];
@@ -296,12 +298,13 @@ function limitPolyphony(events: readonly MusicEvent[]): MusicEvent[] {
   return accepted.sort(compareEvents);
 }
 
-/** 図形の元音と楽器別フレーズを組み合わせ、全楽器が参加する12小節の曲へ編曲する。 */
+/** 通常は全楽器の曲を編曲し、音プログラムを指定した場面だけ固定音階・指定順へ置き換える。 */
 export function buildArrangement(
   shapes: readonly CanvasShape[],
   seed: number,
   worldId: WorldId,
   sceneCount?: number,
+  sceneSoundPrograms?: SceneSoundPrograms,
 ): MusicEvent[] {
   // 小節途中に場面境界が来る場合も、発音先と映像の場面を一致させる。
   if (sceneCount !== undefined) {
@@ -317,7 +320,7 @@ export function buildArrangement(
         .map((event) => ({ ...event, id: `${event.id}-scene-${scene}`, durationBeats: Math.min(event.durationBeats, end - event.beat) }));
       sceneEvents.push(...notes);
     }
-    return limitPolyphony(sceneEvents);
+    return applySoundPrograms(limitPolyphony(sceneEvents), shapes, worldId, count, sceneSoundPrograms);
   }
   const safeSeed = Number.isFinite(seed) ? Math.trunc(seed) >>> 0 : 0;
   if (shapes.length === 0) return [];
@@ -379,6 +382,7 @@ function stableProjectId(
   return `oto-${hashString(`${seed}|${worldId}|${signature}`).toString(36)}`;
 }
 
+/** 図形と場面ごとの動き・音の命令を保存し、同じ設定から演奏イベントを再生成する。 */
 export function createProject(
   shapes: readonly CanvasShape[],
   seed: number,
@@ -403,7 +407,8 @@ export function createProject(
     sceneCount: normalizeSceneCount(options.sceneCount),
     sceneMoods: options.sceneMoods?.slice(0, 10),
     scenePrograms: options.scenePrograms?.map((program) => program ? { moves: [...program.moves], repeat: program.repeat } : null),
-    events: buildArrangement(shapes, safeSeed, worldId, options.sceneCount),
+    sceneSoundPrograms: copySoundPrograms(options.sceneSoundPrograms),
+    events: buildArrangement(shapes, safeSeed, worldId, normalizeSceneCount(options.sceneCount), options.sceneSoundPrograms),
   };
 
   if (options.title !== undefined) project.title = options.title;

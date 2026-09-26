@@ -47,6 +47,8 @@ export interface Point {
 }
 
 export interface CanvasShape {
+  /** 音プログラムの固定音階。0=ド〜7=高いド。 */
+  soundNote?: number;
   id: string;
   kind: ShapeKind;
   position: Point;
@@ -75,6 +77,7 @@ export interface MusicEvent {
 }
 
 export interface OtoProject {
+  sceneSoundPrograms?: import("../music/soundProgram").SceneSoundPrograms;
   scenePrograms?: import("../visuals/motionProgram").ScenePrograms;
   sceneCount?: number;
   sceneMoods?: import("../visuals/animationMood").AnimationMood[];
