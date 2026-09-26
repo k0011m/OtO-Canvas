@@ -16,7 +16,7 @@ import { ProjectThumbnail } from "./ProjectThumbnail";
 import { useFullscreen } from "./useFullscreen";
 import { CelebrationCamera } from "./CelebrationCamera";
 import { MotionPreview, MOTION_HINTS } from "./MotionPreview";
-import { ProgramEditor } from "./ProgramEditor";
+
 import { copyScenePrograms, programStepAtBeat, type ScenePrograms } from "../visuals/motionProgram";
 import { loadCameraChoice, saveCameraChoice, openFrontCamera } from "../storage/cameraSettings";
 import { downloadFile, serializeProject, parseProjectFile, MAX_PROJECT_FILE_BYTES } from "../export/projectFile";
@@ -209,7 +209,7 @@ export function App() {
   const [sceneCount, setSceneCount] = useState(() => creationMode === "basic" ? 1 : 3);
   const [sceneMoods, setSceneMoods] = useState<AnimationMood[]>(Array(10).fill(DEFAULT_ANIMATION_MOOD));
   const [scenePrograms, setScenePrograms] = useState<ScenePrograms>([]);
-  const [programOpen, setProgramOpen] = useState(false);
+
   const [soundProgramOpen, setSoundProgramOpen] = useState(false);
   const [sceneSoundPrograms, setSceneSoundPrograms] = useState<SceneSoundPrograms>([]);
   const [soundProgramBgm, setSoundProgramBgm] = useState(false);
@@ -344,7 +344,7 @@ export function App() {
 
   /** 表示する道具だけを切り替え、既存作品の場面・動きは削除しない。 */
   const changeCreationMode = useCallback((mode: CreationMode) => {
-    setProgramOpen(false);
+
     setSoundProgramOpen(false);
     setCreationMode(mode);
     setSettingsSaved(saveCreationMode(mode));
@@ -707,7 +707,7 @@ export function App() {
     setScenePrograms([]);
     setSceneSoundPrograms([]);
     setSoundProgramBgm(false);
-    setProgramOpen(false);
+
     setSoundProgramOpen(false);
     setCurrentScene(0);
     setProjectTitle("わたしのおと");
@@ -1038,7 +1038,7 @@ export function App() {
         </section>
       )}
 
-      {screen === "create" && !programOpen && !soundProgramOpen && (
+      {screen === "create" && !soundProgramOpen && (
         <section className="screen create-screen" aria-label="おとをつくる" data-tools-open={toolsOpen}>
           <header className="top-bar">
             <div>
@@ -1071,8 +1071,7 @@ export function App() {
               <button type="button" aria-label="場面を減らす" disabled={sceneCount === 1} onClick={() => changeSceneCount(-1)}><ControlIcon name="minus" /></button>
               <span data-testid="scene-count">{sceneCount} ばめん</span>
               <button type="button" aria-label="場面を増やす" disabled={sceneCount === 10} onClick={() => changeSceneCount(1)}><ControlIcon name="plus" /></button>
-              {creationMode === "program" ? <button type="button" data-testid="scene-program" onClick={() => setProgramOpen(true)}>プログラム：{scenePrograms[currentScene]?.moves.length ?? 1}こ</button>
-                : <button type="button" data-testid="scene-motion" onClick={() => { setEditingSceneMood(true); setMoodPickerOpen(true); }}>うごき：{scenePrograms[currentScene] ? "プログラム" : MOOD_NAMES[sceneMoods[currentScene] ?? DEFAULT_ANIMATION_MOOD]}</button>}
+              <button type="button" data-testid="scene-motion" onClick={() => { setEditingSceneMood(true); setMoodPickerOpen(true); }}>うごき：{scenePrograms[currentScene] ? "プログラム" : MOOD_NAMES[sceneMoods[currentScene] ?? DEFAULT_ANIMATION_MOOD]}</button>
               {creationMode === "program" && <button type="button" data-testid="sound-program" onClick={() => setSoundProgramOpen(true)}>おとの じゅんばん</button>}
             </div>
             <div className="scene-switcher" role="tablist" aria-label="MVのシーン">
@@ -1302,10 +1301,6 @@ export function App() {
             </button>
             </div>
           </div>
-          {creationMode === "program" && <div className="program-playback" aria-label="実行中のプログラム">
-            <span>{programStep.scene + 1}ばめん · {programStep.iteration}/{programStep.repeat}かい</span>
-            <ol>{programStep.moves.map((mood, index) => <li key={index} aria-current={index === programStep.index ? "step" : undefined}>{index + 1} {MOOD_NAMES[mood]}</li>)}</ol>
-          </div>}
           {creationMode === "program" && sceneSoundPrograms[programStep.scene] && <div className="sound-program-playing" role="status">
             おとの じゅんばん：{(() => {
               const event = [...events].reverse().find((item) => item.id.startsWith(`sound-program-${programStep.scene}-`) && item.beat <= playback.beat);
@@ -1461,9 +1456,9 @@ export function App() {
               <p>「図形と色」に切り替えても作品は消えません。既存作品は最初の場面を編集し、再生では保存済みの全場面と動きを使います。</p>
               <label className="creation-mode-option">
                 <input type="radio" name="creation-mode" value="program" checked={creationMode === "program"} onChange={() => changeCreationMode("program")} />
-                <span><strong>プログラミングであそぶ</strong><small>6〜8歳向け。図形にドレミファソラシドを付け、鳴らす順番を最大32枚のカードで作れます。動きの命令とくり返しも編集できます。</small></span>
+                <span><strong>プログラミングであそぶ</strong><small>6〜8歳向け。図形にドレミファソラシドを付け、鳴らす順番を最大32枚のカードで作れます。背景BGMのあり・なしも選べます。</small></span>
               </label>
-              <p>保存したプログラムは、他の設定でも再生されます。「動きも編集する」で新しい動きを選ぶと、その場面は動き1つに戻ります。</p>
+              <p>保存した音のプログラムは、他の設定でも再生されます。以前の動きプログラムも再生できますが、編集はできません。新しい動きを選ぶと、その場面は動き1つに戻ります。</p>
               {settingsSaved !== null && <p className="settings-save-status" role="status">{settingsSaved ? "このブラウザに設定を保存しました。" : "設定を保存できませんでした。今開いている間だけ適用します。"}</p>}
             </fieldset>
             <div className="parent-grid">
@@ -1542,7 +1537,7 @@ export function App() {
           </label>
           <label className="creation-mode-option">
             <input type="radio" name="intro-creation-mode" checked={creationMode === "program"} onChange={() => changeCreationMode("program")} />
-            <span><strong>プログラミングであそぶ</strong><small>6〜8歳向け。動きの順番・くり返しや、図形のドレミと鳴らす順番を作れます。</small></span>
+            <span><strong>プログラミングであそぶ</strong><small>6〜8歳向け。図形のドレミと鳴らす順番を作れます。背景BGMのあり・なしも選べます。</small></span>
           </label>
           {settingsSaved === false && <p role="status">設定を保存できませんでした。今開いている間だけ適用します。</p>}
         </fieldset>
@@ -1554,11 +1549,6 @@ export function App() {
         <div className="camera-actions"><button className="pill-button" disabled={cameraBusy} onClick={() => void enableCamera()}>{cameraBusy ? "許可を確認中…" : "同意してカメラを許可"}</button><button className="pill-button" onClick={disableCamera}>使わないではじめる</button></div>
         </>}
       </section></div>}
-      {programOpen && screen === "create" && creationMode === "program" && <ProgramEditor
-        shapes={activeShapes} world={worldId}
-        program={scenePrograms[currentScene] ?? null} fallback={sceneMoods[currentScene] ?? "float"} seconds={30 / sceneCount}
-        onClose={() => setProgramOpen(false)} onChange={(program) => setScenePrograms((values) => Array.from({ length: 10 }, (_, index) => index === currentScene ? program : values[index] ?? null))}
-      />}
       {soundProgramOpen && screen === "create" && creationMode === "program" && <SoundProgramEditor
         bgmEnabled={soundProgramBgm} onBgmChange={setSoundProgramBgm}
         shapes={activeShapes} world={worldId} seconds={30 / sceneCount} steps={sceneSoundPrograms[currentScene] ?? null}

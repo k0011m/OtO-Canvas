@@ -10,6 +10,8 @@ for (const [width, height] of [[390, 844], [667, 375]]) {
     await page.getByRole("button", { name: "閉じる", exact: true }).click();
     await page.getByTestId("start-button").click();
     await page.getByTestId("world-bounce").click();
+    await expect(page.getByTestId("scene-program")).toHaveCount(0);
+    await expect(page.getByTestId("scene-motion")).toBeVisible();
     const canvas = page.getByTestId("canvas-editor").locator("canvas");
     await canvas.click({ position: { x: width * .6, y: height * .6 } });
     await canvas.click({ position: { x: width * .8, y: height * .45 } });
@@ -44,6 +46,7 @@ for (const [width, height] of [[390, 844], [667, 375]]) {
     await expect(page.getByTestId("sound-step-0")).toContainText("シ");
     await page.getByRole("button", { name: "できた", exact: true }).click();
     await page.getByTestId("play-button").click();
+    await expect(page.locator(".program-playback")).toHaveCount(0);
     await expect(page.locator(".sound-program-playing")).toContainText("1ばん · シ");
     await expect(page.locator(".sound-program-playing")).toContainText("2ばん · ファ", { timeout: 6000 });
   });
