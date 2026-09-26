@@ -1081,7 +1081,7 @@ export function App() {
                     aria-selected={currentScene === scene}
                     onClick={() => { setCurrentScene(scene); setSelectedId(null); }}
                   >
-                    <strong>{scene + 1}</strong><span>{scene === 0 ? "はじまり" : scene === sceneCount - 1 ? "おわり" : "なか"}</span><small>{count}</small>
+                    <strong>{scene + 1}</strong><small>{count}</small>
                   </button>
                 );
               })}
