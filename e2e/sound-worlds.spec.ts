@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-for (const [world, label] of [["soft", "みずのしずく"], ["bounce", "マリンバ"], ["space", "ピコピコ"]]) {
+for (const [world, label] of [["soft", "あーのこえ"], ["bounce", "マリンバ"], ["space", "ピコピコ"]]) {
   // 音声ノードを実際に生成する経路を監視し、試聴・伴奏・演奏が選択した世界で鳴ることを確認する。
   test(`plays selected sound world ${world}`, async ({ page }) => {
     await page.goto("/");

@@ -1,0 +1,101 @@
+[
+  {
+    "download": "https://cdn.freesound.org/previews/414/414227_6838634-hq.mp3",
+    "url": "https://freesound.org/people/filmbetrachterin/sounds/414227/",
+    "name": "voice-ah",
+    "sha256": "9a3fba2b2c7919a4039fa781efadc2b593a75037142a6df4071b64f32a2dfa2a",
+    "license": "CC0-1.0",
+    "retrieved": "2026-09-26",
+    "excerptStart": 0.9636,
+    "excerptSeconds": 0.75,
+    "estimatedRootHz": 469.149
+  },
+  {
+    "download": "https://cdn.freesound.org/previews/727/727698_1690102-hq.mp3",
+    "url": "https://freesound.org/people/owstu/sounds/727698/",
+    "name": "voice-hum",
+    "sha256": "c339f98a6d90e4cc1020e49c267c5553143de77ae43775225bb9c58b504ca0c7",
+    "license": "CC0-1.0",
+    "retrieved": "2026-09-26",
+    "excerptStart": 0.0979,
+    "excerptSeconds": 0.7,
+    "estimatedRootHz": 272.222
+  },
+  {
+    "download": "https://cdn.freesound.org/previews/573/573153_12947664-hq.mp3",
+    "url": "https://freesound.org/people/fleurescence/sounds/573153/",
+    "name": "mouth-pop",
+    "sha256": "d69a1f2199e95a3a33db5ecc323007972eae4c052be50be190d7e2d3df4380b7",
+    "license": "CC0-1.0",
+    "retrieved": "2026-09-26",
+    "excerptStart": 0.0,
+    "excerptSeconds": 0.0626,
+    "estimatedRootHz": 630.0
+  },
+  {
+    "download": "https://cdn.freesound.org/previews/685/685067_14917920-hq.mp3",
+    "url": "https://freesound.org/people/Slothfully_So/sounds/685067/",
+    "name": "toy-duck",
+    "sha256": "b77a25c84a3847f9e068abff2ecb79b1720afcb136775ba19cbfe5da28098dda",
+    "license": "CC0-1.0",
+    "retrieved": "2026-09-26",
+    "excerptStart": 0.2916,
+    "excerptSeconds": 0.4052,
+    "estimatedRootHz": 1160.526
+  },
+  {
+    "download": "https://cdn.freesound.org/previews/819/819531_16245704-hq.mp3",
+    "url": "https://freesound.org/people/NightDrawr/sounds/819531/",
+    "name": "toy-squeak",
+    "sha256": "c4800d705cee81983d9dae8101ae4010ea67dfbc23c26c569402019523ec596e",
+    "license": "CC0-1.0",
+    "retrieved": "2026-09-26",
+    "excerptStart": 0.1341,
+    "excerptSeconds": 0.142,
+    "estimatedRootHz": 1102.5
+  },
+  {
+    "download": "https://cdn.freesound.org/previews/108/108737_757844-hq.mp3",
+    "url": "https://freesound.org/people/BranRainey/sounds/108737/",
+    "name": "toy-ball",
+    "sha256": "1c105b5ddb38ccb5b7226916e15513fb82c050775ce5c679ca347200a547ae79",
+    "license": "CC0-1.0",
+    "retrieved": "2026-09-26",
+    "excerptStart": 0.1369,
+    "excerptSeconds": 0.1316,
+    "estimatedRootHz": 261.626
+  },
+  {
+    "download": "https://cdn.freesound.org/previews/88/88451_1254234-hq.mp3",
+    "url": "https://freesound.org/people/davidou/sounds/88451/",
+    "name": "cartoon-boing",
+    "sha256": "f014da57858adc140dfd3482bd36afc1e35501a5c8d6692f2b88e83f9bb81523",
+    "license": "CC0-1.0",
+    "retrieved": "2026-09-26",
+    "excerptStart": 0.009,
+    "excerptSeconds": 0.1911,
+    "estimatedRootHz": 306.25
+  },
+  {
+    "download": "https://cdn.freesound.org/previews/537/537060_481768-hq.mp3",
+    "url": "https://freesound.org/people/suzenako/sounds/537060/",
+    "name": "cartoon-twang",
+    "sha256": "eb7b7d4d3b1b8f346cc32e15ba8c7af94222cf67e99c44e8581e4eeb2e556ada",
+    "license": "CC0-1.0",
+    "retrieved": "2026-09-26",
+    "excerptStart": 0.0385,
+    "excerptSeconds": 0.65,
+    "estimatedRootHz": 116.667
+  },
+  {
+    "download": "https://cdn.freesound.org/previews/672/672965_13530059-hq.mp3",
+    "url": "https://freesound.org/people/WalliumVA/sounds/672965/",
+    "name": "slide-whistle",
+    "sha256": "0c4e82b319ce9d9d6703a6725e511316a287d94eec91d3cefe29e225eb558569",
+    "license": "CC0-1.0",
+    "retrieved": "2026-09-26",
+    "excerptStart": 0.1849,
+    "excerptSeconds": 0.4509,
+    "estimatedRootHz": 261.626
+  }
+]

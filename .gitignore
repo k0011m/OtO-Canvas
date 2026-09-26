@@ -28,3 +28,6 @@ vitest.config.d.ts
 Thumbs.db
 *.swp
 *.swo
+
+# 音素材加工用の一時出力
+.tmp/

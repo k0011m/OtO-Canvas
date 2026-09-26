@@ -154,7 +154,7 @@ export const WORLDS: Record<WorldId, WorldTheme> = {
   soft: {
     id: "soft",
     name: "ふわり",
-    hint: "みず・かみ・しぜんのおと",
+    hint: "こえ・おもちゃ・まんがのおと",
     background: "#f7f4ed",
     surface: "#fffdf8",
     ink: "#252525",

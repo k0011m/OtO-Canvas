@@ -1,3 +1,4 @@
+import { playfulDuration } from "../music/playfulSounds";
 import { BARS, BPM, type InstrumentId, type MusicEvent } from "../types/project";
 import { worldSoundNoise, worldSoundSample } from "../music/worldSounds";
 
@@ -249,7 +250,7 @@ async function renderEvent(
   const frequency = midiToFrequency(midiNote);
   const velocity = clamp(Number.isFinite(event.velocity) ? event.velocity : 0.7, 0, 1);
   const worldSound = event.soundWorld === "soft" || event.soundWorld === "space" ? event.soundWorld : null;
-  const totalSeconds = gateSeconds + (worldSound ? 0.04 : releaseSeconds(event.instrumentId));
+  const totalSeconds = worldSound === "soft" ? playfulDuration(event.instrumentId, frequency, gateSeconds) : gateSeconds + (worldSound ? 0.04 : releaseSeconds(event.instrumentId));
   const endFrame = Math.min(mix.length, startFrame + Math.ceil(totalSeconds * sampleRate));
   let noiseState = hashText(`${event.id}:${event.shapeId}`);
 
@@ -376,7 +377,7 @@ export async function encodePcm16Wav(
 }
 
 /**
- * Synthesizes MusicEvent data without a server, AudioContext, or sample files.
+ * 同梱素材と合成音から、サーバー通信・AudioContextなしでWAVを生成する。
  * The default 12 bars at 96 BPM produces an exact 30-second WAV.
  */
 export async function renderMusicEventsToWav(

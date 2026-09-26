@@ -1,3 +1,4 @@
+import { playfulDuration } from "./playfulSounds";
 import { NOTE_MIDI, soundProgramInstrument } from "./soundProgram";
 import { BPM, TOTAL_BEATS } from "../types/project";
 import type {
@@ -825,16 +826,17 @@ export class AudioEngine {
     }
   }
 
-  /** 共通の音階付き環境音・電子音を短いバッファにし、既存の発音上限と録音経路へ接続する。 */
+  /** 同梱PCM素材と電子音を共通経路で鳴らし、サンプルの長さに合わせて発音枠を解放する。 */
   private triggerWorldSound(world: "soft" | "space", instrument: InstrumentId, note: number, velocity: number, duration: number, when: number, pan: number, priority: VoicePriority): boolean {
     const context = this.runningContextOrNull();
     if (!context) return false;
-    const end = when + duration + 0.04;
+    const frequency = 440 * 2 ** ((note - 69) / 12);
+    const length = world === "soft" ? playfulDuration(instrument, frequency, duration) : duration + .04;
+    const end = when + length;
     const voice = this.createVoice(pan, when, end, priority);
     if (!voice) return false;
-    const buffer = context.createBuffer(1, Math.ceil((duration + 0.04) * context.sampleRate), context.sampleRate);
+    const buffer = context.createBuffer(1, Math.max(1, Math.ceil(length * context.sampleRate)), context.sampleRate);
     const samples = buffer.getChannelData(0);
-    const frequency = 440 * 2 ** ((note - 69) / 12);
     for (let frame = 0; frame < samples.length; frame += 1) {
       samples[frame] = worldSoundSample(world, instrument, frame / context.sampleRate, duration, frequency, worldSoundNoise(frame));
     }
