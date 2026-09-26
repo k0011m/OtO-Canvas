@@ -10,6 +10,7 @@ import { CanvasEditor } from "../canvas/CanvasEditor";
 import { ProjectThumbnail } from "./ProjectThumbnail";
 import { useFullscreen } from "./useFullscreen";
 import { CelebrationCamera } from "./CelebrationCamera";
+import { MotionPreview, MOTION_HINTS } from "./MotionPreview";
 import { loadCameraChoice, saveCameraChoice, openFrontCamera } from "../storage/cameraSettings";
 import { downloadFile, serializeProject, parseProjectFile, MAX_PROJECT_FILE_BYTES } from "../export/projectFile";
 import { loadCreationMode, saveCreationMode, type CreationMode } from "../storage/parentSettings";
@@ -94,7 +95,7 @@ const SECTION_LABELS = {
   outro: "おしまい",
 } as const;
 
-const ANIMATION_MOOD_OPTIONS = ANIMATION_MOODS.map((id) => ({ id, name: MOOD_NAMES[id], motion: "みんなで " + MOOD_NAMES[id], bgm: backingMood(id) === "pop" ? "リズムBGM" : backingMood(id) === "cosmic" ? "うちゅうBGM" : "やさしいBGM" }));
+const ANIMATION_MOOD_OPTIONS = ANIMATION_MOODS.map((id) => ({ id, name: MOOD_NAMES[id], motion: MOTION_HINTS[id], bgm: backingMood(id) === "pop" ? "リズムBGM" : backingMood(id) === "cosmic" ? "うちゅうBGM" : "やさしいBGM" }));
 
 function animationMoodOption(mood: AnimationMood) {
   return ANIMATION_MOOD_OPTIONS.find((option) => option.id === mood) ?? ANIMATION_MOOD_OPTIONS[0];
@@ -1351,12 +1352,7 @@ export function App() {
                   onClick={() => { if (editingSceneMood) { setSceneMoods((values) => values.map((value, index) => index === currentScene ? option.id : value)); closeMoodPicker(); } else void beginPerformance(option.id); }}
                   aria-label={`${option.name}。${option.motion}な動き。${option.bgm}`}
                 >
-                  <span className={`mood-preview mood-preview-${backingMood(option.id)}`} data-motion={option.id} aria-hidden="true">
-                    <i />
-                    <i />
-                    <i />
-                    <i />
-                  </span>
+                  <MotionPreview mood={option.id} />
                   <span className="mood-card-copy">
                     <strong>{option.name}</strong>
                     <span>{option.motion}</span>
