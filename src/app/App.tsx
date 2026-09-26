@@ -161,6 +161,11 @@ function ToolIcon({ kind }: { kind: ShapeKind }) {
   return <span className={`tool-shape-${kind}`} aria-hidden="true" />;
 }
 
+/** 戻る操作は文字フォントに依存しない、太い左向き三角形で統一する。 */
+function BackIcon() {
+  return <span className="back-triangle" aria-hidden="true" />;
+}
+
 function demoShape(worldId: WorldId): CanvasShape {
   const kind: ShapeKind = worldId === "soft" ? "circle" : worldId === "bounce" ? "triangle" : "line";
   return {
@@ -944,7 +949,7 @@ export function App() {
       {screen === "gallery" && (
         <section className="screen gallery-screen" aria-labelledby="gallery-title">
           <header className="gallery-heading">
-            <button className="icon-button" type="button" onClick={() => setScreen("start")} aria-label="最初へ戻る">←</button>
+            <button className="icon-button" type="button" onClick={() => setScreen("start")} aria-label="最初へ戻る"><BackIcon /></button>
             <div><h2 id="gallery-title">さくひんだな</h2><p>この たんまつに ほぞんした おと</p></div>
             <button className="pill-button" type="button" onClick={newProject}>＋ あたらしく</button>
           </header>
@@ -1008,7 +1013,7 @@ export function App() {
             })}
           </div>
           <button className="quiet-button back-button" type="button" onClick={() => setScreen("start")}>
-            もどる
+            <BackIcon />もどる
           </button>
         </section>
       )}
@@ -1018,7 +1023,7 @@ export function App() {
           <header className="top-bar">
             <div>
               <button className="icon-button" type="button" onClick={() => setScreen("world")} aria-label="おとの世界を選び直す">
-                ←
+                <BackIcon />
               </button>
             </div>
             <div className="top-bar-center">
@@ -1253,7 +1258,7 @@ export function App() {
           />
           <div className="performance-controls">
             <button className="performance-back" type="button" onClick={leavePerformance} aria-label="編集へ戻る">
-              <span aria-hidden="true">←</span><strong>もどる</strong>
+              <BackIcon /><strong>もどる</strong>
             </button>
             <div className="performance-badges" aria-live="polite">
               <span className="section-badge">{SECTION_LABELS[playback.section]}</span>
@@ -1315,7 +1320,7 @@ export function App() {
                 <span className="action-icon">▶</span>もういちど みる
               </button>
               <button className="action-card" type="button" onClick={() => setScreen("create")}>
-                <span className="action-icon">↶</span>すこし かえる
+                <BackIcon />すこし かえる
               </button>
               <button className="action-card" type="button" onClick={newProject}>
                 <span className="action-icon">＋</span>あたらしく つくる

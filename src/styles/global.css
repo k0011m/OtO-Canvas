@@ -442,6 +442,8 @@ button:focus-visible,
 }
 
 .icon-button:disabled { cursor: not-allowed; opacity: .3; transform: none; }
+.back-triangle { display: inline-block; flex: 0 0 auto; width: 18px; height: 22px; background: currentColor; clip-path: polygon(100% 0, 0 50%, 100% 100%); vertical-align: middle; }
+.back-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
 
 .canvas-stage {
   position: absolute;
@@ -1053,6 +1055,11 @@ button:focus-visible,
 }
 
 .parent-panel {
+  /* 親向けの明るいパネルは、音世界の暗いボタン背景を引き継がない。 */
+  --bg: #fffdf8;
+  --surface: #fffdf8;
+  --ink: #252525;
+  --accent: #6651b4;
   width: min(100%, 560px);
   max-height: min(760px, calc(100svh - 40px));
   padding: clamp(24px, 4vw, 38px);
@@ -1066,6 +1073,8 @@ button:focus-visible,
 .parent-panel header { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
 .parent-panel h2 { margin: 0; font-size: 1.6rem; }
 .parent-panel p { line-height: 1.7; color: #5e5a54; }
+.parent-panel button { color: #252525; }
+.parent-panel button:disabled { color: #68635b; background: #eee9e0; opacity: 1; cursor: not-allowed; box-shadow: none; }
 .parent-grid { display: grid; gap: 12px; margin-top: 22px; }
 .creation-settings { min-width: 0; margin: 22px 0; padding: 16px; border: 1px solid #d6cec1; border-radius: 20px; }
 .creation-settings legend { font-weight: 800; padding: 0 6px; }

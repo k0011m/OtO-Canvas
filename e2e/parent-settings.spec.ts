@@ -22,7 +22,7 @@ for (const [width, height] of [[390, 844], [667, 375]]) {
     await expect(page.getByRole("radio", { name: /図形と色であそぶ/ })).toBeChecked();
     await page.getByRole("button", { name: "閉じる", exact: true }).click();
     await page.getByTestId("start-button").click();
-    await page.getByTestId("world-bounce").click();
+    await page.getByTestId("world-space").click();
     await expect(page.getByTestId("scene-motion")).toHaveCount(0);
     await expect(page.getByRole("tablist")).toHaveCount(0);
     const canvas = page.getByTestId("canvas-editor").locator("canvas");
@@ -55,7 +55,7 @@ for (const [width, height] of [[390, 844], [667, 375]]) {
 test("mode changes preserve existing scene plan", async ({ page }) => {
   await page.goto("/");
   await page.getByTestId("start-button").click();
-  await page.getByTestId("world-bounce").click();
+  await page.getByTestId("world-space").click();
   await page.getByRole("tab").nth(2).click();
   await page.getByTestId("canvas-editor").locator("canvas").click({ position: { x: 550, y: 350 } });
   await page.getByTestId("scene-motion").click();
