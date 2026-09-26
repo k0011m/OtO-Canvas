@@ -21,6 +21,17 @@ describe("survey model and authentication", () => {
     const csv = surveyCsv([{ seq: 1, created_at: "2026-09-26T00:00:00Z", response: answer }]);
     expect(csv.startsWith("\uFEFF")).toBe(true); expect(csv).toContain("'=HYPERLINK"); expect(csv).toContain("感想");
   });
+  it("accepts play habits, exports both arrays separately and preserves older answers", () => {
+    const answer = emptySurvey(); answer.parent.usualPlay = ["外遊び・運動", "お絵描き・工作"]; answer.parent.screenTime = "30分未満"; answer.parent.help = ["再生"];
+    expect(validateSurvey(answer)).toEqual(answer);
+    const csv = surveyCsv([{ seq: 1, created_at: "2026-09-27", response: answer }]);
+    expect(csv).toContain("外遊び・運動 / お絵描き・工作"); expect(csv).toContain('"再生"'); expect(csv).toContain("30分未満");
+    const legacy = structuredClone(answer) as any; delete legacy.parent.usualPlay; delete legacy.parent.screenTime;
+    expect(validateSurvey(legacy)?.parent.usualPlay).toEqual([]); expect(validateSurvey(legacy)?.parent.screenTime).toBe("");
+    expect(validateSurvey({ ...answer, parent: { ...answer.parent, usualPlay: ["不正な選択"] } })).toBeNull();
+    expect(validateSurvey({ ...answer, parent: { ...answer.parent, usualPlay: ["外遊び・運動", "外遊び・運動"] } })).toBeNull();
+    expect(validateSurvey({ ...answer, parent: { ...answer.parent, screenTime: "不正な選択" } })).toBeNull();
+  });
   it("denies unauthenticated and unconfigured access", async () => {
     const secret = "local-test-only-survey-key-123456";
     const hash = "8df43525bcca6f5882fabf9631756233ce97b76672e33cc2ec1c48428b94c4aa";

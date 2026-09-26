@@ -25,6 +25,9 @@ test("mobile child and parent survey retries and administrator can export", asyn
   await page.getByRole("button", { name: "つぎへ →" }).click();
   await page.getByRole("button", { name: "こたえないで つぎへ" }).click();
   await page.getByLabel("年齢（歳）").fill("5");
+  await page.getByRole("checkbox", { name: "外遊び・運動", exact: true }).check();
+  await page.getByRole("checkbox", { name: "お絵描き・工作", exact: true }).check();
+  await page.getByRole("radio", { name: "30分未満", exact: true }).check();
   await page.getByRole("radio", { name: "タブレット", exact: true }).check();
   await page.getByRole("radio", { name: "合っている", exact: true }).check();
   await page.getByRole("button", { name: "送信前に確認する" }).click();
@@ -37,6 +40,8 @@ test("mobile child and parent survey retries and administrator can export", asyn
   await page.getByLabel("管理キー", { exact: true }).fill("local-test-only-survey-key-123456");
   await page.getByRole("button", { name: "集計を表示・更新" }).click();
   await expect(page.getByRole("heading", { name: "子ども：また遊びたい？" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "普段、お子さまはどんな遊びをしていますか？（複数選択可）", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "普段、1日あたり端末をどれくらい使いますか？", exact: true })).toBeVisible();
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "絞り込んだ回答をCSV保存" }).click();
   expect((await download).suggestedFilename()).toBe("otocanvas-survey.csv");
