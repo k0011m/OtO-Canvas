@@ -95,7 +95,11 @@ const SECTION_LABELS = {
   outro: "おしまい",
 } as const;
 
-const ANIMATION_MOOD_OPTIONS = ANIMATION_MOODS.map((id) => ({ id, name: MOOD_NAMES[id], motion: MOTION_HINTS[id], bgm: backingMood(id) === "pop" ? "リズムBGM" : backingMood(id) === "cosmic" ? "うちゅうBGM" : "やさしいBGM" }));
+const ANIMATION_MOOD_OPTIONS = ANIMATION_MOODS.map((id) => ({
+  id, name: MOOD_NAMES[id], motion: MOTION_HINTS[id],
+  bgm: backingMood(id) === "pop" ? "リズムBGM" : backingMood(id) === "cosmic" ? "うちゅうBGM" : "やさしいBGM",
+  recommendedWorld: backingMood(id) === "pop" ? "ぽんぽん" : backingMood(id) === "cosmic" ? "きらり" : "ふわり",
+}));
 
 function animationMoodOption(mood: AnimationMood) {
   return ANIMATION_MOOD_OPTIONS.find((option) => option.id === mood) ?? ANIMATION_MOOD_OPTIONS[0];
@@ -1346,17 +1350,17 @@ export function App() {
               {ANIMATION_MOOD_OPTIONS.map((option) => (
                 <button
                   key={option.id}
-                  className={`mood-card mood-card-${option.id}`}
+                  className={`mood-card mood-card-${backingMood(option.id)}`}
                   type="button"
                   data-testid={`mood-${option.id}`}
                   onClick={() => { if (editingSceneMood) { setSceneMoods((values) => values.map((value, index) => index === currentScene ? option.id : value)); closeMoodPicker(); } else void beginPerformance(option.id); }}
-                  aria-label={`${option.name}。${option.motion}な動き。${option.bgm}`}
+                  aria-label={`${option.name}。${option.motion}。おすすめ：${option.recommendedWorld}`}
                 >
                   <MotionPreview mood={option.id} />
                   <span className="mood-card-copy">
                     <strong>{option.name}</strong>
                     <span>{option.motion}</span>
-                    <small>♪ {option.bgm}</small>
+                    <small>おすすめ：{option.recommendedWorld}</small>
                   </span>
                 </button>
               ))}
