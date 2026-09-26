@@ -201,6 +201,7 @@ export function App() {
   const toolSwipeStart = useRef<number | null>(null);
   const [screen, setScreen] = useState<Screen>("start");
   const [worldId, setWorldId] = useState<WorldId>("soft");
+  const [previewWorldId, setPreviewWorldId] = useState<WorldId | null>(null);
   const [shapes, setShapes] = useState<CanvasShape[]>([]);
   const [creationMode, setCreationMode] = useState(loadCreationMode);
   const simpleCreation = creationMode === "basic";
@@ -373,13 +374,14 @@ export function App() {
   }, [volume]);
 
   const screenBgmEnabled = screen !== "perform" && !soundProgramOpen;
+  const screenBgmWorld = screen === "world" ? previewWorldId ?? worldId : worldId;
   // 作品の再生中は専用BGMを止め、選択・編集へ戻ったときだけ再開する。
   useEffect(() => {
     if (!audioReady || !screenBgmEnabled) return;
     // 非表示タブでは鳴らさず、戻ったときは現在の音世界で再開する。
     const updateScreenBgm = () => {
       if (document.hidden) audioEngine.stopScreenBgm();
-      else audioEngine.startScreenBgm(worldId);
+      else audioEngine.startScreenBgm(screenBgmWorld);
     };
     updateScreenBgm();
     document.addEventListener("visibilitychange", updateScreenBgm);
@@ -387,7 +389,7 @@ export function App() {
       document.removeEventListener("visibilitychange", updateScreenBgm);
       audioEngine.stopScreenBgm();
     };
-  }, [audioReady, screenBgmEnabled, worldId]);
+  }, [audioReady, screenBgmEnabled, screenBgmWorld]);
 
   useEffect(() => {
     if (screen === "start" || screen === "world") return undefined;
@@ -488,7 +490,9 @@ export function App() {
     [],
   );
 
+  /** 確定した作品の世界は変えず、カードの試聴と背景BGMの音源をそろえる。 */
   const previewWorld = useCallback((nextWorld: WorldId) => {
+    setPreviewWorldId(nextWorld);
     audioEngine.previewShape(demoShape(nextWorld), nextWorld);
   }, []);
 
