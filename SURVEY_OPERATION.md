@@ -17,7 +17,7 @@ Cloudflare Pages FunctionsとD1を使用します。静的ファイルだけを�
 
 1. D1データベース `otocanvas-survey` を作成し、`migrations/0001_survey.sql`を実行します。
 2. `wrangler.jsonc`の`SURVEY_DB`バインドを使います。現在のdatabase_idは公開環境のリソース識別子で、認証情報ではありません。別アカウントへ複製する場合は差し替えてください。
-3. Cloudflare Pages → oto-canvas → Settings → Variables and Secretsで、ProductionのSecretとして`SURVEY_ADMIN_KEY`を設定します。24〜512文字のランダムなキー（32文字以上を推奨）を管理者自身が入力し、パスワード管理ツール等で保管してください。ソースコード、URL、チャット、公開環境変数へ入れないでください。
+3. Cloudflare Pages → oto-canvas → Settings → Variables and Secretsで、`tools/survey-key-hash.html`を端末で開き、32〜512文字のランダムな管理キーからSHA-256を作成します。ProductionのSecretとして`SURVEY_ADMIN_KEY_HASH`に64桁の小文字16進ハッシュだけを設定し、旧`SURVEY_ADMIN_KEY`は削除します。元のキーは管理者のパスワード管理ツール等だけで保管してください。ソースコード、URL、チャット、公開環境変数へ入れないでください。
 4. mainの変更をデプロイします。Secret変更時も再デプロイが必要です。管理画面で同じキーを入力します。管理キーはブラウザ永続保存せずメモリだけで保持します。ログアウトか画面を閉じると消えます。キーが漏れた場合はSecretを更新・再デプロイしてください。
 5. Preview環境へ本番データ用キーを複製しないでください。キーなしの環境は送信503、集計401で閉じます。
 
@@ -28,7 +28,7 @@ Cloudflare Pages FunctionsとD1を使用します。静的ファイルだけを�
 - 投稿は同一OriginのJSONだけ受理し、20KB上限、選択肢・数値・自由記述1,000文字上限をサーバー側で検証。未知のフィールドは破棄します。
 - APIはno-store。Service Workerは`/api/`を除外します。オフライン時は送信済みと表示せず、画面に回答を残します。明示送信時に同じタブのsessionStorageへ再送用回答を置き、成功時に消します。タブを閉じると失われる場合があります。
 - `response_id`一意制約で通信再試行による重複を防ぎます。ネットワーク単位で1時間120件を上限とし、IP自体は回答DBへ保存しません。時間単位の鍵付きハッシュを送信制限テーブルへ一時保持します。期限切れの行は次の受信時に削除します。Cloudflare自身のアクセスログ等はサービス側の設定に従います。
-- 管理APIはBearerキーをサーバー側でダイジェスト比較し、認証後に250件ずつ返します。画面は全ページを取得し終えるまで集計を表示しません。CSVはUTF-8 BOM付きで、自由記述の数式実行を抑止します。
+- 管理APIは受信したBearerキーをSHA-256にして保存済みハッシュと比較し、認証後に250件ずつ返します。画面は全ページを取得し終えるまで集計を表示しません。CSVはUTF-8 BOM付きで、自由記述の数式実行を抑止します。
 
 ## ローカル開発・検証
 
@@ -37,7 +37,7 @@ Cloudflare Pages FunctionsとD1を使用します。静的ファイルだけを�
 ```sh
 npm run build
 npx wrangler d1 migrations apply otocanvas-survey --local
-npx wrangler pages dev dist --port 4187 --binding SURVEY_ADMIN_KEY=local-test-only-survey-key-123456
+npx wrangler pages dev dist --port 4187 --binding SURVEY_ADMIN_KEY_HASH=8df43525bcca6f5882fabf9631756233ce97b76672e33cc2ec1c48428b94c4aa
 ```
 
 http://localhost:4187/?survey=1 で確認してください。上記はローカル専用の公開テスト値です。本番に使わないでください。環境ファイルは不要です。
@@ -54,3 +54,10 @@ npx playwright test --config playwright.survey.config.ts
 - 2026-09-26: `src/survey/SurveyApp.tsx`・`survey.css`に2問の子ども回答、親回答、管理集計を実装。`model.ts`は回答形式・検証・CSVを共有。`src/main.tsx`のquery分岐と`src/app/App.tsx`の入口を追加。
 - `functions/api/survey.ts`の`onRequestPost`が受信・制限・D1保存、`authorized`が管理認証。`functions/api/survey/admin.ts`の`onRequestGet`が認証済みのページ取得。`migrations/0001_survey.sql`で回答と送信制限テーブルを定義。
 - `wrangler.jsonc`、Wrangler開発依存、`.gitignore`を追加・更新。`public/sw.js`はAPIをキャッシュ対象外に変更。`tests/survey.test.ts`と`e2e-survey/survey.spec.ts`が検証・認証・重複防止・再送・スマホUI・CSVを検証します。
+
+### 2026-09-27 管理キーのハッシュ保存
+
+- `functions/api/survey.ts`の`authorized`・`validKeyHash`と管理APIを変更。保存済み原文との比較を廃止し、`SURVEY_ADMIN_KEY_HASH`のみ参照します。旧キーへのフォールバックはありません。ハッシュ自体をBearerで送ってもログインできません。
+- 投稿制限のIPハッシュにも新設定値を利用。回答データの形式は変更しません。単体・E2E設定もハッシュ形式に変更しました。
+- `tools/survey-key-hash.html`は通信・永続保存なしのローカル変換ツールです。SHA-256方式は高エントロピーのランダムな管理キー専用で、人が考えたパスワード向けではありません。認証時の元キーはHTTPSリクエストと処理中メモリには存在しますが、保存しません。
+- 移行時は新Secretの追加・旧Secretの削除後に再デプロイが必要です。過去のデプロイに紐づく旧Secretは現行設定の削除だけで消えるとは保証できないため、新しいランダムキーへの変更を推奨します。旧版へロールバックしないでください。

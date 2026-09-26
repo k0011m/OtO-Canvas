@@ -23,9 +23,13 @@ describe("survey model and authentication", () => {
   });
   it("denies unauthenticated and unconfigured access", async () => {
     const secret = "local-test-only-survey-key-123456";
-    expect(await authorized(new Request("https://example.test"), secret)).toBe(false);
-    expect(await authorized(new Request("https://example.test", { headers: { Authorization: `Bearer ${secret}` } }), secret)).toBe(true);
-    expect(await authorized(new Request("https://example.test", { headers: { Authorization: "Bearer wrong" } }), secret)).toBe(false);
+    const hash = "8df43525bcca6f5882fabf9631756233ce97b76672e33cc2ec1c48428b94c4aa";
+    expect(await authorized(new Request("https://example.test"), hash)).toBe(false);
+    expect(await authorized(new Request("https://example.test", { headers: { Authorization: `Bearer ${secret}` } }), hash)).toBe(true);
+    expect(await authorized(new Request("https://example.test", { headers: { Authorization: "Bearer wrong" } }), hash)).toBe(false);
     expect(await authorized(new Request("https://example.test"))).toBe(false);
+    expect(await authorized(new Request("https://example.test", { headers: { Authorization: 'Bearer ' + hash } }), hash)).toBe(false);
+    expect(await authorized(new Request("https://example.test", { headers: { Authorization: 'Bearer ' + secret } }), secret)).toBe(false);
+    expect(await authorized(new Request("https://example.test", { headers: { Authorization: 'Bearer ' + secret } }), 'invalid')).toBe(false);
   });
 });
