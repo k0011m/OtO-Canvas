@@ -262,11 +262,11 @@ export function buildBackingTrack(
     );
 }
 
-/** 手動の音プログラムは指定音を聴き分けられるよう伴奏を休み、他の場面には動きに合う伴奏を付ける。 */
-export function buildSceneBackingTrack(worldId: WorldId, moods: readonly AnimationMood[], count: number, seed: number, programs?: SceneSoundPrograms): MusicEvent[] {
+/** 音プログラムの伴奏は作品の選択に従い、旧作品は従来どおり伴奏なしにする。 */
+export function buildSceneBackingTrack(worldId: WorldId, moods: readonly AnimationMood[], count: number, seed: number, programs?: SceneSoundPrograms, soundProgramBgm = false): MusicEvent[] {
   const total = normalizeSceneCount(count);
   return Array.from({ length: total }, (_, scene) => {
-    if (programs?.[scene]) return [];
+    if (programs?.[scene] && !soundProgramBgm) return [];
     const start = scene * TOTAL_BEATS / total;
     const end = (scene + 1) * TOTAL_BEATS / total;
     return buildBackingTrack(worldId, moods[scene] ?? "float", seed)

@@ -212,6 +212,7 @@ export function App() {
   const [programOpen, setProgramOpen] = useState(false);
   const [soundProgramOpen, setSoundProgramOpen] = useState(false);
   const [sceneSoundPrograms, setSceneSoundPrograms] = useState<SceneSoundPrograms>([]);
+  const [soundProgramBgm, setSoundProgramBgm] = useState(false);
   const [editingSceneMood, setEditingSceneMood] = useState(false);
   const [currentScene, setCurrentScene] = useState<SceneIndex>(0);
   const [projectTitle, setProjectTitle] = useState("わたしのおと");
@@ -272,9 +273,9 @@ export function App() {
     () =>
       [
         ...events,
-        ...buildSceneBackingTrack(worldId, sceneMoods, sceneCount, seedRef.current, sceneSoundPrograms),
+        ...buildSceneBackingTrack(worldId, sceneMoods, sceneCount, seedRef.current, sceneSoundPrograms, soundProgramBgm),
       ].sort((left, right) => left.beat - right.beat || left.id.localeCompare(right.id)),
-    [sceneMoods, sceneCount, events, worldId, sceneSoundPrograms],
+    [sceneMoods, sceneCount, events, worldId, sceneSoundPrograms, soundProgramBgm],
   );
   const programStep = programStepAtBeat(playback.beat, sceneCount, sceneMoods, scenePrograms);
   const playingMood = programStep.mood;
@@ -399,7 +400,7 @@ export function App() {
         id: projectIdRef.current,
         title: projectTitle,
         timestamp: createdAtRef.current,
-        sceneCount, sceneMoods, scenePrograms, sceneSoundPrograms,
+        sceneCount, sceneMoods, scenePrograms, sceneSoundPrograms, soundProgramBgm,
       });
       project.updatedAt = Date.now();
       void saveProject(project).catch(() => undefined);
@@ -407,7 +408,7 @@ export function App() {
     return () => {
       if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
     };
-  }, [events, projectTitle, screen, shapes, worldId, sceneCount, sceneMoods, scenePrograms, sceneSoundPrograms]);
+  }, [events, projectTitle, screen, shapes, worldId, sceneCount, sceneMoods, scenePrograms, sceneSoundPrograms, soundProgramBgm]);
 
   useEffect(
     () => () => {
@@ -472,6 +473,7 @@ export function App() {
     setSceneMoods(Array.from({ length: 10 }, (_, index) => project.sceneMoods?.[index] ?? DEFAULT_ANIMATION_MOOD));
     setScenePrograms(copyScenePrograms(project.scenePrograms));
     setSceneSoundPrograms(copySoundPrograms(project.sceneSoundPrograms));
+    setSoundProgramBgm(project.soundProgramBgm ?? false);
     setShapes(cloneShapes(project.shapes).map((shape) => ({ ...shape, scene: shape.scene ?? 0 })));
     setProjectTitle(project.title ?? "わたしのおと");
     setCurrentScene(0);
@@ -586,7 +588,7 @@ export function App() {
       setSceneMoods(nextMoods);
       const performanceEvents = [
         ...events,
-        ...buildSceneBackingTrack(worldId, nextMoods, sceneCount, seedRef.current, sceneSoundPrograms),
+        ...buildSceneBackingTrack(worldId, nextMoods, sceneCount, seedRef.current, sceneSoundPrograms, soundProgramBgm),
       ].sort((left, right) => left.beat - right.beat || left.id.localeCompare(right.id));
 
 
@@ -653,7 +655,7 @@ export function App() {
         },
       });
     },
-    [sceneMoods, sceneCount, currentScene, events, shapes.length, showToast, startAudio, worldId, sceneSoundPrograms],
+    [sceneMoods, sceneCount, currentScene, events, shapes.length, showToast, startAudio, worldId, sceneSoundPrograms, soundProgramBgm],
   );
 
   const leavePerformance = useCallback(() => {
@@ -704,6 +706,7 @@ export function App() {
     setSceneMoods(Array(10).fill(DEFAULT_ANIMATION_MOOD));
     setScenePrograms([]);
     setSceneSoundPrograms([]);
+    setSoundProgramBgm(false);
     setProgramOpen(false);
     setSoundProgramOpen(false);
     setCurrentScene(0);
@@ -770,6 +773,7 @@ export function App() {
     setSceneMoods(Array.from({ length: 10 }, (_, index) => project.sceneMoods?.[index] ?? DEFAULT_ANIMATION_MOOD));
     setScenePrograms(copyScenePrograms(project.scenePrograms));
     setSceneSoundPrograms(copySoundPrograms(project.sceneSoundPrograms));
+    setSoundProgramBgm(project.soundProgramBgm ?? false);
     setShapes(cloneShapes(project.shapes).map((shape) => ({ ...shape, scene: shape.scene ?? 0 })));
     setCurrentScene(0);
     setUndoStack([]);
@@ -787,7 +791,7 @@ export function App() {
     const nextEvents = buildArrangement(nextShapes, project.seed, project.worldId, normalizeSceneCount(project.sceneCount), project.sceneSoundPrograms);
     const performanceEvents = [
       ...nextEvents,
-      ...buildSceneBackingTrack(project.worldId, project.sceneMoods ?? [], normalizeSceneCount(project.sceneCount), project.seed, project.sceneSoundPrograms),
+      ...buildSceneBackingTrack(project.worldId, project.sceneMoods ?? [], normalizeSceneCount(project.sceneCount), project.seed, project.sceneSoundPrograms, project.soundProgramBgm),
     ].sort((left, right) => left.beat - right.beat || left.id.localeCompare(right.id));
     setProjectTitle(project.title ?? "わたしのおと");
     setWorldId(project.worldId);
@@ -795,6 +799,7 @@ export function App() {
     setSceneMoods(Array.from({ length: 10 }, (_, index) => project.sceneMoods?.[index] ?? DEFAULT_ANIMATION_MOOD));
     setScenePrograms(copyScenePrograms(project.scenePrograms));
     setSceneSoundPrograms(copySoundPrograms(project.sceneSoundPrograms));
+    setSoundProgramBgm(project.soundProgramBgm ?? false);
     setShapes(nextShapes);
     setCurrentScene(0);
     setPlayback({ ...EMPTY_PLAYBACK, section: "intro" });
@@ -814,7 +819,7 @@ export function App() {
     const copy = createProject(project.shapes, (project.seed + 1) >>> 0, project.worldId, {
       id: createId("project"),
       title: `${project.title ?? "わたしのおと"} コピー`,
-      sceneCount: project.sceneCount, sceneMoods: project.sceneMoods, scenePrograms: project.scenePrograms, sceneSoundPrograms: project.sceneSoundPrograms,
+      sceneCount: project.sceneCount, sceneMoods: project.sceneMoods, scenePrograms: project.scenePrograms, sceneSoundPrograms: project.sceneSoundPrograms, soundProgramBgm: project.soundProgramBgm,
     });
     await saveProject(copy);
     setGalleryProjects(await listProjects());
@@ -877,8 +882,8 @@ export function App() {
 
   /** ロゴ画面では最後の保存作品、それ以外は現在編集中の作品をファイルにする。 */
   const currentFileProject = useCallback(() => screen === "start" ? restoredProject : createProject(shapes, seedRef.current, worldId, {
-    id: projectIdRef.current, title: projectTitle, timestamp: createdAtRef.current, sceneCount, sceneMoods, scenePrograms, sceneSoundPrograms,
-  }), [screen, restoredProject, shapes, worldId, projectTitle, sceneCount, sceneMoods, scenePrograms, sceneSoundPrograms]);
+    id: projectIdRef.current, title: projectTitle, timestamp: createdAtRef.current, sceneCount, sceneMoods, scenePrograms, sceneSoundPrograms, soundProgramBgm,
+  }), [screen, restoredProject, shapes, worldId, projectTitle, sceneCount, sceneMoods, scenePrograms, sceneSoundPrograms, soundProgramBgm]);
 
   /** 専用ファイルに書き出し、写真と親向け設定は含めない。 */
   const exportProjectFile = useCallback(() => {
@@ -897,7 +902,7 @@ export function App() {
       const previous = currentFileProject();
       if (previous?.shapes.length) await saveProject(previous, { requirePersistent: true });
       const project = createProject(imported.shapes, imported.seed, imported.worldId, {
-        id: createId("project"), title: imported.title, sceneCount: imported.sceneCount, sceneMoods: imported.sceneMoods, scenePrograms: imported.scenePrograms, sceneSoundPrograms: imported.sceneSoundPrograms,
+        id: createId("project"), title: imported.title, sceneCount: imported.sceneCount, sceneMoods: imported.sceneMoods, scenePrograms: imported.scenePrograms, sceneSoundPrograms: imported.sceneSoundPrograms, soundProgramBgm: imported.soundProgramBgm,
       });
       await saveProject(project, { requirePersistent: true });
       await loadFromGallery(project);
@@ -1555,6 +1560,7 @@ export function App() {
         onClose={() => setProgramOpen(false)} onChange={(program) => setScenePrograms((values) => Array.from({ length: 10 }, (_, index) => index === currentScene ? program : values[index] ?? null))}
       />}
       {soundProgramOpen && screen === "create" && creationMode === "program" && <SoundProgramEditor
+        bgmEnabled={soundProgramBgm} onBgmChange={setSoundProgramBgm}
         shapes={activeShapes} world={worldId} seconds={30 / sceneCount} steps={sceneSoundPrograms[currentScene] ?? null}
         onShapesChange={(next) => commitActiveShapes(next, "おとを かえたよ")}
         onChange={(steps) => setSceneSoundPrograms((values) => Array.from({ length: 10 }, (_, index) => index === currentScene ? steps : values[index] ?? null))}

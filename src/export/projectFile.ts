@@ -46,6 +46,7 @@ export function parseProjectFile(text: string): OtoProject {
     worldId: project.worldId, bpm: 96, bars: 12, sceneCount: project.sceneCount,
     sceneMoods: project.sceneMoods?.slice(), events: [],
     sceneSoundPrograms: copySoundPrograms(project.sceneSoundPrograms),
+    soundProgramBgm: project.soundProgramBgm ?? false,
     scenePrograms: project.scenePrograms?.map((program) => program ? { moves: [...program.moves], repeat: program.repeat } : null),
     shapes: project.shapes.map((s) => ({ id: s.id, kind: s.kind, position: { ...s.position }, size: s.size,
       soundNote: s.soundNote, rotation: s.rotation, colorId: s.colorId, patternId: s.patternId, zIndex: s.zIndex, scene: s.scene,

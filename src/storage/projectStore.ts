@@ -137,6 +137,7 @@ function hasProjectMetadata(value: unknown): value is Record<string, unknown> {
 export function isOtoProject(value: unknown): value is OtoProject {
   return (
     hasProjectMetadata(value) &&
+    (value.soundProgramBgm === undefined || typeof value.soundProgramBgm === "boolean") &&
     (value.sceneSoundPrograms === undefined || isSceneSoundPrograms(value.sceneSoundPrograms)) &&
     (value.scenePrograms === undefined || isScenePrograms(value.scenePrograms)) &&
     (value.sceneCount === undefined || (Number.isInteger(value.sceneCount) && Number(value.sceneCount) >= 1 && Number(value.sceneCount) <= 10)) &&

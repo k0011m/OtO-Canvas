@@ -26,3 +26,10 @@ it("rejects duplicate shapes, invalid coordinates and overfull scenes", () => {
   expect(() => parseProjectFile(serializeProject({ ...project, shapes: [{ ...project.shapes[0], position: { x: 100, y: .5 } }] }))).toThrow();
   expect(() => parseProjectFile(serializeProject({ ...project, shapes: Array.from({ length: 51 }, (_, i) => ({ ...project.shapes[0], id: `${i}` })) }))).toThrow();
 });
+
+// 設定の往復・旧形式・不正な型をまとめて検証する。
+it("preserves optional sound-program BGM and validates its type", () => {
+  expect(parseProjectFile(serializeProject({ ...project, soundProgramBgm: true })).soundProgramBgm).toBe(true);
+  expect(parseProjectFile(serializeProject({ ...project, soundProgramBgm: undefined })).soundProgramBgm).toBe(false);
+  expect(() => parseProjectFile(serializeProject({ ...project, soundProgramBgm: "yes" as unknown as boolean }))).toThrow();
+});

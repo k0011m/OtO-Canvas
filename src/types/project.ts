@@ -78,6 +78,8 @@ export interface MusicEvent {
 
 export interface OtoProject {
   sceneSoundPrograms?: import("../music/soundProgram").SceneSoundPrograms;
+  /** 音プログラムの場面にも背景BGMを付ける。未指定の旧作品は伴奏なし。 */
+  soundProgramBgm?: boolean;
   scenePrograms?: import("../visuals/motionProgram").ScenePrograms;
   sceneCount?: number;
   sceneMoods?: import("../visuals/animationMood").AnimationMood[];

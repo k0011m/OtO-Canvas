@@ -14,6 +14,8 @@ for (const [width, height] of [[390, 844], [667, 375]]) {
     await canvas.click({ position: { x: width * .6, y: height * .6 } });
     await canvas.click({ position: { x: width * .8, y: height * .45 } });
     await page.getByTestId("sound-program").click();
+    await expect(page.getByRole("button", { name: "背景BGMなし", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: "背景BGMあり", exact: true }).click();
     await page.getByRole("button", { name: "ずけい1", exact: true }).click();
     await page.getByRole("group", { name: "図形の音階" }).getByRole("button", { name: "ファ", exact: true }).click();
     await page.getByRole("button", { name: "じゅんばんに たす" }).click();
@@ -38,6 +40,7 @@ for (const [width, height] of [[390, 844], [667, 375]]) {
     await page.reload();
     await page.getByRole("button", { name: "つづきから" }).click();
     await page.getByTestId("sound-program").click();
+    await expect(page.getByRole("button", { name: "背景BGMあり", exact: true })).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByTestId("sound-step-0")).toContainText("シ");
     await page.getByRole("button", { name: "できた", exact: true }).click();
     await page.getByTestId("play-button").click();

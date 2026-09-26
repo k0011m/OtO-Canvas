@@ -370,3 +370,12 @@ OtoCanvas本体は[MIT License](./LICENSE)で提供します。利用中のOSS�
 - `src/app/App.tsx`の初回案内は「おとなのひとに見せてね！」から保護者用の設定へ進みます。図形と色／動き編集／プログラミングの3段階を説明し、`changeCreationMode`で選んだ難易度を保存します。その後、記念写真の用途・保存先・マイクを使わないことを説明し、保護者の操作でだけカメラ権限を要求します。
 - 初回判定は既存の`otocanvas.camera.v1`の未選択状態を利用します。許可または使わないを選ぶと案内を終了し、設定済みの利用者には再表示しません。サイトデータ削除で選択が消えると再表示します。キャッシュだけの整理では再表示しません。保存を禁止したブラウザでは次の起動時に案内が再表示されることがあります。年齢認証の機能ではありません。
 - `e2e/camera-files.spec.ts`で初回の引き渡し・権限要求前の待機・難易度保存・データ削除後の再案内・スマホ縦横4サイズの重なり防止を検証します。実機固有のブラウザUIは自動テスト対象外です。
+
+### 2026-09-26：音プログラムの背景BGMを選択
+
+- `src/app/SoundProgramEditor.tsx`へBGMあり／なしの絵ボタンを追加。試聴中の切り替えは再生を停止し、次の試聴へ反映します。試聴の伴奏は現在の音世界の標準BGMです。
+- `src/styles/global.css`の`.sound-bgm-choice`で選択中のボタンを太枠と背景色で示します。
+- `src/types/project.ts`、`src/music/arranger.ts`、`src/storage/projectStore.ts`、`src/export/projectFile.ts`で作品単位の任意boolean `soundProgramBgm`を保存・型検証・ファイル入出力。未指定の旧作品はfalseです。
+- `src/music/backingTrack.ts`の`buildSceneBackingTrack`はtrueの場合、音の順番を設定した場面にも動きに合った伴奏を付けます。falseは従来どおり伴奏を消します。音プログラムのない場面は通常の伴奏を維持します。
+- `src/app/App.tsx`は選択を新規作品で初期化し、保存・復元・作品棚からの再生・ファイル読み込み・本番・WAV/MV用の混合音符へ渡します。設定は作品内の全ての音プログラム場面に共通です。
+- `tests/backingTrack.test.ts`と`tests/projectFile.test.ts`で伴奏の分岐・設定の往復・旧作品・不正型を検証し、`e2e/sound-program.spec.ts`でUI設定・再読み込みを検証します。

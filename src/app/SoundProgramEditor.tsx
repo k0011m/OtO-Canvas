@@ -18,7 +18,8 @@ function SoundShape({ shape, number, world }: { shape: CanvasShape; number: numb
 }
 
 /** 図形ごとの固定音階と、繰り返し配置できる発音順を別々に編集する。 */
-export function SoundProgramEditor({ shapes, world, steps, seconds, onShapesChange, onChange, onClose }: {
+export function SoundProgramEditor({ shapes, world, steps, seconds, bgmEnabled, onBgmChange, onShapesChange, onChange, onClose }: {
+  bgmEnabled: boolean; onBgmChange: (enabled: boolean) => void;
   shapes: CanvasShape[]; world: WorldId; steps: string[] | null; seconds: number;
   onShapesChange: (shapes: CanvasShape[]) => void; onChange: (steps: string[] | null) => void; onClose: () => void;
 }) {
@@ -31,10 +32,11 @@ export function SoundProgramEditor({ shapes, world, steps, seconds, onShapesChan
 
   /** 再試聴・編集・閉じるで前のタイマーを止め、遅れて音が鳴ることを防ぐ。 */
   function stop() {
+    audioEngine.stopScreenBgm();
     generation.current++;
     timers.current.forEach(clearTimeout); timers.current = []; setPlaying(null);
   }
-  useEffect(() => () => { generation.current++; timers.current.forEach(clearTimeout); }, []);
+  useEffect(() => () => { generation.current++; timers.current.forEach(clearTimeout); audioEngine.stopScreenBgm(); }, []);
 
   /** 初期値のドも明示して、本番と試聴で音色・音高の選択を一致させる。 */
   async function preview(shape: CanvasShape) {
@@ -49,6 +51,7 @@ export function SoundProgramEditor({ shapes, world, steps, seconds, onShapesChan
     await audioEngine.unlock();
     if (ticket !== generation.current) return;
     audioEngine.stopScreenBgm();
+    if (bgmEnabled) audioEngine.startScreenBgm(world);
     order.forEach((id, index) => {
       timers.current.push(setTimeout(() => {
         setPlaying(index);
@@ -56,7 +59,7 @@ export function SoundProgramEditor({ shapes, world, steps, seconds, onShapesChan
         audioEngine.previewShape({ ...shape, soundNote: shape.soundNote ?? 0 }, world);
       }, index * seconds * 1000 / order.length));
     });
-    timers.current.push(setTimeout(() => setPlaying(null), seconds * 1000));
+    timers.current.push(setTimeout(stop, seconds * 1000));
   }
 
   /** カード順の変更は音階を変えず、実行中なら試聴を停止する。 */
@@ -68,6 +71,11 @@ export function SoundProgramEditor({ shapes, world, steps, seconds, onShapesChan
 
   return <div className="parent-overlay"><section className="parent-panel sound-editor" role="dialog" aria-modal="true" aria-labelledby="sound-program-title">
     <header><h2 id="sound-program-title">おとの プログラム</h2><button className="icon-button" aria-label="音プログラムを閉じる" onClick={onClose}><ControlIcon name="close" /></button></header>
+    <div className="program-repeat sound-bgm-choice" role="group" aria-label="音プログラムの背景BGM">
+      <strong>BGM</strong>
+      <button aria-label="背景BGMあり" aria-pressed={bgmEnabled} onClick={() => { stop(); onBgmChange(true); }}>♫ ✓</button>
+      <button aria-label="背景BGMなし" aria-pressed={!bgmEnabled} onClick={() => { stop(); onBgmChange(false); }}>♫ ×</button>
+    </div>
     <h3 aria-label="1. 図形の音階を決める" className="sound-picture-heading"><span aria-hidden="true">1 · ● → ♪</span></h3>
     {!shapes.length && <p className="sr-only">まず このばめんに ずけいを おいてね。</p>}
     <div className="sound-shape-list" role="group" aria-label="音をつける図形">

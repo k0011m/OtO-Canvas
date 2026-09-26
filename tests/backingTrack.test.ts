@@ -103,3 +103,13 @@ describe("buildBackingTrack", () => {
     },
   );
 });
+
+// 伴奏の選択は手動場面だけに適用し、自動演奏の場面には影響させない。
+it("keeps optional backing music for programmed scenes", async () => {
+  const { buildSceneBackingTrack } = await import("../src/music/backingTrack");
+  const without = buildSceneBackingTrack("bounce", ["float", "pop"], 2, 1, [["one"], null]);
+  const withBgm = buildSceneBackingTrack("bounce", ["float", "pop"], 2, 1, [["one"], null], true);
+  expect(without.every((event) => event.beat >= 24)).toBe(true);
+  expect(withBgm.some((event) => event.beat < 24)).toBe(true);
+  expect(withBgm.filter((event) => event.beat >= 24)).toEqual(without);
+});
