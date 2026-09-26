@@ -72,7 +72,7 @@ describe("buildBackingTrack", () => {
   );
 
   it("uses a genuinely different instrument family and rhythm for each mood", () => {
-    const tracks: Record<AnimationMood, MusicEvent[]> = {
+    const tracks: Record<"float" | "pop" | "cosmic", MusicEvent[]> = {
       float: buildBackingTrack("space", "float", 4242),
       pop: buildBackingTrack("space", "pop", 4242),
       cosmic: buildBackingTrack("space", "cosmic", 4242),
@@ -88,7 +88,7 @@ describe("buildBackingTrack", () => {
       new Set(["flute", "chime", "glockenspiel"]),
     );
 
-    const onsetSignatures = ANIMATION_MOODS.map((mood) =>
+    const onsetSignatures = (["float", "pop", "cosmic"] as const).map((mood) =>
       [...new Set(tracks[mood].map((event) => event.beat % 4))].join(",")
     );
     expect(new Set(onsetSignatures).size).toBe(3);

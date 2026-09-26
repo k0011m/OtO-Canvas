@@ -36,15 +36,21 @@ export function colorSoundProfile(colorId: string): ColorSoundProfile {
   return COLOR_SOUND[colorId] ?? DEFAULT_COLOR_SOUND;
 }
 
-export function sceneForBeat(beat: number): SceneIndex {
-  if (beat >= 32) return 2;
-  if (beat >= 16) return 1;
-  return 0;
+/** 場面数を範囲内に収め、旧作品は3場面として扱う。 */
+export function normalizeSceneCount(count = 3): number {
+  return Number.isFinite(count) ? Math.max(1, Math.min(10, Math.round(count))) : 3;
+}
+
+/** 30秒の拍位置から現在の場面を求め、最終拍は最後の場面に収める。 */
+export function sceneForBeat(beat: number, count = 3): SceneIndex {
+  const total = normalizeSceneCount(count);
+  return Math.max(0, Math.min(total - 1, Math.floor((Number.isFinite(beat) ? beat : 0) * total / 48))) as SceneIndex;
 }
 
 export function shapesForScene(
   shapes: readonly CanvasShape[],
   scene: SceneIndex,
+  count = 3,
 ): CanvasShape[] {
   const hasScenes = shapes.some((shape) => shape.scene !== undefined);
   if (!hasScenes) return [...shapes];
@@ -58,7 +64,7 @@ export function shapesForScene(
     const fallback = shapes.filter((shape) => shape.scene === previous);
     if (fallback.length > 0) return fallback;
   }
-  for (let next = scene + 1; next <= 2; next += 1) {
+  for (let next = scene + 1; next < normalizeSceneCount(count); next += 1) {
     const fallback = shapes.filter((shape) => shape.scene === next);
     if (fallback.length > 0) return fallback;
   }

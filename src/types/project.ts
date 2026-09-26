@@ -18,7 +18,7 @@ export type ShapeColorId =
   | "lime"
   | "ink";
 export type WorldId = "soft" | "bounce" | "space";
-export type SceneIndex = 0 | 1 | 2;
+export type SceneIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 export type SectionId = "intro" | "a" | "b" | "break" | "climax" | "outro";
 export type VisualEventKind = "pulse" | "orbit" | "wave" | "split" | "fade";
 /**
@@ -55,7 +55,7 @@ export interface CanvasShape {
   colorId: string;
   patternId: string;
   zIndex: number;
-  /** Optional for backwards compatibility. New projects use three 10-second scenes. */
+  /** 旧作品では省略可能。1〜10場面を30秒の中で均等に配分する。 */
   scene?: SceneIndex;
   /** Pen strokes store normalized local points around `position`. */
   points?: Point[];
@@ -75,6 +75,8 @@ export interface MusicEvent {
 }
 
 export interface OtoProject {
+  sceneCount?: number;
+  sceneMoods?: import("../visuals/animationMood").AnimationMood[];
   version: 1;
   id: string;
   title?: string;

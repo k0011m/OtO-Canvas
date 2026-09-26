@@ -13,7 +13,7 @@ export function ProjectThumbnail({ project }: { project: OtoProject }) {
     const viewport = { width: 300, height: 180 };
     const theme = WORLDS[project.worldId];
     drawCanvasBackdrop(context, viewport, theme);
-    renderShapes(context, shapesForScene(project.shapes, 0), theme, viewport, null, true);
+    renderShapes(context, shapesForScene(project.shapes, 0, project.sceneCount), theme, viewport, null, true);
   }, [project]);
   return <canvas ref={ref} width={300} height={180} aria-hidden="true" />;
 }

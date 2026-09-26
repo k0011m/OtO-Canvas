@@ -152,8 +152,9 @@ function expectFiniteNode(node: VisualNode): void {
 }
 
 describe("animation moods", () => {
-  it("exposes exactly three valid moods and defaults to float", () => {
-    expect(ANIMATION_MOODS).toEqual(["float", "pop", "cosmic"]);
+  it("exposes fifteen valid moods and defaults to float", () => {
+    expect(ANIMATION_MOODS).toHaveLength(15);
+    expect(new Set(ANIMATION_MOODS).size).toBe(15);
     expect(DEFAULT_ANIMATION_MOOD).toBe("float");
 
     for (const mood of ANIMATION_MOODS) expect(isAnimationMood(mood)).toBe(true);
@@ -174,6 +175,7 @@ describe("animation moods", () => {
     for (const node of Object.values(nodes)) expectFiniteNode(node);
 
     const pose = (node: VisualNode) => [node.x, node.y, node.rotation, node.scale];
+    expect(new Set(Object.values(nodes).map((node) => JSON.stringify(pose(node)))).size).toBe(15);
     expect(pose(nodes.float)).not.toEqual(pose(nodes.pop));
     expect(pose(nodes.float)).not.toEqual(pose(nodes.cosmic));
     expect(pose(nodes.pop)).not.toEqual(pose(nodes.cosmic));

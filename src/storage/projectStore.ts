@@ -4,6 +4,7 @@ import {
   type MusicEvent,
   type OtoProject,
 } from "../types/project";
+import { isAnimationMood } from "../visuals/animationMood";
 
 export const PROJECT_DATABASE_NAME = "oto-canvas";
 export const PROJECT_STORE_NAME = "projects";
@@ -82,7 +83,7 @@ function isCanvasShape(value: unknown): value is CanvasShape {
     typeof value.colorId === "string" &&
     typeof value.patternId === "string" &&
     isFiniteNumber(value.zIndex) &&
-    (value.scene === undefined || value.scene === 0 || value.scene === 1 || value.scene === 2) &&
+    (value.scene === undefined || (Number.isInteger(value.scene) && Number(value.scene) >= 0 && Number(value.scene) < 10)) &&
     (value.points === undefined ||
       (Array.isArray(value.points) && value.points.every(isPoint)))
   );
@@ -133,6 +134,8 @@ function hasProjectMetadata(value: unknown): value is Record<string, unknown> {
 export function isOtoProject(value: unknown): value is OtoProject {
   return (
     hasProjectMetadata(value) &&
+    (value.sceneCount === undefined || (Number.isInteger(value.sceneCount) && Number(value.sceneCount) >= 1 && Number(value.sceneCount) <= 10)) &&
+    (value.sceneMoods === undefined || (Array.isArray(value.sceneMoods) && value.sceneMoods.length <= 10 && value.sceneMoods.every(isAnimationMood))) &&
     value.bars === BARS &&
     Array.isArray(value.events) &&
     value.events.every(isMusicEvent)

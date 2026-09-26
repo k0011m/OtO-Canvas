@@ -1,4 +1,6 @@
 import type { AnimationMood } from "../visuals/animationMood";
+import { backingMood } from "../visuals/animationMood";
+import { normalizeSceneCount } from "./creativeRules";
 import {
   BARS,
   TOTAL_BEATS,
@@ -239,7 +241,7 @@ export function buildBackingTrack(
   const normalizedSeed = safeSeed(seed);
   let inputs: BackingEventInput[];
 
-  switch (mood) {
+  switch (backingMood(mood)) {
     case "float":
       inputs = buildFloatInputs(normalizedSeed);
       break;
@@ -257,4 +259,16 @@ export function buildBackingTrack(
     .sort((left, right) =>
       left.beat - right.beat || left.id.localeCompare(right.id)
     );
+}
+
+/** 各場面の動きに合う伴奏を、その場面の時間内へ切り出す。 */
+export function buildSceneBackingTrack(worldId: WorldId, moods: readonly AnimationMood[], count: number, seed: number): MusicEvent[] {
+  const total = normalizeSceneCount(count);
+  return Array.from({ length: total }, (_, scene) => {
+    const start = scene * TOTAL_BEATS / total;
+    const end = (scene + 1) * TOTAL_BEATS / total;
+    return buildBackingTrack(worldId, moods[scene] ?? "float", seed)
+      .filter((event) => event.beat >= start && event.beat < end)
+      .map((event) => ({ ...event, id: `${event.id}-scene-${scene}`, durationBeats: Math.min(event.durationBeats, end - event.beat) }));
+  }).flat();
 }

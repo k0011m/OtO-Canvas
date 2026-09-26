@@ -12,6 +12,7 @@ import {
 import type { CanvasShape, MusicEvent, SectionId, WorldTheme } from "../types/project";
 import {
   DEFAULT_ANIMATION_MOOD,
+  MOOD_NAMES,
   type AnimationMood,
 } from "./animationMood";
 import {
@@ -79,11 +80,7 @@ interface LocalInteraction extends VisualInteraction {
 const DEFAULT_LABEL =
   "音に合わせて動く図形のミュージックビデオ。画面をなぞると演奏に参加できます";
 
-const ANIMATION_MOOD_LABELS: Readonly<Record<AnimationMood, string>> = {
-  float: "ふわふわ",
-  pop: "はじける",
-  cosmic: "宇宙旅行",
-};
+const ANIMATION_MOOD_LABELS = MOOD_NAMES;
 
 const clamp01 = (value: number): number => Math.min(1, Math.max(0, value));
 

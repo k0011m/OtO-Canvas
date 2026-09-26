@@ -381,7 +381,12 @@ function applyAnimationMood(
   const endingEase = input.section === "outro" ? 1 - smoothstep(0.78, 1, progress) * 0.45 : 1;
   const amount = gain * motion * endingEase;
 
-  switch (animationMood(input)) {
+  const mood = animationMood(input);
+  if (mood !== "float" && mood !== "pop" && mood !== "cosmic") {
+    return groupChoreography(layout, mood, index, input, seconds, motion * endingEase);
+  }
+
+  switch (mood) {
     case "float": {
       const wave = shortest * (0.048 + gain * 0.038) * motion * endingEase;
       const longWave = Math.sin(seconds * 0.72 + phase);
@@ -447,6 +452,36 @@ function applyAnimationMood(
         scale: layout.scale * (1 + depth * (0.09 + gain * 0.075) * motion),
       };
     }
+  }
+}
+
+/** 集団で揃う動きと順番に伝わる動きを、連続した曲線で描き分ける。 */
+function groupChoreography(layout: BaseLayout, mood: AnimationMood, index: number, input: VisualFrameInput, seconds: number, motion: number): BaseLayout {
+  const t = seconds * 1.6;
+  const wave = Math.sin(t);
+  const amplitude = Math.min(input.width, input.height) * 0.12 * motion;
+  const centerX = input.width / 2;
+  const centerY = input.height / 2;
+  const dx = layout.x - centerX;
+  const dy = layout.y - centerY;
+  switch (mood) {
+    case "wave": return { ...layout, y: layout.y + Math.sin(t - index * 0.65) * amplitude };
+    case "march": return { ...layout, x: layout.x + wave * amplitude, y: layout.y - Math.abs(Math.sin(t * 2 + index * Math.PI)) * amplitude * 0.3 };
+    case "spiral": {
+      const angle = t * 0.45 * motion;
+      const radius = 0.8 + 0.2 * Math.cos(t * 0.6);
+      return { ...layout, x: centerX + (dx * Math.cos(angle) - dy * Math.sin(angle)) * (1 + (radius - 1) * motion), y: centerY + (dx * Math.sin(angle) + dy * Math.cos(angle)) * (1 + (radius - 1) * motion) };
+    }
+    case "breathe": return { ...layout, scale: layout.scale * (1 + wave * 0.24 * motion) };
+    case "swing": return { ...layout, x: layout.x + wave * amplitude, rotation: layout.rotation + wave * 0.5 * motion };
+    case "zigzag": return { ...layout, x: layout.x + Math.asin(Math.sin(t)) / (Math.PI / 2) * amplitude, y: layout.y + Math.cos(t * 2) * amplitude * 0.4 };
+    case "gather": { const factor = (1 - Math.cos(t * 0.5)) * 0.3 * motion; return { ...layout, x: layout.x - dx * factor, y: layout.y - dy * factor }; }
+    case "scatter": { const factor = (1 - Math.cos(t)) * 0.17 * motion; return { ...layout, x: layout.x + dx * factor, y: layout.y + dy * factor }; }
+    case "rise": return { ...layout, y: layout.y - (1 - Math.cos(t * 0.55)) * amplitude, x: layout.x + Math.sin(t * 0.7 + index) * amplitude * 0.25 };
+    case "rain": return { ...layout, y: layout.y + (1 - Math.cos(t * 0.75 + index * 0.3)) * amplitude, rotation: layout.rotation + Math.sin(t + index) * 0.3 * motion };
+    case "figure8": return { ...layout, x: layout.x + wave * amplitude, y: layout.y + Math.sin(t * 2) * amplitude * 0.6 };
+    case "carousel": { const angle = t * 0.35 * motion; return { ...layout, x: centerX + dx * Math.cos(angle) - dy * Math.sin(angle), y: centerY + dx * Math.sin(angle) + dy * Math.cos(angle), rotation: layout.rotation + angle }; }
+    default: return layout;
   }
 }
 

@@ -17,6 +17,7 @@ import {
   buildRelationshipEvents,
   sceneForBeat,
   shapesForScene,
+  normalizeSceneCount,
 } from "./creativeRules";
 import { getSectionAtBar, getSectionDefinition } from "./sections";
 import { buildInstrumentPhrases, voiceBudgetEnd } from "./instrumentPhrases";
@@ -34,6 +35,8 @@ export interface BarVariation {
 }
 
 export interface CreateProjectOptions {
+  sceneCount?: number;
+  sceneMoods?: OtoProject["sceneMoods"];
   id?: string;
   title?: string;
   timestamp?: number;
@@ -297,7 +300,24 @@ export function buildArrangement(
   shapes: readonly CanvasShape[],
   seed: number,
   worldId: WorldId,
+  sceneCount?: number,
 ): MusicEvent[] {
+  // 小節途中に場面境界が来る場合も、発音先と映像の場面を一致させる。
+  if (sceneCount !== undefined) {
+    const count = normalizeSceneCount(sceneCount);
+    const sceneEvents: MusicEvent[] = [];
+    for (let scene = 0; scene < count; scene += 1) {
+      const start = scene * TOTAL_BEATS / count;
+      const end = (scene + 1) * TOTAL_BEATS / count;
+      const picture = shapesForScene(shapes, scene as import("../types/project").SceneIndex, count)
+        .map(({ scene: _scene, ...shape }) => shape);
+      const notes = buildArrangement(picture, seed, worldId)
+        .filter((event) => event.beat >= start && event.beat < end)
+        .map((event) => ({ ...event, id: `${event.id}-scene-${scene}`, durationBeats: Math.min(event.durationBeats, end - event.beat) }));
+      sceneEvents.push(...notes);
+    }
+    return limitPolyphony(sceneEvents);
+  }
   const safeSeed = Number.isFinite(seed) ? Math.trunc(seed) >>> 0 : 0;
   if (shapes.length === 0) return [];
   const usesScenes = shapes.some((shape) => shape.scene !== undefined);
@@ -379,7 +399,9 @@ export function createProject(
       ...shape,
       position: { ...shape.position },
     })),
-    events: buildArrangement(shapes, safeSeed, worldId),
+    sceneCount: normalizeSceneCount(options.sceneCount),
+    sceneMoods: options.sceneMoods?.slice(0, 10),
+    events: buildArrangement(shapes, safeSeed, worldId, options.sceneCount),
   };
 
   if (options.title !== undefined) project.title = options.title;

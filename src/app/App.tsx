@@ -13,7 +13,7 @@ import { downloadJacketPng, downloadRecordedVideo } from "../export/artworkExpor
 import { exportAndDownloadWav } from "../export/wavExporter";
 import { audioEngine, DEFAULT_MASTER_VOLUME } from "../music/audioEngine";
 import { buildArrangement, createProject, getSectionAtBeat } from "../music/arranger";
-import { buildBackingTrack } from "../music/backingTrack";
+import { buildSceneBackingTrack } from "../music/backingTrack";
 import { WORLD_SOUND_LABELS } from "../music/worldSounds";
 import { instrumentForShape } from "../music/shapeMapper";
 import {
@@ -27,6 +27,7 @@ import {
   colorSoundProfile,
   relationshipCount,
   sceneForBeat,
+  normalizeSceneCount,
   shapesForScene,
 } from "../music/creativeRules";
 import {
@@ -52,6 +53,7 @@ import {
 } from "../visuals/PerformanceCanvas";
 import {
   DEFAULT_ANIMATION_MOOD,
+  ANIMATION_MOODS, MOOD_NAMES, backingMood,
   type AnimationMood,
 } from "../visuals/animationMood";
 
@@ -88,16 +90,7 @@ const SECTION_LABELS = {
   outro: "おしまい",
 } as const;
 
-const ANIMATION_MOOD_OPTIONS: ReadonlyArray<{
-  id: AnimationMood;
-  name: string;
-  motion: string;
-  bgm: string;
-}> = [
-  { id: "float", name: "ゆらゆら", motion: "なめらか", bgm: "やさしいBGM" },
-  { id: "pop", name: "はじける", motion: "ぴょんぴょん", bgm: "リズムBGM" },
-  { id: "cosmic", name: "ぐるぐる", motion: "うずを えがく", bgm: "うちゅうBGM" },
-];
+const ANIMATION_MOOD_OPTIONS = ANIMATION_MOODS.map((id) => ({ id, name: MOOD_NAMES[id], motion: "みんなで " + MOOD_NAMES[id], bgm: backingMood(id) === "pop" ? "リズムBGM" : backingMood(id) === "cosmic" ? "うちゅうBGM" : "やさしいBGM" }));
 
 function animationMoodOption(mood: AnimationMood) {
   return ANIMATION_MOOD_OPTIONS.find((option) => option.id === mood) ?? ANIMATION_MOOD_OPTIONS[0];
@@ -188,6 +181,9 @@ export function App() {
   const [screen, setScreen] = useState<Screen>("start");
   const [worldId, setWorldId] = useState<WorldId>("soft");
   const [shapes, setShapes] = useState<CanvasShape[]>([]);
+  const [sceneCount, setSceneCount] = useState(3);
+  const [sceneMoods, setSceneMoods] = useState<AnimationMood[]>(Array(10).fill(DEFAULT_ANIMATION_MOOD));
+  const [editingSceneMood, setEditingSceneMood] = useState(false);
   const [currentScene, setCurrentScene] = useState<SceneIndex>(0);
   const [projectTitle, setProjectTitle] = useState("わたしのおと");
   const [galleryProjects, setGalleryProjects] = useState<OtoProject[]>([]);
@@ -204,7 +200,7 @@ export function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
-  const [animationMood, setAnimationMood] = useState<AnimationMood>(DEFAULT_ANIMATION_MOOD);
+
   const [moodPickerOpen, setMoodPickerOpen] = useState(false);
   const [remixVersion, setRemixVersion] = useState(0);
   const [recordingVideo, setRecordingVideo] = useState(false);
@@ -229,25 +225,26 @@ export function App() {
     setToolsOpen(false);
   }, []);
   const events = useMemo(
-    () => buildArrangement(shapes, seedRef.current, worldId),
-    [remixVersion, shapes, worldId],
+    () => buildArrangement(shapes, seedRef.current, worldId, sceneCount),
+    [remixVersion, shapes, worldId, sceneCount],
   );
   const mixedEvents = useMemo(
     () =>
       [
         ...events,
-        ...buildBackingTrack(worldId, animationMood, seedRef.current),
+        ...buildSceneBackingTrack(worldId, sceneMoods, sceneCount, seedRef.current),
       ].sort((left, right) => left.beat - right.beat || left.id.localeCompare(right.id)),
-    [animationMood, events, worldId],
+    [sceneMoods, sceneCount, events, worldId],
   );
-  const activeMood = animationMoodOption(animationMood);
+  const playingMood = sceneMoods[sceneForBeat(playback.beat, sceneCount)] ?? DEFAULT_ANIMATION_MOOD;
+  const activeMood = animationMoodOption(playingMood);
   const activeShapes = useMemo(
     () => shapes.filter((shape) => (shape.scene ?? 0) === currentScene),
     [currentScene, shapes],
   );
   const performanceShapes = useMemo(
-    () => shapesForScene(shapes, sceneForBeat(playback.beat)),
-    [playback.beat, shapes],
+    () => shapesForScene(shapes, sceneForBeat(playback.beat, sceneCount), sceneCount),
+    [playback.beat, shapes, sceneCount],
   );
   const activeRelationships = useMemo(
     () => relationshipCount(activeShapes),
@@ -306,6 +303,7 @@ export function App() {
         id: projectIdRef.current,
         title: projectTitle,
         timestamp: createdAtRef.current,
+        sceneCount, sceneMoods,
       });
       project.updatedAt = Date.now();
       void saveProject(project).catch(() => undefined);
@@ -313,7 +311,7 @@ export function App() {
     return () => {
       if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
     };
-  }, [events, projectTitle, screen, shapes, worldId]);
+  }, [events, projectTitle, screen, shapes, worldId, sceneCount, sceneMoods]);
 
   useEffect(
     () => () => {
@@ -374,6 +372,8 @@ export function App() {
     createdAtRef.current = project.createdAt;
     seedRef.current = project.seed;
     setWorldId(project.worldId);
+    setSceneCount(normalizeSceneCount(project.sceneCount));
+    setSceneMoods(Array.from({ length: 10 }, (_, index) => project.sceneMoods?.[index] ?? DEFAULT_ANIMATION_MOOD));
     setShapes(cloneShapes(project.shapes).map((shape) => ({ ...shape, scene: shape.scene ?? 0 })));
     setProjectTitle(project.title ?? "わたしのおと");
     setCurrentScene(0);
@@ -468,11 +468,12 @@ export function App() {
       showToast("まず かたちを おいてみよう");
       return;
     }
+    setEditingSceneMood(false);
     setMoodPickerOpen(true);
   }, [events.length, shapes.length, showToast]);
 
   const beginPerformance = useCallback(
-    async (mood: AnimationMood = animationMood, saveVideo = false) => {
+    async (mood?: AnimationMood, saveVideo = false) => {
       if (shapes.length === 0 || events.length === 0) {
         showToast("まず かたちを おいてみよう");
         return;
@@ -481,12 +482,14 @@ export function App() {
 
       audioEngine.stopScreenBgm();
 
+      const nextMoods = mood ? sceneMoods.map((value, index) => index === currentScene ? mood : value) : sceneMoods;
+      setSceneMoods(nextMoods);
       const performanceEvents = [
         ...events,
-        ...buildBackingTrack(worldId, mood, seedRef.current),
+        ...buildSceneBackingTrack(worldId, nextMoods, sceneCount, seedRef.current),
       ].sort((left, right) => left.beat - right.beat || left.id.localeCompare(right.id));
 
-      setAnimationMood(mood);
+
       setMoodPickerOpen(false);
       setPlayback({ ...EMPTY_PLAYBACK, section: "intro" });
       setScreen("perform");
@@ -550,7 +553,7 @@ export function App() {
         },
       });
     },
-    [animationMood, events, shapes.length, showToast, startAudio, worldId],
+    [sceneMoods, sceneCount, currentScene, events, shapes.length, showToast, startAudio, worldId],
   );
 
   const leavePerformance = useCallback(() => {
@@ -597,12 +600,14 @@ export function App() {
     createdAtRef.current = Date.now();
     seedRef.current = seedFromText(projectIdRef.current);
     setShapes([]);
+    setSceneCount(3);
+    setSceneMoods(Array(10).fill(DEFAULT_ANIMATION_MOOD));
     setCurrentScene(0);
     setProjectTitle("わたしのおと");
     setUndoStack([]);
     setSelectedId(null);
     setPlayback(EMPTY_PLAYBACK);
-    setAnimationMood(DEFAULT_ANIMATION_MOOD);
+
     setMoodPickerOpen(false);
     setRemixVersion((value) => value + 1);
     setRestoredProject(null);
@@ -635,6 +640,15 @@ export function App() {
     );
   }, [commitActiveShapes, currentScene, shapes, showToast]);
 
+  /** 場面を減らしても絵と振り付けを保持し、再び増やすと元へ戻せるようにする。 */
+  const changeSceneCount = useCallback((delta: number) => {
+    const next = normalizeSceneCount(sceneCount + delta);
+    setSceneCount(next);
+    setCurrentScene((scene) => Math.min(scene, next - 1) as SceneIndex);
+    setSelectedId(null);
+    if (delta < 0) showToast("しまった ばめんは ＋で もどせるよ");
+  }, [sceneCount, showToast]);
+
   const openGallery = useCallback(async () => {
     await startAudio();
     setGalleryProjects(await listProjects());
@@ -648,6 +662,8 @@ export function App() {
     seedRef.current = project.seed;
     setProjectTitle(project.title ?? "わたしのおと");
     setWorldId(project.worldId);
+    setSceneCount(normalizeSceneCount(project.sceneCount));
+    setSceneMoods(Array.from({ length: 10 }, (_, index) => project.sceneMoods?.[index] ?? DEFAULT_ANIMATION_MOOD));
     setShapes(cloneShapes(project.shapes).map((shape) => ({ ...shape, scene: shape.scene ?? 0 })));
     setCurrentScene(0);
     setUndoStack([]);
@@ -662,13 +678,15 @@ export function App() {
     createdAtRef.current = project.createdAt;
     seedRef.current = project.seed;
     const nextShapes = cloneShapes(project.shapes).map((shape) => ({ ...shape, scene: shape.scene ?? 0 }));
-    const nextEvents = buildArrangement(nextShapes, project.seed, project.worldId);
+    const nextEvents = buildArrangement(nextShapes, project.seed, project.worldId, normalizeSceneCount(project.sceneCount));
     const performanceEvents = [
       ...nextEvents,
-      ...buildBackingTrack(project.worldId, animationMood, project.seed),
+      ...buildSceneBackingTrack(project.worldId, project.sceneMoods ?? [], normalizeSceneCount(project.sceneCount), project.seed),
     ].sort((left, right) => left.beat - right.beat || left.id.localeCompare(right.id));
     setProjectTitle(project.title ?? "わたしのおと");
     setWorldId(project.worldId);
+    setSceneCount(normalizeSceneCount(project.sceneCount));
+    setSceneMoods(Array.from({ length: 10 }, (_, index) => project.sceneMoods?.[index] ?? DEFAULT_ANIMATION_MOOD));
     setShapes(nextShapes);
     setCurrentScene(0);
     setPlayback({ ...EMPTY_PLAYBACK, section: "intro" });
@@ -682,12 +700,13 @@ export function App() {
         setScreen("finish");
       },
     });
-  }, [animationMood, startAudio]);
+  }, [startAudio]);
 
   const duplicateGalleryProject = useCallback(async (project: OtoProject) => {
     const copy = createProject(project.shapes, (project.seed + 1) >>> 0, project.worldId, {
       id: createId("project"),
       title: `${project.title ?? "わたしのおと"} コピー`,
+      sceneCount: project.sceneCount, sceneMoods: project.sceneMoods,
     });
     await saveProject(copy);
     setGalleryProjects(await listProjects());
@@ -709,12 +728,12 @@ export function App() {
 
   const exportJacket = useCallback(async () => {
     try {
-      await downloadJacketPng(shapes, theme, projectTitle);
+      await downloadJacketPng(shapes, theme, projectTitle, sceneCount);
       showToast("ジャケットを ほぞんしました");
     } catch {
       showToast("ジャケットを ほぞんできませんでした");
     }
-  }, [projectTitle, shapes, showToast, theme]);
+  }, [projectTitle, shapes, showToast, theme, sceneCount]);
 
   const exportWav = useCallback(async () => {
     if (events.length === 0 || exporting) return;
@@ -885,8 +904,14 @@ export function App() {
           </header>
 
           <div className="canvas-stage" data-testid="canvas-editor">
-            <div className="scene-switcher" role="tablist" aria-label="MVの3つのシーン">
-              {([0, 1, 2] as SceneIndex[]).map((scene) => {
+            <div className="scene-controls" role="group" aria-label="場面と動き">
+              <button type="button" aria-label="場面を減らす" disabled={sceneCount === 1} onClick={() => changeSceneCount(-1)}>−</button>
+              <span data-testid="scene-count">{sceneCount} ばめん</span>
+              <button type="button" aria-label="場面を増やす" disabled={sceneCount === 10} onClick={() => changeSceneCount(1)}>＋</button>
+              <button type="button" data-testid="scene-motion" onClick={() => { setEditingSceneMood(true); setMoodPickerOpen(true); }}>うごき：{MOOD_NAMES[sceneMoods[currentScene] ?? DEFAULT_ANIMATION_MOOD]}</button>
+            </div>
+            <div className="scene-switcher" role="tablist" aria-label="MVのシーン">
+              {Array.from({ length: sceneCount }, (_, index) => index as SceneIndex).map((scene) => {
                 const count = shapes.filter((shape) => (shape.scene ?? 0) === scene).length;
                 return (
                   <button
@@ -896,7 +921,7 @@ export function App() {
                     aria-selected={currentScene === scene}
                     onClick={() => { setCurrentScene(scene); setSelectedId(null); }}
                   >
-                    <strong>{scene + 1}</strong><span>{scene === 0 ? "はじまり" : scene === 1 ? "なか" : "おわり"}</span><small>{count}</small>
+                    <strong>{scene + 1}</strong><span>{scene === 0 ? "はじまり" : scene === sceneCount - 1 ? "おわり" : "なか"}</span><small>{count}</small>
                   </button>
                 );
               })}
@@ -1078,7 +1103,7 @@ export function App() {
             theme={theme}
             beat={playback.beat}
             section={playback.section}
-            animationMood={animationMood}
+            animationMood={playingMood}
             playing={playback.playing}
             lowPower={lowPower}
             onConduct={conduct}
@@ -1119,12 +1144,12 @@ export function App() {
         <section className="screen finish-screen" aria-labelledby="finish-title">
           <div className="finish-art">
             <PerformanceCanvas
-              shapes={shapesForScene(shapes, 2)}
+              shapes={shapesForScene(shapes, (sceneCount - 1) as SceneIndex, sceneCount)}
               events={events}
               theme={theme}
               beat={TOTAL_BEATS - 1}
               section="outro"
-              animationMood={animationMood}
+              animationMood={playingMood}
               playing={false}
               reducedMotion
               lowPower={lowPower}
@@ -1146,7 +1171,7 @@ export function App() {
               <button className="action-card" type="button" onClick={newProject}>
                 <span className="action-icon">＋</span>あたらしく つくる
               </button>
-              <button className="action-card" type="button" disabled={recordingVideo} onClick={() => void beginPerformance(animationMood, true)}>
+              <button className="action-card" type="button" disabled={recordingVideo} onClick={() => void beginPerformance(undefined, true)}>
                 <span className="action-icon">●</span>{recordingVideo ? "ろくが中" : "MVを ほぞん"}
               </button>
               <button className="action-card" type="button" onClick={() => void exportJacket()}>
@@ -1177,8 +1202,8 @@ export function App() {
           >
             <header className="mood-dialog-heading">
               <div>
-                <h2 id="mood-title">どんな うごきで みる？</h2>
-                <p id="mood-description">アニメと BGMを えらんでね</p>
+                <h2 id="mood-title">{currentScene + 1}ばんの うごき</h2>
+                <p id="mood-description">みんなの うごきを えらんでね・1ばめん {(30 / sceneCount).toFixed(1)}びょう</p>
               </div>
               <button
                 className="mood-close"
@@ -1189,6 +1214,7 @@ export function App() {
                 ×
               </button>
             </header>
+            {!editingSceneMood && <button className="pill-button" type="button" data-testid="play-scene-plan" onClick={() => void beginPerformance()}>この うごきで さいせい</button>}
             <div className="mood-grid">
               {ANIMATION_MOOD_OPTIONS.map((option) => (
                 <button
@@ -1196,10 +1222,10 @@ export function App() {
                   className={`mood-card mood-card-${option.id}`}
                   type="button"
                   data-testid={`mood-${option.id}`}
-                  onClick={() => void beginPerformance(option.id)}
+                  onClick={() => { if (editingSceneMood) { setSceneMoods((values) => values.map((value, index) => index === currentScene ? option.id : value)); closeMoodPicker(); } else void beginPerformance(option.id); }}
                   aria-label={`${option.name}。${option.motion}な動き。${option.bgm}`}
                 >
-                  <span className={`mood-preview mood-preview-${option.id}`} aria-hidden="true">
+                  <span className={`mood-preview mood-preview-${backingMood(option.id)}`} data-motion={option.id} aria-hidden="true">
                     <i />
                     <i />
                     <i />
