@@ -1,3 +1,4 @@
+import { ControlIcon } from "./ControlIcon";
 import { useEffect, useRef, useState } from "react";
 import { openFrontCamera } from "../storage/cameraSettings";
 import { downloadFile } from "../export/projectFile";
@@ -59,7 +60,7 @@ export function CelebrationCamera({ onClose, onDenied }: { onClose: () => void; 
   };
 
   return <div className="parent-overlay"><section className="parent-panel camera-panel" role="dialog" aria-modal="true" aria-labelledby="camera-title">
-    <header><h2 id="camera-title">できたね！ ピース！</h2><button className="icon-button" onClick={onClose} aria-label="撮影を閉じる">×</button></header>
+    <header><h2 id="camera-title">できたね！ ピース！</h2><button className="icon-button" onClick={onClose} aria-label="撮影を閉じる"><ControlIcon name="close" /></button></header>
     <p>おもいどおりに できたら、ピースして とってみよう。とらずに とじても いいよ。</p>
     {photoUrl ? <img className="celebration-photo" src={photoUrl} alt="撮影した記念写真" /> : <video ref={videoRef} className="celebration-video" muted playsInline onLoadedData={() => setReady(true)} />}
     {error && <p role="alert">{error}</p>}

@@ -1,3 +1,4 @@
+import { ControlIcon } from "./ControlIcon";
 import {
   useCallback,
   useEffect,
@@ -951,7 +952,7 @@ export function App() {
           <header className="gallery-heading">
             <button className="icon-button" type="button" onClick={() => setScreen("start")} aria-label="最初へ戻る"><BackIcon /></button>
             <div><h2 id="gallery-title">さくひんだな</h2><p>この たんまつに ほぞんした おと</p></div>
-            <button className="pill-button" type="button" onClick={newProject}>＋ あたらしく</button>
+            <button className="pill-button" type="button" aria-label="＋ あたらしく" onClick={newProject}><ControlIcon name="plus" /> あたらしく</button>
           </header>
           {galleryProjects.length === 0 ? (
             <div className="gallery-empty"><BrandShapes /><strong>まだ さくひんが ありません</strong></div>
@@ -1032,25 +1033,25 @@ export function App() {
             </div>
             <div className="top-bar-actions">
               {!simpleCreation && <button className="icon-button" type="button" onClick={remix} disabled={shapes.length === 0} aria-label="音をリミックスする">
-                ⤨
+                <ControlIcon name="shuffle" />
               </button>}
               <button className="icon-button" type="button" disabled={undoStack.length === 0} onClick={undo} aria-label="ひとつ戻す">
-                ↶
+                <ControlIcon name="undo" />
               </button>
               <button className="icon-button" type="button" onClick={clearCanvas} disabled={activeShapes.length === 0} aria-label="このシーンを全部消す">
-                ○
+                <ControlIcon name="trash" />
               </button>
               <button className="icon-button" type="button" onClick={() => setParentOpen(true)} aria-label="おとな向け設定">
-                ⋯
+                <ControlIcon name="more" />
               </button>
             </div>
           </header>
 
           <div className="canvas-stage" data-testid="canvas-editor">
             {!simpleCreation && <><div className="scene-controls" role="group" aria-label="場面と動き">
-              <button type="button" aria-label="場面を減らす" disabled={sceneCount === 1} onClick={() => changeSceneCount(-1)}>−</button>
+              <button type="button" aria-label="場面を減らす" disabled={sceneCount === 1} onClick={() => changeSceneCount(-1)}><ControlIcon name="minus" /></button>
               <span data-testid="scene-count">{sceneCount} ばめん</span>
-              <button type="button" aria-label="場面を増やす" disabled={sceneCount === 10} onClick={() => changeSceneCount(1)}>＋</button>
+              <button type="button" aria-label="場面を増やす" disabled={sceneCount === 10} onClick={() => changeSceneCount(1)}><ControlIcon name="plus" /></button>
               {creationMode === "program" ? <button type="button" data-testid="scene-program" onClick={() => setProgramOpen(true)}>プログラム：{scenePrograms[currentScene]?.moves.length ?? 1}こ</button>
                 : <button type="button" data-testid="scene-motion" onClick={() => { setEditingSceneMood(true); setMoodPickerOpen(true); }}>うごき：{scenePrograms[currentScene] ? "プログラム" : MOOD_NAMES[sceneMoods[currentScene] ?? DEFAULT_ANIMATION_MOOD]}</button>}
             </div>
@@ -1128,13 +1129,13 @@ export function App() {
                       type="button"
                       aria-label="形を小さくする"
                       onClick={() => updateSelected((shape) => ({ ...shape, size: Math.max(0.07, shape.size - 0.035) }), "ちいさく なりました")}
-                    >−</button>
+                    ><ControlIcon name="minus" /></button>
                     <button
                       className="property-button"
                       type="button"
                       aria-label="形を大きくする"
                       onClick={() => updateSelected((shape) => ({ ...shape, size: Math.min(0.42, shape.size + 0.035) }), "おおきく なりました")}
-                    >＋</button>
+                    ><ControlIcon name="plus" /></button>
                   </div>
                 </div>
                 <div className="property-group">
@@ -1146,19 +1147,19 @@ export function App() {
                       data-testid="rotate-left"
                       aria-label="形を左へ回す"
                       onClick={() => updateSelected((shape) => ({ ...shape, rotation: shape.rotation - Math.PI / 12 }), "ひだりへ まわしました")}
-                    >↶</button>
+                    ><ControlIcon name="undo" /></button>
                     <button
                       className="property-button"
                       type="button"
                       data-testid="rotate-right"
                       aria-label="形を右へ回す"
                       onClick={() => updateSelected((shape) => ({ ...shape, rotation: shape.rotation + Math.PI / 12 }), "みぎへ まわしました")}
-                    >↷</button>
+                    ><ControlIcon name="redo" /></button>
                   </div>
                 </div>
                 </>}
                 <button className="property-delete" type="button" aria-label="選んだ形を消す" onClick={deleteSelected}>
-                  × けす
+                  <ControlIcon name="close" /> けす
                 </button>
               </div>
             )}
@@ -1178,7 +1179,7 @@ export function App() {
             </button>
             <button className="fullscreen-button" type="button" aria-label={expanded ? "最大化を解除" : "画面を最大化"}
               aria-pressed={expanded} onClick={() => void toggleFullscreen()}>
-              <span aria-hidden="true">{expanded ? "⊡" : "⛶"}</span>
+              <ControlIcon name={expanded ? "collapse" : "expand"} />
               <small>{expanded ? "もどす" : "ひろげる"}</small>
             </button>
             <button
@@ -1267,7 +1268,7 @@ export function App() {
             <div className="performance-actions">
             <button className="fullscreen-button" type="button" aria-label={expanded ? "最大化を解除" : "画面を最大化"}
               aria-pressed={expanded} onClick={() => void toggleFullscreen()}>
-              <span aria-hidden="true">{expanded ? "⊡" : "⛶"}</span>
+              <ControlIcon name={expanded ? "collapse" : "expand"} />
               <small>{expanded ? "もどす" : "ひろげる"}</small>
             </button>
             <button
@@ -1277,7 +1278,7 @@ export function App() {
               onClick={() => void togglePause()}
               aria-label={playback.playing ? "一時停止" : "再開"}
             >
-              {playback.playing ? "Ⅱ" : "▶"}
+              <ControlIcon name={playback.playing ? "pause" : "play"} />
             </button>
             </div>
           </div>
@@ -1323,7 +1324,7 @@ export function App() {
                 <BackIcon />すこし かえる
               </button>
               <button className="action-card" type="button" onClick={newProject}>
-                <span className="action-icon">＋</span>あたらしく つくる
+                <ControlIcon name="plus" />あたらしく つくる
               </button>
               <button className="action-card" type="button" disabled={recordingVideo} onClick={() => void beginPerformance(undefined, true)}>
                 <span className="action-icon">●</span>{recordingVideo ? "ろくが中" : "MVを ほぞん"}
@@ -1365,7 +1366,7 @@ export function App() {
                 onClick={closeMoodPicker}
                 aria-label="動き選びを閉じる"
               >
-                ×
+                <ControlIcon name="close" />
               </button>
             </header>
             {!editingSceneMood && <button className="pill-button" type="button" data-testid="play-scene-plan" onClick={() => void beginPerformance()}>この うごきで さいせい</button>}
@@ -1403,7 +1404,7 @@ export function App() {
           <section className="parent-panel" role="dialog" aria-modal="true" aria-labelledby="parent-title">
             <header>
               <h2 id="parent-title">おとなの方へ</h2>
-              <button className="icon-button" type="button" onClick={() => setParentOpen(false)} aria-label="閉じる">×</button>
+              <button className="icon-button" type="button" onClick={() => setParentOpen(false)} aria-label="閉じる"><ControlIcon name="close" /></button>
             </header>
             <p>作品と設定はこのブラウザに保存されます。撮影は保護者が許可した場合だけ使えます。写真・作品は送信せず、マイクは使いません。</p>
             <fieldset className="creation-settings">
@@ -1486,7 +1487,7 @@ export function App() {
       {expanded && screen !== "create" && screen !== "perform" && (
         <button className="fullscreen-button fullscreen-exit" type="button" aria-label="最大化を解除"
           onClick={() => void toggleFullscreen()}>
-          <span aria-hidden="true">⊡</span><small>もどす</small>
+          <ControlIcon name="collapse" /><small>もどす</small>
         </button>
       )}
 

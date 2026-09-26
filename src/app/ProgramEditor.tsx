@@ -1,3 +1,4 @@
+import { ControlIcon } from "./ControlIcon";
 import { useState } from "react";
 import { MotionPreview } from "./MotionPreview";
 import { ANIMATION_MOODS, MOOD_NAMES, type AnimationMood } from "../visuals/animationMood";
@@ -21,7 +22,7 @@ export function ProgramEditor({ program, fallback, seconds, onChange, onClose }:
   };
 
   return <div className="parent-overlay"><section className="parent-panel program-editor" role="dialog" aria-modal="true" aria-labelledby="program-title">
-    <header><h2 id="program-title">みんなの プログラム</h2><button className="icon-button" aria-label="プログラムを閉じる" onClick={onClose}>×</button></header>
+    <header><h2 id="program-title">みんなの プログラム</h2><button className="icon-button" aria-label="プログラムを閉じる" onClick={onClose}><ControlIcon name="close" /></button></header>
     <p>①から じゅんばんに うごくよ。カードを おすと うごきを かえられるよ。</p>
     <ol className="program-cards">
       {value.moves.map((mood, index) => <li key={index} data-testid={`program-step-${index}`}>
@@ -29,13 +30,13 @@ export function ProgramEditor({ program, fallback, seconds, onChange, onClose }:
           <strong>{index + 1}</strong><MotionPreview mood={mood} /><span>{MOOD_NAMES[mood]}</span>
         </button>
         <div className="program-step-actions">
-          <button aria-label={`${index + 1}番を前へ`} disabled={index === 0} onClick={() => move(index, -1)}>←</button>
-          <button aria-label={`${index + 1}番を後ろへ`} disabled={index === value.moves.length - 1} onClick={() => move(index, 1)}>→</button>
-          <button aria-label={`${index + 1}番を消す`} disabled={value.moves.length === 1} onClick={() => { onChange({ ...value, moves: value.moves.filter((_, i) => i !== index) }); setSelected(Math.max(0, index - 1)); setChoosing(false); }}>×</button>
+          <button aria-label={`${index + 1}番を前へ`} disabled={index === 0} onClick={() => move(index, -1)}><ControlIcon name="left" /></button>
+          <button aria-label={`${index + 1}番を後ろへ`} disabled={index === value.moves.length - 1} onClick={() => move(index, 1)}><ControlIcon name="right" /></button>
+          <button aria-label={`${index + 1}番を消す`} disabled={value.moves.length === 1} onClick={() => { onChange({ ...value, moves: value.moves.filter((_, i) => i !== index) }); setSelected(Math.max(0, index - 1)); setChoosing(false); }}><ControlIcon name="close" /></button>
         </div>
       </li>)}
     </ol>
-    <button className="pill-button" disabled={value.moves.length >= MAX_PROGRAM_MOVES} onClick={() => { setSelected(value.moves.length); onChange({ ...value, moves: [...value.moves, fallback] }); setChoosing(true); }}>＋ めいれいを たす</button>
+    <button className="pill-button" aria-label="＋ めいれいを たす" disabled={value.moves.length >= MAX_PROGRAM_MOVES} onClick={() => { setSelected(value.moves.length); onChange({ ...value, moves: [...value.moves, fallback] }); setChoosing(true); }}><ControlIcon name="plus" /> めいれいを たす</button>
     {choosing && <div className="program-choices" role="group" aria-label={`${activeIndex + 1}番の動きを選ぶ`}>
       {ANIMATION_MOODS.map((mood) => <button key={mood} aria-pressed={value.moves[activeIndex] === mood} onClick={() => {
         onChange({ ...value, moves: value.moves.map((old, i) => i === activeIndex ? mood : old) }); setChoosing(false);
