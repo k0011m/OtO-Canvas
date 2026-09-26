@@ -92,6 +92,7 @@ function isMusicEvent(value: unknown): value is MusicEvent {
   if (!isRecord(value)) return false;
 
   return (
+    (value.soundWorld === undefined || (typeof value.soundWorld === "string" && WORLD_IDS.has(value.soundWorld))) &&
     typeof value.id === "string" &&
     value.id.length > 0 &&
     typeof value.shapeId === "string" &&

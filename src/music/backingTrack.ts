@@ -61,6 +61,7 @@ function makeEvent(
   if (durationBeats <= 0) return undefined;
 
   const event: MusicEvent = {
+    soundWorld: worldId,
     id: `bgm-${mood}-${index.toString(36)}`,
     shapeId: `bgm:${mood}:${input.role}`,
     beat: input.beat,

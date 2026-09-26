@@ -1,4 +1,5 @@
 import { BARS, BPM, type InstrumentId, type MusicEvent } from "../types/project";
+import { worldSoundNoise, worldSoundSample } from "../music/worldSounds";
 
 const TWO_PI = Math.PI * 2;
 const DEFAULT_SAMPLE_RATE = 22_050;
@@ -247,7 +248,8 @@ async function renderEvent(
   );
   const frequency = midiToFrequency(midiNote);
   const velocity = clamp(Number.isFinite(event.velocity) ? event.velocity : 0.7, 0, 1);
-  const totalSeconds = gateSeconds + releaseSeconds(event.instrumentId);
+  const worldSound = event.soundWorld === "soft" || event.soundWorld === "space" ? event.soundWorld : null;
+  const totalSeconds = gateSeconds + (worldSound ? 0.04 : releaseSeconds(event.instrumentId));
   const endFrame = Math.min(mix.length, startFrame + Math.ceil(totalSeconds * sampleRate));
   let noiseState = hashText(`${event.id}:${event.shapeId}`);
 
@@ -260,7 +262,9 @@ async function renderEvent(
     const time = (frame - startFrame) / sampleRate;
     let sample = 0;
 
-    switch (event.instrumentId) {
+    if (worldSound) {
+      sample = worldSoundSample(worldSound, event.instrumentId, time, gateSeconds, frequency, worldSoundNoise(frame - startFrame));
+    } else switch (event.instrumentId) {
       case "marimba":
         sample = renderMarimba(time, frequency);
         break;

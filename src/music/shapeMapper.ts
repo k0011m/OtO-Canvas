@@ -34,7 +34,7 @@ export function quantizeXToStep(x: number): number {
   return Math.round(normalized(x) * (STEPS_PER_BAR - 1));
 }
 
-export function instrumentForShape(shape: CanvasShape): InstrumentId {
+export function instrumentForShape(shape: Pick<CanvasShape, "kind">): InstrumentId {
   switch (shape.kind) {
     case "circle":
       return "marimba";

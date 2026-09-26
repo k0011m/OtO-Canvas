@@ -344,7 +344,7 @@ export function buildArrangement(
     candidates.push(...buildInstrumentPhrases(motif, bar, safeSeed, worldId));
   }
 
-  return limitPolyphony(candidates);
+  return limitPolyphony(candidates).map((event) => ({ ...event, soundWorld: worldId }));
 }
 
 function stableProjectId(

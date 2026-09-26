@@ -10,6 +10,8 @@ import { instrumentForShape } from "./shapeMapper";
 import { colorSoundProfile } from "./creativeRules";
 import { getSectionAtBeat } from "./sections";
 import { buildBackingTrack } from "./backingTrack";
+import { worldSoundNoise, worldSoundSample } from "./worldSounds";
+import { WORLD_TONICS } from "./scales";
 
 // UIと音声エンジンで初期音量をそろえ、試聴・再生・MV録音へ共通適用する。
 export const DEFAULT_MASTER_VOLUME = 0.7;
@@ -51,6 +53,7 @@ interface ActiveVoice {
 }
 
 interface TriggerOptions {
+  soundWorld?: WorldId;
   instrumentId: InstrumentId;
   midiNote: number;
   velocity: number;
@@ -207,7 +210,7 @@ export class AudioEngine {
     const x = clamp(finiteOr(shape.position.x, 0.5), 0, 1);
     const y = clamp(finiteOr(shape.position.y, 0.5), 0, 1);
     const size = normalizedShapeSize(shape.size);
-    const root = worldId === "bounce" ? 62 : worldId === "space" ? 55 : 60;
+    const root = WORLD_TONICS[worldId];
     const scaleIndex = Math.round((1 - y) * (PENTATONIC.length - 1));
     const profile = colorSoundProfile(shape.colorId);
     const shiftedIndex = scaleIndex + profile.degreeOffset;
@@ -217,6 +220,7 @@ export class AudioEngine {
     const instrumentId = instrumentForShape(shape);
 
     return this.triggerInstrument({
+      soundWorld: worldId,
       instrumentId,
       midiNote,
       velocity: Math.min(0.8, (0.28 + size * 0.28) * profile.velocityScale),
@@ -385,11 +389,8 @@ export class AudioEngine {
     return this.snapshotAt(beat, this.playbackState === "playing");
   }
 
-  /**
-   * Adds a deliberately quiet pentatonic flourish. x/y are normalized canvas
-   * coordinates. Calls are throttled and share the global polyphony ceiling.
-   */
-  liveConduct(x: number, y: number): boolean {
+  /** 選択中の音世界で控えめな音階付きアクセントを加え、連打と同時発音数を制限する。 */
+  liveConduct(x: number, y: number, worldId: WorldId = "bounce"): boolean {
     const context = this.runningContextOrNull();
     if (!context || context.currentTime - this.lastConductTime < 0.1) {
       return false;
@@ -402,10 +403,11 @@ export class AudioEngine {
       (normalizedX * 0.6 + (1 - normalizedY) * 0.4) *
         (PENTATONIC.length - 1),
     );
-    const midiNote = 57 + PENTATONIC[scaleIndex];
+    const midiNote = WORLD_TONICS[worldId] + PENTATONIC[scaleIndex];
     const pan = normalizedX * 1.6 - 0.8;
     const now = context.currentTime + MIN_SCHEDULE_LEAD_SECONDS;
     const firstPlayed = this.triggerInstrument({
+      soundWorld: worldId,
       instrumentId: "chime",
       midiNote,
       velocity: 0.24 + (1 - normalizedY) * 0.12,
@@ -417,6 +419,7 @@ export class AudioEngine {
 
     if (firstPlayed) {
       this.triggerInstrument({
+        soundWorld: worldId,
         instrumentId: "glockenspiel",
         midiNote: midiNote + (normalizedY < 0.45 ? 7 : 5),
         velocity: 0.18,
@@ -545,6 +548,7 @@ export class AudioEngine {
         this.anchorTime +
         (audibleStartBeat - this.anchorBeat) * secondsPerBeat;
       const wasScheduled = this.triggerInstrument({
+        soundWorld: event.soundWorld,
         instrumentId: event.instrumentId,
         midiNote: event.midiNote ?? defaultMidiNote(event.instrumentId),
         velocity: event.velocity,
@@ -704,6 +708,10 @@ export class AudioEngine {
     const pan = clamp(finiteOr(options.pan, 0), -0.85, 0.85);
     const priority = options.priority ?? "auxiliary";
 
+    if (options.soundWorld === "soft" || options.soundWorld === "space") {
+      return this.triggerWorldSound(options.soundWorld, options.instrumentId, midiNote, velocity, durationSeconds, when, pan, priority);
+    }
+
     switch (options.instrumentId) {
       case "marimba":
         return this.triggerMarimba(
@@ -814,6 +822,28 @@ export class AudioEngine {
           priority,
         );
     }
+  }
+
+  /** 共通の音階付き環境音・電子音を短いバッファにし、既存の発音上限と録音経路へ接続する。 */
+  private triggerWorldSound(world: "soft" | "space", instrument: InstrumentId, note: number, velocity: number, duration: number, when: number, pan: number, priority: VoicePriority): boolean {
+    const context = this.runningContextOrNull();
+    if (!context) return false;
+    const end = when + duration + 0.04;
+    const voice = this.createVoice(pan, when, end, priority);
+    if (!voice) return false;
+    const buffer = context.createBuffer(1, Math.ceil((duration + 0.04) * context.sampleRate), context.sampleRate);
+    const samples = buffer.getChannelData(0);
+    const frequency = 440 * 2 ** ((note - 69) / 12);
+    for (let frame = 0; frame < samples.length; frame += 1) {
+      samples[frame] = worldSoundSample(world, instrument, frame / context.sampleRate, duration, frequency, worldSoundNoise(frame));
+    }
+    const source = context.createBufferSource();
+    source.buffer = buffer;
+    source.connect(voice.gain);
+    voice.nodes.add(source);
+    voice.gain.gain.setValueAtTime(velocity * 0.24, when);
+    this.startSource(voice, source, when, end);
+    return true;
   }
 
   /** A short wooden-bar tone: rounded fundamental with one dry upper partial. */

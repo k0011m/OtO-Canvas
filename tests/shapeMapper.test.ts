@@ -91,7 +91,7 @@ describe("mapShapeToMotif", () => {
     "maps %s to the %s voice",
     (kind, instrumentId, visualEvent, isPitched) => {
       // Pen intentionally has no points here: even a tap/legacy stroke is musical.
-      const motif = mapShapeToMotif(makeShape(kind), "soft");
+      const motif = mapShapeToMotif(makeShape(kind), "bounce");
 
       expect(motif.instrumentId).toBe(instrumentId);
       expect(motif.visualEvent).toBe(visualEvent);

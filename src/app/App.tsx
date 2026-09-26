@@ -14,6 +14,8 @@ import { exportAndDownloadWav } from "../export/wavExporter";
 import { audioEngine, DEFAULT_MASTER_VOLUME } from "../music/audioEngine";
 import { buildArrangement, createProject, getSectionAtBeat } from "../music/arranger";
 import { buildBackingTrack } from "../music/backingTrack";
+import { WORLD_SOUND_LABELS } from "../music/worldSounds";
+import { instrumentForShape } from "../music/shapeMapper";
 import {
   clearProjects,
   deleteProject,
@@ -73,17 +75,7 @@ const SHAPE_LABELS: Record<ShapeKind, string> = {
   pen: "おえかきペン",
 };
 
-const SHAPE_INSTRUMENT_LABELS: Record<ShapeKind, string> = {
-  circle: "マリンバ",
-  triangle: "たいこ",
-  line: "ベース",
-  square: "ピアノ",
-  diamond: "ハープ",
-  star: "てっきん",
-  hexagon: "カリンバ",
-  ring: "チャイム",
-  pen: "フルート",
-};
+
 
 const CREATION_TOOLS: readonly ShapeKind[] = [...STAMP_SHAPE_KINDS, "pen"];
 
@@ -591,7 +583,7 @@ export function App() {
       audioEngine.previewShape(nearest.shape, worldId);
       lastLiveShapeAtRef.current = now;
     } else {
-      audioEngine.liveConduct(gesture.x, gesture.y);
+      audioEngine.liveConduct(gesture.x, gesture.y, worldId);
     }
   }, [performanceShapes, worldId]);
 
@@ -1048,12 +1040,12 @@ export function App() {
                   className="tool-button"
                   type="button"
                   data-testid={`tool-${kind}`}
-                  aria-label={`${SHAPE_LABELS[kind]}・${SHAPE_INSTRUMENT_LABELS[kind]}`}
+                  aria-label={`${SHAPE_LABELS[kind]}・${WORLD_SOUND_LABELS[worldId][instrumentForShape({ kind })]}`}
                   aria-pressed={selectedKind === kind}
                   onClick={() => {
                     setSelectedKind(kind);
                     setSelectedId(null);
-                    showToast(`${SHAPE_LABELS[kind]}は ${SHAPE_INSTRUMENT_LABELS[kind]}の おと`);
+                    showToast(`${SHAPE_LABELS[kind]}は ${WORLD_SOUND_LABELS[worldId][instrumentForShape({ kind })]}の おと`);
                     audioEngine.previewShape(
                       {
                         id: `tool-${kind}`,

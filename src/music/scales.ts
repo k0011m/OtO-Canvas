@@ -92,6 +92,7 @@ export function normalizedYToPentatonic(
   );
 }
 
+/** 世界の基準音から図形の音程を決め、楽器コースの打楽器だけを無音程にする。 */
 export function pitchForInstrument(
   y: number,
   instrumentId: InstrumentId,
@@ -122,7 +123,7 @@ export function pitchForInstrument(
       return normalizedYToPentatonic(y, tonic - 12, 10);
     case "drum":
     case "percussion":
-      return undefined;
+      return worldId === "bounce" ? undefined : normalizedYToPentatonic(y, tonic - 12, 10);
   }
 }
 

@@ -42,7 +42,8 @@ export function buildInstrumentPhrases(
   const rotation = ((motif[0]?.step ?? 0) + (bar % 2) * 2) % 16;
   let instrumentIndex = 0;
   for (const [instrumentId, group] of groups) {
-    const phrase = PHRASES[instrumentId];
+    const phrase = worldId !== "bounce" && (instrumentId === "drum" || instrumentId === "percussion")
+      ? PHRASES.marimba : PHRASES[instrumentId];
     const phase = mixSeed(seed, worldId, instrumentId) % phrase.length;
     const [minimum, maximum] = REGISTERS[instrumentId];
     for (let noteIndex = 0; noteIndex < 2; noteIndex += 1) {

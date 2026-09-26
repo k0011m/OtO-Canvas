@@ -62,6 +62,7 @@ export interface CanvasShape {
 }
 
 export interface MusicEvent {
+  soundWorld?: WorldId;
   id: string;
   shapeId: string;
   beat: number;
@@ -147,7 +148,7 @@ export const WORLDS: Record<WorldId, WorldTheme> = {
   soft: {
     id: "soft",
     name: "ふわり",
-    hint: "やさしく ころころ",
+    hint: "みず・かみ・しぜんのおと",
     background: "#f7f4ed",
     surface: "#fffdf8",
     ink: "#252525",
@@ -159,7 +160,7 @@ export const WORLDS: Record<WorldId, WorldTheme> = {
   bounce: {
     id: "bounce",
     name: "ぽんぽん",
-    hint: "げんきに はずむ",
+    hint: "がっきで えんそう",
     background: "#fff4dc",
     surface: "#fffaf0",
     ink: "#29231d",
@@ -171,7 +172,7 @@ export const WORLDS: Record<WorldId, WorldTheme> = {
   space: {
     id: "space",
     name: "きらり",
-    hint: "ゆっくり うちゅう",
+    hint: "ピコピコ でんしのおと",
     background: "#10142c",
     surface: "#191f40",
     ink: "#f7f5ff",
