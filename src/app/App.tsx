@@ -1033,7 +1033,7 @@ export function App() {
         </section>
       )}
 
-      {screen === "create" && (
+      {screen === "create" && !programOpen && !soundProgramOpen && (
         <section className="screen create-screen" aria-label="おとをつくる" data-tools-open={toolsOpen}>
           <header className="top-bar">
             <div>
@@ -1550,6 +1550,7 @@ export function App() {
         </>}
       </section></div>}
       {programOpen && screen === "create" && creationMode === "program" && <ProgramEditor
+        shapes={activeShapes} world={worldId}
         program={scenePrograms[currentScene] ?? null} fallback={sceneMoods[currentScene] ?? "float"} seconds={30 / sceneCount}
         onClose={() => setProgramOpen(false)} onChange={(program) => setScenePrograms((values) => Array.from({ length: 10 }, (_, index) => index === currentScene ? program : values[index] ?? null))}
       />}

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-for (const [width, height] of [[390, 844], [667, 375]]) {
+for (const [width, height] of [[390, 844], [667, 375], [1280, 800]]) {
   // 親の解放、カード入替、反復、保存・再読込、実行表示をスマホ縦横で確かめる。
   test(`program editing and playback at ${width}x${height}`, async ({ page }, info) => {
     await page.setViewportSize({ width, height });
@@ -12,15 +12,29 @@ for (const [width, height] of [[390, 844], [667, 375]]) {
     await page.getByTestId("world-bounce").click();
     await page.getByTestId("canvas-editor").locator("canvas").click({ position: { x: width * .6, y: height * .6 } });
     await page.getByTestId("scene-program").click();
+    await expect(page).toHaveURL("http://127.0.0.1:4173/");
+    const bounds = await page.locator(".block-editor").boundingBox();
+    expect(bounds?.width).toBe(width); expect(bounds?.height).toBe(height);
     await page.getByTestId("program-step-0").locator(".program-command").click();
     await page.getByRole("group", { name: "1番の動きを選ぶ" }).getByRole("button", { name: "なみなみ", exact: true }).click();
     await page.getByRole("button", { name: "＋ めいれいを たす" }).click();
     await page.getByRole("group", { name: "2番の動きを選ぶ" }).getByRole("button", { name: "はじける", exact: true }).click();
     await page.getByRole("button", { name: "2番を前へ" }).click();
     await page.getByRole("button", { name: "3かい", exact: true }).click();
+    await page.getByRole("button", { name: "プログラムを試す", exact: true }).click();
+    await expect(page.getByTestId("program-step-0")).toHaveAttribute("aria-current", "step");
+    await expect(page.getByTestId("program-step-1")).toHaveAttribute("aria-current", "step", { timeout: 3000 });
+    await page.getByRole("button", { name: "試演を止める", exact: true }).click();
+    // 2ブロックが同時に見える縦画面で実ドラッグを検証し、低い横画面では上下ボタンを使う。
+    if (height > 500) {
+      await page.getByTestId("program-step-0").dragTo(page.getByTestId("program-step-1"));
+      await expect(page.getByTestId("program-step-0").locator(".program-command")).toHaveAttribute("aria-label", "1番：なみなみ");
+      await page.getByTestId("program-step-0").dragTo(page.getByTestId("program-step-1"));
+    }
+    expect(await page.locator(".block-editor").evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
     await page.getByTestId("program-step-0").scrollIntoViewIfNeeded();
     await page.screenshot({ path: info.outputPath("program-editor.png") });
-    await expect(page.getByTestId("program-step-0")).toContainText("はじける");
+    await expect(page.getByTestId("program-step-0").locator(".program-command")).toHaveAttribute("aria-label", "1番：はじける");
     await page.getByRole("button", { name: "できた", exact: true }).click();
     await expect.poll(() => page.evaluate(async () => {
       const path = "/src/storage/projectStore.ts";
@@ -48,7 +62,7 @@ for (const [width, height] of [[390, 844], [667, 375]]) {
     await page.getByRole("button", { name: "2番を消す" }).click();
     await expect(page.getByRole("button", { name: "1番を消す" })).toBeDisabled();
     await page.getByRole("button", { name: "うごき１つに もどす" }).click();
-    await expect(page.getByTestId("program-step-0")).toContainText("ゆらゆら");
+    await expect(page.getByTestId("program-step-0").locator(".program-command")).toHaveAttribute("aria-label", "1番：ゆらゆら");
     await expect(page.getByRole("button", { name: "1かい", exact: true })).toHaveAttribute("aria-pressed", "true");
   });
 }

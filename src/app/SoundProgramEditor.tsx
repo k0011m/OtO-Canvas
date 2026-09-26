@@ -14,7 +14,7 @@ function SoundShape({ shape, number, world }: { shape: CanvasShape; number: numb
     context.clearRect(0, 0, 80, 80);
     renderShapes(context, [{ ...shape, position: { x: .5, y: .5 }, size: .6 }], WORLDS[world], { width: 80, height: 80 }, null, true);
   }, [shape, world]);
-  return <span className="sound-shape"><canvas ref={ref} width={80} height={80} aria-hidden="true" /><strong style={{ borderColor: shapeColorValue(shape.colorId) }}>ずけい{number}</strong></span>;
+  return <span className="sound-shape"><canvas ref={ref} width={80} height={80} aria-hidden="true" /><strong style={{ borderColor: shapeColorValue(shape.colorId) }}>{number}</strong></span>;
 }
 
 /** 図形ごとの固定音階と、繰り返し配置できる発音順を別々に編集する。 */
@@ -68,28 +68,28 @@ export function SoundProgramEditor({ shapes, world, steps, seconds, onShapesChan
 
   return <div className="parent-overlay"><section className="parent-panel sound-editor" role="dialog" aria-modal="true" aria-labelledby="sound-program-title">
     <header><h2 id="sound-program-title">おとの プログラム</h2><button className="icon-button" aria-label="音プログラムを閉じる" onClick={onClose}><ControlIcon name="close" /></button></header>
-    <h3>1. ずけいの おとを きめよう</h3>
-    {!shapes.length && <p>まず このばめんに ずけいを おいてね。</p>}
+    <h3 aria-label="1. 図形の音階を決める" className="sound-picture-heading"><span aria-hidden="true">1 · ● → ♪</span></h3>
+    {!shapes.length && <p className="sr-only">まず このばめんに ずけいを おいてね。</p>}
     <div className="sound-shape-list" role="group" aria-label="音をつける図形">
       {shapes.map((shape, index) => <button key={shape.id} aria-label={`ずけい${index + 1}`} aria-pressed={selected?.id === shape.id} onClick={() => { stop(); setSelectedId(shape.id); void preview(shape); }}>
         <SoundShape shape={shape} number={index + 1} world={world} /><span>{NOTE_NAMES[shape.soundNote ?? 0]}</span>
       </button>)}
     </div>
-    {selected && <><p>ずけい{shapes.indexOf(selected) + 1} の おと</p><div className="sound-note-picker" role="group" aria-label="図形の音階">
+    {selected && <><p className="sr-only">ずけい{shapes.indexOf(selected) + 1} の おと</p><div className="sound-note-picker" role="group" aria-label="図形の音階">
       {NOTE_NAMES.map((name, note) => <button key={note} aria-pressed={(selected.soundNote ?? 0) === note} onClick={() => {
         stop(); const next = { ...selected, soundNote: note };
         onShapesChange(shapes.map((shape) => shape.id === selected.id ? next : shape)); void preview(next);
       }}>{name}</button>)}
     </div></>}
-    <h3>2. ならす じゅんばんを つくろう</h3>
-    <p>ずけいを えらんで「じゅんばんに たす」。おなじ ずけいも なんかいでも つかえるよ。</p>
-    <button className="pill-button" disabled={!selected || order.length >= MAX_SOUND_STEPS} onClick={() => {
+    <h3 aria-label="2. 鳴らす順番を作る" className="sound-picture-heading"><span aria-hidden="true">2 · ▶ ▣ → ▣ → ▣</span></h3>
+    <p className="sr-only">ずけいを えらんで「じゅんばんに たす」。おなじ ずけいも なんかいでも つかえるよ。</p>
+    <button className="pill-button" aria-label="じゅんばんに たす" disabled={!selected || order.length >= MAX_SOUND_STEPS} onClick={() => {
       stop();
       if (selected!.soundNote === undefined) onShapesChange(shapes.map((shape) => shape.id === selected!.id ? { ...shape, soundNote: 0 } : shape));
       onChange([...order, selected!.id]);
-    }}><ControlIcon name="plus" />じゅんばんに たす</button>
-    <p>{steps === null ? "いまは おまかせえんそう。カードを たすと じぶんの じゅんばんに なるよ。" : `${order.length} / ${MAX_SOUND_STEPS}こ · ${seconds.toFixed(1)}びょうで 1かい ならすよ。`}</p>
-    {steps !== null && !order.length && <p>カードが ないと このばめんの ずけいは おやすみするよ。</p>}
+    }}><ControlIcon name="plus" /><span aria-hidden="true">♪</span></button>
+    <p className="sr-only">{steps === null ? "いまは おまかせえんそう。カードを たすと じぶんの じゅんばんに なるよ。" : `${order.length} / ${MAX_SOUND_STEPS}こ · ${seconds.toFixed(1)}びょうで 1かい ならすよ。`}</p>
+    {steps !== null && !order.length && <p className="sr-only">カードが ないと このばめんの ずけいは おやすみするよ。</p>}
     <ol className="sound-sequence" aria-label="音の順番">
       {order.map((id, index) => {
         const shape = shapes.find((item) => item.id === id)!;
@@ -99,7 +99,7 @@ export function SoundProgramEditor({ shapes, world, steps, seconds, onShapesChan
         </li>;
       })}
     </ol>
-    <div className="camera-actions"><button className="pill-button" disabled={!order.length} onClick={() => playing === null ? void trySequence() : stop()}><ControlIcon name={playing === null ? "play" : "pause"} />{playing === null ? "じゅんばんを きく" : "とめる"}</button><button className="pill-button" onClick={() => { stop(); onChange(null); }}>おまかせに もどす</button><button className="pill-button" onClick={onClose}>できた</button></div>
-    <p>おとは ドから 高いドまで。ぽんぽんの さんかくは マリンバ、せんは ピアノで なるよ。</p>
+    <div className="camera-actions"><button className="pill-button" aria-label={playing === null ? "じゅんばんを きく" : "とめる"} disabled={!order.length} onClick={() => playing === null ? void trySequence() : stop()}><ControlIcon name={playing === null ? "play" : "pause"} /></button><button className="pill-button" aria-label="おまかせに もどす" onClick={() => { stop(); onChange(null); }}><ControlIcon name="undo" /></button><button className="pill-button" aria-label="できた" onClick={onClose}><svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12 L10 18 L21 5" fill="none" stroke="currentColor" strokeWidth="4" /></svg></button></div>
+    <p className="sr-only">おとは ドから 高いドまで。ぽんぽんの さんかくは マリンバ、せんは ピアノで なるよ。</p>
   </section></div>;
 }
