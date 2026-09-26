@@ -35,6 +35,7 @@ export interface BarVariation {
 }
 
 export interface CreateProjectOptions {
+  scenePrograms?: OtoProject["scenePrograms"];
   sceneCount?: number;
   sceneMoods?: OtoProject["sceneMoods"];
   id?: string;
@@ -401,6 +402,7 @@ export function createProject(
     })),
     sceneCount: normalizeSceneCount(options.sceneCount),
     sceneMoods: options.sceneMoods?.slice(0, 10),
+    scenePrograms: options.scenePrograms?.map((program) => program ? { moves: [...program.moves], repeat: program.repeat } : null),
     events: buildArrangement(shapes, safeSeed, worldId, options.sceneCount),
   };
 

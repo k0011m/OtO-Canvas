@@ -75,6 +75,7 @@ export interface MusicEvent {
 }
 
 export interface OtoProject {
+  scenePrograms?: import("../visuals/motionProgram").ScenePrograms;
   sceneCount?: number;
   sceneMoods?: import("../visuals/animationMood").AnimationMood[];
   version: 1;

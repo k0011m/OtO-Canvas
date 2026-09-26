@@ -30,6 +30,7 @@ export interface VisualFrameInput {
   timeMs: number;
   /** The visual choreography selected before playback. */
   animationMood?: AnimationMood;
+  motionSeconds?: number;
   interaction?: VisualInteraction;
   reducedMotion?: boolean;
   lowPower?: boolean;
@@ -622,7 +623,8 @@ function posedSectionLayout(
     sectionInput,
     seconds,
   );
-  return applyAnimationMood(layout, shape, index, sectionInput, seconds);
+  // 命令の反復では振り付けの時計だけを戻し、音楽への反応は曲全体の拍を使う。
+  return applyAnimationMood(layout, shape, index, sectionInput, sectionInput.motionSeconds ?? seconds);
 }
 
 /**

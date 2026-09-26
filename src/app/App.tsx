@@ -11,6 +11,8 @@ import { ProjectThumbnail } from "./ProjectThumbnail";
 import { useFullscreen } from "./useFullscreen";
 import { CelebrationCamera } from "./CelebrationCamera";
 import { MotionPreview, MOTION_HINTS } from "./MotionPreview";
+import { ProgramEditor } from "./ProgramEditor";
+import { copyScenePrograms, programStepAtBeat, type ScenePrograms } from "../visuals/motionProgram";
 import { loadCameraChoice, saveCameraChoice, openFrontCamera } from "../storage/cameraSettings";
 import { downloadFile, serializeProject, parseProjectFile, MAX_PROJECT_FILE_BYTES } from "../export/projectFile";
 import { loadCreationMode, saveCreationMode, type CreationMode } from "../storage/parentSettings";
@@ -195,6 +197,8 @@ export function App() {
   const [settingsSaved, setSettingsSaved] = useState<boolean | null>(null);
   const [sceneCount, setSceneCount] = useState(() => creationMode === "basic" ? 1 : 3);
   const [sceneMoods, setSceneMoods] = useState<AnimationMood[]>(Array(10).fill(DEFAULT_ANIMATION_MOOD));
+  const [scenePrograms, setScenePrograms] = useState<ScenePrograms>([]);
+  const [programOpen, setProgramOpen] = useState(false);
   const [editingSceneMood, setEditingSceneMood] = useState(false);
   const [currentScene, setCurrentScene] = useState<SceneIndex>(0);
   const [projectTitle, setProjectTitle] = useState("わたしのおと");
@@ -258,7 +262,8 @@ export function App() {
       ].sort((left, right) => left.beat - right.beat || left.id.localeCompare(right.id)),
     [sceneMoods, sceneCount, events, worldId],
   );
-  const playingMood = sceneMoods[sceneForBeat(playback.beat, sceneCount)] ?? DEFAULT_ANIMATION_MOOD;
+  const programStep = programStepAtBeat(playback.beat, sceneCount, sceneMoods, scenePrograms);
+  const playingMood = programStep.mood;
   const activeMood = animationMoodOption(playingMood);
   const activeShapes = useMemo(
     () => shapes.filter((shape) => (shape.scene ?? 0) === currentScene),
@@ -324,6 +329,7 @@ export function App() {
 
   /** 表示する道具だけを切り替え、既存作品の場面・動きは削除しない。 */
   const changeCreationMode = useCallback((mode: CreationMode) => {
+    setProgramOpen(false);
     setCreationMode(mode);
     setSettingsSaved(saveCreationMode(mode));
     setMoodPickerOpen(false);
@@ -377,7 +383,7 @@ export function App() {
         id: projectIdRef.current,
         title: projectTitle,
         timestamp: createdAtRef.current,
-        sceneCount, sceneMoods,
+        sceneCount, sceneMoods, scenePrograms,
       });
       project.updatedAt = Date.now();
       void saveProject(project).catch(() => undefined);
@@ -385,7 +391,7 @@ export function App() {
     return () => {
       if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
     };
-  }, [events, projectTitle, screen, shapes, worldId, sceneCount, sceneMoods]);
+  }, [events, projectTitle, screen, shapes, worldId, sceneCount, sceneMoods, scenePrograms]);
 
   useEffect(
     () => () => {
@@ -448,6 +454,7 @@ export function App() {
     setWorldId(project.worldId);
     setSceneCount(normalizeSceneCount(project.sceneCount));
     setSceneMoods(Array.from({ length: 10 }, (_, index) => project.sceneMoods?.[index] ?? DEFAULT_ANIMATION_MOOD));
+    setScenePrograms(copyScenePrograms(project.scenePrograms));
     setShapes(cloneShapes(project.shapes).map((shape) => ({ ...shape, scene: shape.scene ?? 0 })));
     setProjectTitle(project.title ?? "わたしのおと");
     setCurrentScene(0);
@@ -676,6 +683,8 @@ export function App() {
     setShapes([]);
     setSceneCount(simpleCreation ? 1 : 3);
     setSceneMoods(Array(10).fill(DEFAULT_ANIMATION_MOOD));
+    setScenePrograms([]);
+    setProgramOpen(false);
     setCurrentScene(0);
     setProjectTitle("わたしのおと");
     setUndoStack([]);
@@ -738,6 +747,7 @@ export function App() {
     setWorldId(project.worldId);
     setSceneCount(normalizeSceneCount(project.sceneCount));
     setSceneMoods(Array.from({ length: 10 }, (_, index) => project.sceneMoods?.[index] ?? DEFAULT_ANIMATION_MOOD));
+    setScenePrograms(copyScenePrograms(project.scenePrograms));
     setShapes(cloneShapes(project.shapes).map((shape) => ({ ...shape, scene: shape.scene ?? 0 })));
     setCurrentScene(0);
     setUndoStack([]);
@@ -761,6 +771,7 @@ export function App() {
     setWorldId(project.worldId);
     setSceneCount(normalizeSceneCount(project.sceneCount));
     setSceneMoods(Array.from({ length: 10 }, (_, index) => project.sceneMoods?.[index] ?? DEFAULT_ANIMATION_MOOD));
+    setScenePrograms(copyScenePrograms(project.scenePrograms));
     setShapes(nextShapes);
     setCurrentScene(0);
     setPlayback({ ...EMPTY_PLAYBACK, section: "intro" });
@@ -780,7 +791,7 @@ export function App() {
     const copy = createProject(project.shapes, (project.seed + 1) >>> 0, project.worldId, {
       id: createId("project"),
       title: `${project.title ?? "わたしのおと"} コピー`,
-      sceneCount: project.sceneCount, sceneMoods: project.sceneMoods,
+      sceneCount: project.sceneCount, sceneMoods: project.sceneMoods, scenePrograms: project.scenePrograms,
     });
     await saveProject(copy);
     setGalleryProjects(await listProjects());
@@ -843,8 +854,8 @@ export function App() {
 
   /** ロゴ画面では最後の保存作品、それ以外は現在編集中の作品をファイルにする。 */
   const currentFileProject = useCallback(() => screen === "start" ? restoredProject : createProject(shapes, seedRef.current, worldId, {
-    id: projectIdRef.current, title: projectTitle, timestamp: createdAtRef.current, sceneCount, sceneMoods,
-  }), [screen, restoredProject, shapes, worldId, projectTitle, sceneCount, sceneMoods]);
+    id: projectIdRef.current, title: projectTitle, timestamp: createdAtRef.current, sceneCount, sceneMoods, scenePrograms,
+  }), [screen, restoredProject, shapes, worldId, projectTitle, sceneCount, sceneMoods, scenePrograms]);
 
   /** 専用ファイルに書き出し、写真と親向け設定は含めない。 */
   const exportProjectFile = useCallback(() => {
@@ -863,7 +874,7 @@ export function App() {
       const previous = currentFileProject();
       if (previous?.shapes.length) await saveProject(previous, { requirePersistent: true });
       const project = createProject(imported.shapes, imported.seed, imported.worldId, {
-        id: createId("project"), title: imported.title, sceneCount: imported.sceneCount, sceneMoods: imported.sceneMoods,
+        id: createId("project"), title: imported.title, sceneCount: imported.sceneCount, sceneMoods: imported.sceneMoods, scenePrograms: imported.scenePrograms,
       });
       await saveProject(project, { requirePersistent: true });
       await loadFromGallery(project);
@@ -1035,7 +1046,8 @@ export function App() {
               <button type="button" aria-label="場面を減らす" disabled={sceneCount === 1} onClick={() => changeSceneCount(-1)}>−</button>
               <span data-testid="scene-count">{sceneCount} ばめん</span>
               <button type="button" aria-label="場面を増やす" disabled={sceneCount === 10} onClick={() => changeSceneCount(1)}>＋</button>
-              <button type="button" data-testid="scene-motion" onClick={() => { setEditingSceneMood(true); setMoodPickerOpen(true); }}>うごき：{MOOD_NAMES[sceneMoods[currentScene] ?? DEFAULT_ANIMATION_MOOD]}</button>
+              {creationMode === "program" ? <button type="button" data-testid="scene-program" onClick={() => setProgramOpen(true)}>プログラム：{scenePrograms[currentScene]?.moves.length ?? 1}こ</button>
+                : <button type="button" data-testid="scene-motion" onClick={() => { setEditingSceneMood(true); setMoodPickerOpen(true); }}>うごき：{scenePrograms[currentScene] ? "プログラム" : MOOD_NAMES[sceneMoods[currentScene] ?? DEFAULT_ANIMATION_MOOD]}</button>}
             </div>
             <div className="scene-switcher" role="tablist" aria-label="MVのシーン">
               {Array.from({ length: sceneCount }, (_, index) => index as SceneIndex).map((scene) => {
@@ -1170,7 +1182,7 @@ export function App() {
               type="button"
               data-testid="play-button"
               aria-label="できた曲を再生する"
-              onClick={() => simpleCreation ? void beginPerformance() : openMoodPicker()}
+              onClick={() => simpleCreation || creationMode === "program" ? void beginPerformance() : openMoodPicker()}
             >
               <span className="play-icon" aria-hidden="true" />
               <span>さいせい</span>
@@ -1234,6 +1246,7 @@ export function App() {
             beat={playback.beat}
             section={playback.section}
             animationMood={playingMood}
+            motionSeconds={programStep.programmed ? programStep.elapsedSeconds : undefined}
             playing={playback.playing}
             lowPower={lowPower}
             onConduct={conduct}
@@ -1244,7 +1257,7 @@ export function App() {
             </button>
             <div className="performance-badges" aria-live="polite">
               <span className="section-badge">{SECTION_LABELS[playback.section]}</span>
-              <span className="mood-badge">{activeMood.name} · {activeMood.bgm}</span>
+              <span className="mood-badge">{activeMood.name} · {animationMoodOption(sceneMoods[programStep.scene] ?? "float").bgm}</span>
             </div>
             <div className="performance-actions">
             <button className="fullscreen-button" type="button" aria-label={expanded ? "最大化を解除" : "画面を最大化"}
@@ -1263,6 +1276,10 @@ export function App() {
             </button>
             </div>
           </div>
+          {creationMode === "program" && <div className="program-playback" aria-label="実行中のプログラム">
+            <span>{programStep.scene + 1}ばめん · {programStep.iteration}/{programStep.repeat}かい</span>
+            <ol>{programStep.moves.map((mood, index) => <li key={index} aria-current={index === programStep.index ? "step" : undefined}>{index + 1} {MOOD_NAMES[mood]}</li>)}</ol>
+          </div>}
           <p className="conduct-hint">さわって おとを うごかそう · あと {formatClock(remainingSeconds)}</p>
           <div className="progress-track" role="progressbar" aria-label="曲の進み具合" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(playback.progress * 100)}>
             <div className="progress-fill" style={{ "--progress": playback.progress } as CSSProperties} />
@@ -1280,6 +1297,7 @@ export function App() {
               beat={TOTAL_BEATS - 1}
               section="outro"
               animationMood={playingMood}
+              motionSeconds={programStep.programmed ? programStep.elapsedSeconds : undefined}
               playing={false}
               reducedMotion
               lowPower={lowPower}
@@ -1353,7 +1371,11 @@ export function App() {
                   className={`mood-card mood-card-${backingMood(option.id)}`}
                   type="button"
                   data-testid={`mood-${option.id}`}
-                  onClick={() => { if (editingSceneMood) { setSceneMoods((values) => values.map((value, index) => index === currentScene ? option.id : value)); closeMoodPicker(); } else void beginPerformance(option.id); }}
+                  onClick={() => {
+                    setScenePrograms((values) => values.map((value, index) => index === currentScene ? null : value));
+                    if (editingSceneMood) { setSceneMoods((values) => values.map((value, index) => index === currentScene ? option.id : value)); closeMoodPicker(); }
+                    else void beginPerformance(option.id);
+                  }}
                   aria-label={`${option.name}。${option.motion}。おすすめ：${option.recommendedWorld}`}
                 >
                   <MotionPreview mood={option.id} />
@@ -1395,12 +1417,16 @@ export function App() {
                 <span><strong>図形と色であそぶ</strong><small>図形を置く・動かす・色を変える。音楽と動きはおまかせ。新しい作品は1場面です。</small></span>
               </label>
               <label className="creation-mode-option">
-                <input type="radio" name="creation-mode" value="motion" checked={!simpleCreation} onChange={() => changeCreationMode("motion")} />
+                <input type="radio" name="creation-mode" value="motion" checked={creationMode === "motion"} onChange={() => changeCreationMode("motion")} />
                 <span><strong>動きも編集する</strong><small>場面を1〜10に増減し、15種類の集団の動きを選べます。大きさ・回転の編集も表示します。</small></span>
               </label>
               <p>設定はこのブラウザに自動保存します。別の端末・ブラウザには引き継がれません。ブラウザのデータを消すと設定も消えます。</p>
               <p>「図形と色」に切り替えても作品は消えません。既存作品は最初の場面を編集し、再生では保存済みの全場面と動きを使います。</p>
-              <p>現在の動き編集は選択式です。命令を並べる・くり返すプログラミング学習機能は、まだ含まれていません。</p>
+              <label className="creation-mode-option">
+                <input type="radio" name="creation-mode" value="program" checked={creationMode === "program"} onChange={() => changeCreationMode("program")} />
+                <span><strong>プログラミングであそぶ</strong><small>場面ごとに最大6枚の命令を順番に並べ、全体を1〜3回くり返します。再生中は実行している命令が光ります。</small></span>
+              </label>
+              <p>保存したプログラムは、他の設定でも再生されます。「動きも編集する」で新しい動きを選ぶと、その場面は動き1つに戻ります。</p>
               {settingsSaved !== null && <p className="settings-save-status" role="status">{settingsSaved ? "このブラウザに設定を保存しました。" : "設定を保存できませんでした。今開いている間だけ適用します。"}</p>}
             </fieldset>
             <div className="parent-grid">
@@ -1467,6 +1493,10 @@ export function App() {
         <p>「使わない」または権限を拒否すると、子どもの画面には撮影機能を表示しません。あとから「おとなの方へ」で変更できます。</p>
         <div className="camera-actions"><button className="pill-button" disabled={cameraBusy} onClick={() => void enableCamera()}>{cameraBusy ? "許可を確認中…" : "同意してカメラを許可"}</button><button className="pill-button" onClick={disableCamera}>使わないではじめる</button></div>
       </section></div>}
+      {programOpen && screen === "create" && creationMode === "program" && <ProgramEditor
+        program={scenePrograms[currentScene] ?? null} fallback={sceneMoods[currentScene] ?? "float"} seconds={30 / sceneCount}
+        onClose={() => setProgramOpen(false)} onChange={(program) => setScenePrograms((values) => Array.from({ length: 10 }, (_, index) => index === currentScene ? program : values[index] ?? null))}
+      />}
       {cameraOpen && cameraChoice === "on" && <CelebrationCamera onClose={closeCamera} onDenied={disableCamera} />}
       {toast && <div className="toast" role="status">{toast}</div>}
     </main>

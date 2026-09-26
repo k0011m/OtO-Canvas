@@ -47,6 +47,7 @@ export interface PerformanceCanvasProps {
   section: SectionId;
   /** Selects the performance animation style without changing the composition. */
   animationMood?: AnimationMood;
+  motionSeconds?: number;
   playing?: boolean;
   /** A 0-1 global pulse, or a positioned 0-1 visual interaction. */
   interactionPulse?: InteractionPulse;
@@ -198,6 +199,7 @@ export function PerformanceCanvas({
   beat,
   section,
   animationMood = DEFAULT_ANIMATION_MOOD,
+  motionSeconds,
   playing = false,
   interactionPulse,
   reducedMotion,
@@ -244,6 +246,7 @@ export function PerformanceCanvas({
     beat,
     section,
     animationMood,
+    motionSeconds,
     playing,
     interactionPulse,
     reducedMotion: effectiveReducedMotion,
@@ -257,6 +260,7 @@ export function PerformanceCanvas({
     beat,
     section,
     animationMood,
+    motionSeconds,
     playing,
     interactionPulse,
     reducedMotion: effectiveReducedMotion,
@@ -361,6 +365,7 @@ export function PerformanceCanvas({
         beat: props.beat,
         section: props.section,
         animationMood: props.animationMood,
+        motionSeconds: props.motionSeconds,
         width: viewport.width,
         height: viewport.height,
         dpr: viewport.dpr,

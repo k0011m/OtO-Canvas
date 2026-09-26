@@ -5,6 +5,7 @@ import {
   type OtoProject,
 } from "../types/project";
 import { isAnimationMood } from "../visuals/animationMood";
+import { isScenePrograms } from "../visuals/motionProgram";
 
 export const PROJECT_DATABASE_NAME = "oto-canvas";
 export const PROJECT_STORE_NAME = "projects";
@@ -134,6 +135,7 @@ function hasProjectMetadata(value: unknown): value is Record<string, unknown> {
 export function isOtoProject(value: unknown): value is OtoProject {
   return (
     hasProjectMetadata(value) &&
+    (value.scenePrograms === undefined || isScenePrograms(value.scenePrograms)) &&
     (value.sceneCount === undefined || (Number.isInteger(value.sceneCount) && Number(value.sceneCount) >= 1 && Number(value.sceneCount) <= 10)) &&
     (value.sceneMoods === undefined || (Array.isArray(value.sceneMoods) && value.sceneMoods.length <= 10 && value.sceneMoods.every(isAnimationMood))) &&
     value.bars === BARS &&
