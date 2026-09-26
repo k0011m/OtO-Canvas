@@ -1,3 +1,5 @@
+import { OfflineSettings } from "./OfflineSettings";
+import { cleanAppCache } from "../pwa/registerServiceWorker";
 import { SoundProgramEditor } from "./SoundProgramEditor";
 import { copySoundPrograms, NOTE_NAMES, type SceneSoundPrograms } from "../music/soundProgram";
 import { ControlIcon } from "./ControlIcon";
@@ -899,17 +901,14 @@ export function App() {
     finally { setImporting(false); }
   }, [currentFileProject, loadFromGallery, showToast]);
 
-  /** アプリ専用キャッシュだけを削除し、再読み込みで作業メモリを解放する。 */
+  /** オフライン起動用データと作品を残し、旧キャッシュと作業メモリを整理する。 */
   const clearCacheAndRestart = useCallback(async () => {
-    if (!window.confirm("作品を保存してアプリのキャッシュを消し、再読み込みします。未保存の記念写真は消えます。続けますか？")) return;
+    if (!window.confirm("作品を保存して古いキャッシュを整理し、再読み込みします。オフライン起動用のデータは残します。未保存の記念写真は消えます。続けますか？")) return;
     setMaintenanceBusy(true);
     try {
       const project = currentFileProject();
       if (project?.shapes.length) await saveProject(project, { requirePersistent: true });
-      if ("caches" in window) {
-        const keys = await caches.keys();
-        await Promise.all(keys.filter((key) => key.startsWith("oto-canvas-shell-")).map((key) => caches.delete(key)));
-      }
+      await cleanAppCache();
       audioEngine.stop(); audioEngine.stopScreenBgm(); setCameraOpen(false);
       window.location.reload();
     } catch { setFileMessage("キャッシュを整理できませんでした。作品ファイルの書き出し後にもう一度お試しください。"); setMaintenanceBusy(false); }
@@ -1425,6 +1424,10 @@ export function App() {
               <button className="icon-button" type="button" onClick={() => setParentOpen(false)} aria-label="閉じる"><ControlIcon name="close" /></button>
             </header>
             <p>作品と設定はこのブラウザに保存されます。撮影は保護者が許可した場合だけ使えます。写真・作品は送信せず、マイクは使いません。</p>
+            <OfflineSettings beforeUpdate={async () => {
+              const project = currentFileProject();
+              if (project?.shapes.length) await saveProject(project, { requirePersistent: true });
+            }} />
             <fieldset className="creation-settings">
               <legend>できた記念の写真</legend>
               <p>完成画面で子どもが選んだときだけ、内カメラで撮影します。写真は端末へ保存でき、閉じるとアプリ内から消えます。ピースの自動認識は行いません。許可の確認時にも一度カメラへ接続し、すぐ停止します。</p>
@@ -1461,7 +1464,7 @@ export function App() {
                 <input ref={fileInputRef} type="file" accept=".otocanvas" aria-label="作品ファイル" hidden onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void importProjectFile(file); }} />
               </div>
               {fileMessage && <p role="status">{fileMessage}</p>}
-              <div className="setting-row"><span><strong>キャッシュ・作業メモリ</strong><small>作品と設定は残して再読み込み。アプリのキャッシュが対象です。ブラウザ全体のキャッシュや端末のメモリは消せません。</small></span><button className="pill-button" disabled={maintenanceBusy || importing} onClick={() => void clearCacheAndRestart()}>整理する</button></div>
+              <div className="setting-row"><span><strong>キャッシュ・作業メモリ</strong><small>作品・設定・オフライン起動用データは残して再読み込み。古いアプリのキャッシュが対象です。ブラウザ全体のキャッシュや端末のメモリは消せません。</small></span><button className="pill-button" disabled={maintenanceBusy || importing} onClick={() => void clearCacheAndRestart()}>整理する</button></div>
               <label className="setting-row">
                 <span><strong>作品のなまえ</strong><small>作品棚とジャケットに表示します</small></span>
                 <input
