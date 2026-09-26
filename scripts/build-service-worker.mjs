@@ -19,7 +19,8 @@ const files = await listFiles(root);
 const template = await readFile("public/sw.js", "utf8");
 const hash = createHash("sha256").update(template);
 for (const file of files) hash.update(file).update(await readFile(resolve(root, file)));
-const manifest = { version: hash.digest("hex").slice(0, 16), files };
+// Cloudflare Pagesのindex.html→/転送を避け、HTMLは公開時の正規URLから保存する。
+const manifest = { version: hash.digest("hex").slice(0, 16), files: files.map((file) => file === "index.html" ? "./" : file) };
 if (!files.includes("index.html") || !files.some((file) => file.endsWith(".js"))) throw new Error("App shell is incomplete");
 await writeFile(resolve(root, "sw.js"), template.replace("/* OTO_PRECACHE */ null", JSON.stringify(manifest)));
 console.log(`Offline shell: ${files.length} files (${manifest.version})`);
