@@ -34,6 +34,7 @@ export interface CanvasEditorProps {
   selectedId: string | null;
   theme: WorldTheme;
   disabled?: boolean;
+  allowTransforms?: boolean;
   className?: string;
   onShapesChange: (next: CanvasShape[], actionLabel: string) => void;
   onSelect: (id: string | null) => void;
@@ -113,6 +114,7 @@ function replaceShape(
   return shapes.map((shape) => (shape.id === replacement.id ? replacement : shape));
 }
 
+/** 親が選んだ操作範囲を、ボタン以外のポインター・キー入力にも適用する。 */
 export function CanvasEditor({
   shapes,
   selectedKind,
@@ -120,6 +122,7 @@ export function CanvasEditor({
   selectedId,
   theme,
   disabled = false,
+  allowTransforms = true,
   className,
   onShapesChange,
   onSelect,
@@ -192,8 +195,8 @@ export function CanvasEditor({
     if (!context) return;
     context.setTransform(viewport.dpr, 0, 0, viewport.dpr, 0, 0);
     drawCanvasBackdrop(context, viewport, theme);
-    renderShapes(context, visibleShapes, theme, viewport, selectedId, disabled);
-  }, [disabled, selectedId, theme, viewport, visibleShapes]);
+    renderShapes(context, visibleShapes, theme, viewport, selectedId, disabled, allowTransforms);
+  }, [disabled, selectedId, theme, viewport, visibleShapes, allowTransforms]);
 
   useEffect(() => {
     if (interactionRef.current && !shapes.some((shape) => shape.id === interactionRef.current?.shapeId)) {
@@ -415,9 +418,9 @@ export function CanvasEditor({
 
       const selected = shapes.find((shape) => shape.id === selectedId);
       const rotateTarget =
-        selected && hitTestRotateHandle(selected, point, viewport) ? selected : null;
+        allowTransforms && selected && hitTestRotateHandle(selected, point, viewport) ? selected : null;
       const scaleTarget =
-        !rotateTarget && selected && hitTestScaleHandle(selected, point, viewport) ? selected : null;
+        allowTransforms && !rotateTarget && selected && hitTestScaleHandle(selected, point, viewport) ? selected : null;
       const hitShape =
         rotateTarget ?? scaleTarget ?? shapesByFrontmost(shapes).find((shape) => hitTestShape(shape, point, viewport));
 
@@ -454,6 +457,7 @@ export function CanvasEditor({
     [
       disabled,
       makeStrokeShape,
+      allowTransforms,
       onPreview,
       onSelect,
       pointFromClient,
@@ -577,7 +581,7 @@ export function CanvasEditor({
 
   const handleWheel = useCallback(
     (event: ReactWheelEvent<HTMLCanvasElement>): void => {
-      if (disabled || !selectedShape) return;
+      if (disabled || !allowTransforms || !selectedShape) return;
       event.preventDefault();
       const step = event.deltaY < 0 ? 0.018 : -0.018;
       changeSelected(
@@ -585,7 +589,7 @@ export function CanvasEditor({
         step > 0 ? "図形をおおきくした" : "図形をちいさくした",
       );
     },
-    [changeSelected, disabled, selectedShape],
+    [changeSelected, disabled, selectedShape, allowTransforms],
   );
 
   const cycleSelection = useCallback(
@@ -646,6 +650,8 @@ export function CanvasEditor({
         setStatus(`${KIND_LABELS[selectedShape.kind]}をけしました`);
         return;
       }
+
+      if (!allowTransforms && ["+", "=", "-", "_", "r"].includes(event.key.toLowerCase())) return;
 
       if (event.key === "+" || event.key === "=") {
         event.preventDefault();
@@ -715,6 +721,7 @@ export function CanvasEditor({
       addShape,
       changeSelected,
       cycleSelection,
+      allowTransforms,
       disabled,
       onPreview,
       onSelect,
@@ -745,7 +752,8 @@ export function CanvasEditor({
       data-shape-count={shapes.length}
     >
       <p id={instructionsId} style={SCREEN_READER_ONLY}>
-        空いている場所を押すと図形を置けます。ペンでは指やマウスを動かして絵を描けます。図形を押して動かし、右下の取っ手で大きさ、上の取っ手で向きを変えられます。キーボードでは角かっこで図形を選び、矢印で移動、プラスとマイナスで拡大縮小、Rで回転、Deleteで削除、Enterで音を鳴らします。
+        空いている場所を押すと図形を置けます。ペンでは指やマウスを動かして絵を描けます。図形を押すと選んで動かせます。キーボードでは角かっこで図形を選び、矢印で移動、Deleteで削除、Enterで音を鳴らします。
+        {allowTransforms && "右下の取っ手で大きさ、上の取っ手で向きを変えられます。プラスとマイナスで拡大縮小、Rで回転できます。"}
       </p>
       <p id={statusId} role="status" aria-live="polite" style={SCREEN_READER_ONLY}>
         {status}

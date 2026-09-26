@@ -9,6 +9,7 @@ import {
 import { CanvasEditor } from "../canvas/CanvasEditor";
 import { ProjectThumbnail } from "./ProjectThumbnail";
 import { useFullscreen } from "./useFullscreen";
+import { loadCreationMode, saveCreationMode, type CreationMode } from "../storage/parentSettings";
 import { downloadJacketPng, downloadRecordedVideo } from "../export/artworkExporter";
 import { exportAndDownloadWav } from "../export/wavExporter";
 import { audioEngine, DEFAULT_MASTER_VOLUME } from "../music/audioEngine";
@@ -181,7 +182,10 @@ export function App() {
   const [screen, setScreen] = useState<Screen>("start");
   const [worldId, setWorldId] = useState<WorldId>("soft");
   const [shapes, setShapes] = useState<CanvasShape[]>([]);
-  const [sceneCount, setSceneCount] = useState(3);
+  const [creationMode, setCreationMode] = useState(loadCreationMode);
+  const simpleCreation = creationMode === "basic";
+  const [settingsSaved, setSettingsSaved] = useState<boolean | null>(null);
+  const [sceneCount, setSceneCount] = useState(() => creationMode === "basic" ? 1 : 3);
   const [sceneMoods, setSceneMoods] = useState<AnimationMood[]>(Array(10).fill(DEFAULT_ANIMATION_MOOD));
   const [editingSceneMood, setEditingSceneMood] = useState(false);
   const [currentScene, setCurrentScene] = useState<SceneIndex>(0);
@@ -257,6 +261,16 @@ export function App() {
       setToast((current) => (current === message ? null : current));
     }, 2100);
   }, []);
+
+  /** 表示する道具だけを切り替え、既存作品の場面・動きは削除しない。 */
+  const changeCreationMode = useCallback((mode: CreationMode) => {
+    setCreationMode(mode);
+    setSettingsSaved(saveCreationMode(mode));
+    setMoodPickerOpen(false);
+    setCurrentScene(0);
+    setSelectedId(null);
+    if (shapes.length === 0) setSceneCount(mode === "basic" ? 1 : 3);
+  }, [shapes.length]);
 
   useEffect(() => {
     let active = true;
@@ -600,7 +614,7 @@ export function App() {
     createdAtRef.current = Date.now();
     seedRef.current = seedFromText(projectIdRef.current);
     setShapes([]);
-    setSceneCount(3);
+    setSceneCount(simpleCreation ? 1 : 3);
     setSceneMoods(Array(10).fill(DEFAULT_ANIMATION_MOOD));
     setCurrentScene(0);
     setProjectTitle("わたしのおと");
@@ -612,7 +626,7 @@ export function App() {
     setRemixVersion((value) => value + 1);
     setRestoredProject(null);
     setScreen("world");
-  }, []);
+  }, [simpleCreation]);
 
   const remix = useCallback(() => {
     seedRef.current = (seedRef.current + 0x9e3779b9) >>> 0;
@@ -888,9 +902,9 @@ export function App() {
               <span>OTO CANVAS</span>
             </div>
             <div className="top-bar-actions">
-              <button className="icon-button" type="button" onClick={remix} disabled={shapes.length === 0} aria-label="音をリミックスする">
+              {!simpleCreation && <button className="icon-button" type="button" onClick={remix} disabled={shapes.length === 0} aria-label="音をリミックスする">
                 ⤨
-              </button>
+              </button>}
               <button className="icon-button" type="button" disabled={undoStack.length === 0} onClick={undo} aria-label="ひとつ戻す">
                 ↶
               </button>
@@ -904,7 +918,7 @@ export function App() {
           </header>
 
           <div className="canvas-stage" data-testid="canvas-editor">
-            <div className="scene-controls" role="group" aria-label="場面と動き">
+            {!simpleCreation && <><div className="scene-controls" role="group" aria-label="場面と動き">
               <button type="button" aria-label="場面を減らす" disabled={sceneCount === 1} onClick={() => changeSceneCount(-1)}>−</button>
               <span data-testid="scene-count">{sceneCount} ばめん</span>
               <button type="button" aria-label="場面を増やす" disabled={sceneCount === 10} onClick={() => changeSceneCount(1)}>＋</button>
@@ -929,7 +943,9 @@ export function App() {
                 <button className="copy-scene" type="button" onClick={copyPreviousScene}>まえを うつす</button>
               )}
             </div>
+            </>}
             <CanvasEditor
+              allowTransforms={!simpleCreation}
               shapes={activeShapes}
               selectedKind={selectedKind}
               selectedColorId={selectedColorId}
@@ -950,7 +966,7 @@ export function App() {
 
 
             {selectedId && toolsOpen && (
-              <div className="selection-controls" aria-label="選んだ形の色・大きさ・向きを変える">
+              <div className="selection-controls" aria-label={simpleCreation ? "選んだ形の色を変える" : "選んだ形の色・大きさ・向きを変える"}>
                 <div className="property-group">
                   <span className="property-label">いろ</span>
                   <div className="color-palette" role="group" aria-label="色を選ぶ">
@@ -974,7 +990,7 @@ export function App() {
                     ))}
                   </div>
                 </div>
-                <div className="property-group">
+                {!simpleCreation && <><div className="property-group">
                   <span className="property-label">おおきさ</span>
                   <div className="property-actions">
                     <button
@@ -1010,6 +1026,7 @@ export function App() {
                     >↷</button>
                   </div>
                 </div>
+                </>}
                 <button className="property-delete" type="button" aria-label="選んだ形を消す" onClick={deleteSelected}>
                   × けす
                 </button>
@@ -1040,7 +1057,7 @@ export function App() {
               type="button"
               data-testid="play-button"
               aria-label="できた曲を再生する"
-              onClick={openMoodPicker}
+              onClick={() => simpleCreation ? void beginPerformance() : openMoodPicker()}
             >
               <span className="play-icon" aria-hidden="true" />
               <span>さいせい</span>
@@ -1185,7 +1202,7 @@ export function App() {
         </section>
       )}
 
-      {moodPickerOpen && screen === "create" && (
+      {!simpleCreation && moodPickerOpen && screen === "create" && (
         <div
           className="mood-overlay"
           role="presentation"
@@ -1253,6 +1270,22 @@ export function App() {
               <button className="icon-button" type="button" onClick={() => setParentOpen(false)} aria-label="閉じる">×</button>
             </header>
             <p>作品はこの端末の中だけに保存されます。ログイン、広告、カメラ、マイク、外部送信はありません。</p>
+            <fieldset className="creation-settings">
+              <legend>子どもに表示する機能</legend>
+              <p>興味や慣れ具合に合わせて選べます。いつでも変更できます。</p>
+              <label className="creation-mode-option">
+                <input type="radio" name="creation-mode" value="basic" checked={simpleCreation} onChange={() => changeCreationMode("basic")} />
+                <span><strong>図形と色であそぶ</strong><small>図形を置く・動かす・色を変える。音楽と動きはおまかせ。新しい作品は1場面です。</small></span>
+              </label>
+              <label className="creation-mode-option">
+                <input type="radio" name="creation-mode" value="motion" checked={!simpleCreation} onChange={() => changeCreationMode("motion")} />
+                <span><strong>動きも編集する</strong><small>場面を1〜10に増減し、15種類の集団の動きを選べます。大きさ・回転の編集も表示します。</small></span>
+              </label>
+              <p>設定はこのブラウザに自動保存します。別の端末・ブラウザには引き継がれません。ブラウザのデータを消すと設定も消えます。</p>
+              <p>「図形と色」に切り替えても作品は消えません。既存作品は最初の場面を編集し、再生では保存済みの全場面と動きを使います。</p>
+              <p>現在の動き編集は選択式です。命令を並べる・くり返すプログラミング学習機能は、まだ含まれていません。</p>
+              {settingsSaved !== null && <p className="settings-save-status" role="status">{settingsSaved ? "このブラウザに設定を保存しました。" : "設定を保存できませんでした。今開いている間だけ適用します。"}</p>}
+            </fieldset>
             <div className="parent-grid">
               <label className="setting-row">
                 <span><strong>作品のなまえ</strong><small>作品棚とジャケットに表示します</small></span>

@@ -14,6 +14,7 @@ export interface CanvasViewport {
 export interface RenderShapeOptions {
   selected?: boolean;
   disabled?: boolean;
+  allowTransforms?: boolean;
 }
 
 export const MIN_SHAPE_SIZE = 0.07;
@@ -333,7 +334,8 @@ function paddedSelectionBounds(shape: CanvasShape, viewport: CanvasViewport): Lo
   };
 }
 
-function drawSelection(context: CanvasRenderingContext2D, shape: CanvasShape, theme: WorldTheme, viewport: CanvasViewport): void {
+/** かんたん設定でも選択枠は残し、使えない回転・拡縮ハンドルだけを隠す。 */
+function drawSelection(context: CanvasRenderingContext2D, shape: CanvasShape, theme: WorldTheme, viewport: CanvasViewport, allowTransforms = true): void {
   const bounds = paddedSelectionBounds(shape, viewport);
   const scalePoint = { x: bounds.right, y: bounds.bottom };
   const rotatePoint = { x: (bounds.left + bounds.right) / 2, y: bounds.top - ROTATE_HANDLE_GAP };
@@ -346,6 +348,10 @@ function drawSelection(context: CanvasRenderingContext2D, shape: CanvasShape, th
   context.setLineDash([7, 6]);
   context.strokeRect(bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top);
   context.setLineDash([]);
+  if (!allowTransforms) {
+    context.restore();
+    return;
+  }
   context.beginPath();
   context.moveTo(rotatePoint.x, bounds.top);
   context.lineTo(rotatePoint.x, rotatePoint.y);
@@ -410,14 +416,15 @@ export function renderShape(context: CanvasRenderingContext2D, shape: CanvasShap
     context.restore();
   }
   context.shadowColor = "transparent";
-  if (options.selected) drawSelection(context, shape, theme, viewport);
+  if (options.selected) drawSelection(context, shape, theme, viewport, options.allowTransforms);
   context.restore();
 }
 
-export function renderShapes(context: CanvasRenderingContext2D, shapes: readonly CanvasShape[], theme: WorldTheme, viewport: CanvasViewport, selectedId: string | null, disabled = false): void {
+/** 選択状態と許可された編集ハンドルを各図形の描画へ渡す。 */
+export function renderShapes(context: CanvasRenderingContext2D, shapes: readonly CanvasShape[], theme: WorldTheme, viewport: CanvasViewport, selectedId: string | null, disabled = false, allowTransforms = true): void {
   const orderedShapes = [...shapes].sort((left, right) => left.zIndex - right.zIndex);
   for (const shape of orderedShapes) {
-    renderShape(context, shape, theme, viewport, { selected: shape.id === selectedId, disabled });
+    renderShape(context, shape, theme, viewport, { selected: shape.id === selectedId, disabled, allowTransforms });
   }
 }
 
