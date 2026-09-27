@@ -1242,3 +1242,7 @@ button:focus-visible,
 .sound-editor .sound-sequence > li { border: 3px solid #4394c7; border-radius: 12px; background: #d8eeff; box-shadow: 0 4px 0 #377cab; }
 .sound-bgm-choice button { min-width: 76px; font-size: 22px; }
 .sound-bgm-choice button[aria-pressed="true"] { background: #d9cfff; border: 3px solid #6651b4; color: #30215a; }
+
+/* 募集中のアンケートへの入口を、端末の安全領域を避けて左下に置く。 */
+.start-survey-entry { position: absolute; z-index: 1; left: max(18px, env(safe-area-inset-left)); bottom: max(18px, env(safe-area-inset-bottom)); display: inline-flex; align-items: center; justify-content: center; min-height: 48px; color: var(--ink); text-decoration: none; }
+@media (max-width: 540px) and (orientation: portrait) { .start-screen { padding-bottom: max(84px, calc(env(safe-area-inset-bottom) + 72px)); } }

@@ -930,6 +930,7 @@ export function App() {
     <main className={`app-shell${expanded ? " app-shell--expanded" : ""}`} style={worldStyle(worldId)}>
       {screen === "start" && !cameraIntro && (
         <section className="screen start-screen" aria-labelledby="start-title">
+          <a className="quiet-button start-survey-entry" href="/?survey=1">いまだけアンケート</a>
           <button
             className="quiet-button parent-entry"
             type="button"
