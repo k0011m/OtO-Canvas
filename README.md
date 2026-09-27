@@ -394,3 +394,9 @@ OtoCanvas本体は[MIT License](./LICENSE)で提供します。利用中のOSS�
 同じサイトの`/?survey=1`に子ども2問と親向けアンケート、`/?survey=admin`に認証付き集計を追加しました。開発意図・項目・Cloudflare D1/Pages Functionsの設定・管理キー・再送と個人情報の扱いは[SURVEY_OPERATION.md](./SURVEY_OPERATION.md)を参照してください。通常の制作機能は引き続きブラウザ内で動作しますが、アンケートの送信と集計にはオンラインのCloudflareバックエンドが必要です。既存の共有ZIPにはこの追加機能は含まれていません。
 
 管理者認証はハッシュのみ保存する方式です。設定は `SURVEY_ADMIN_KEY_HASH`、移行手順は [SURVEY_OPERATION.md](SURVEY_OPERATION.md) を参照してください。
+
+### 2026-09-27：検索用タイトル・説明文とサイトマップ
+
+- `index.html`の`title`と`meta description`を、図形で音楽と動画をつくる子ども向け創作アプリの紹介文へ変更しました。
+- `public/sitemap.xml`を追加。公開先は`https://oto-canvas.com/sitemap.xml`で、トップページだけを掲載します。アンケート・管理画面は含めません（サイトマップからの除外自体は検索掲載の禁止ではありません）。
+- 今回はrobots.txt・canonical・紹介ページの追加やGoogle Search Consoleの登録操作は行いません。検索結果の文面・掲載時期・順位はGoogleが判断します。
