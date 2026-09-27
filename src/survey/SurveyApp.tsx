@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { CHILD_LABELS, contactCsv, emptyContact, emptySurvey, LABELS, OPTIONS, surveyCsv, TEXT_LABELS, validateSurvey, type SurveyAnswer, type SurveyRow } from "./model";
 import { downloadFile } from "../export/projectFile";
 import "./survey.css";
+import { SurveyResponseManager } from "./SurveyResponseManager";
 import { ContactFields, ContactReview } from "./SurveyContact";
 
 const DRAFT = "otocanvas.survey.pending.v1";
@@ -55,6 +56,7 @@ function SurveyAdmin() {
     {rows && <><div className="survey-filters"><label>年齢<select value={age} onChange={e => setAge(e.target.value)}><option value="all">すべて</option><option>3-4</option><option>5-6</option><option>7-8</option><option value="other">その他の年齢</option><option value="unknown">未回答</option></select></label><label>モード<select value={mode} onChange={e => setMode(e.target.value)}><option value="">すべて</option>{OPTIONS.mode.map(x => <option key={x}>{x}</option>)}</select></label>
     <button onClick={() => downloadFile(new Blob([surveyCsv(filtered)], { type: "text/csv;charset=utf-8" }), "otocanvas-survey.csv")}>絞り込んだ回答をCSV保存</button><button onClick={() => { setRows(null); setKey(""); }}>ログアウト</button></div>
     <p className="survey-total">{filtered.length}組 <small>全{rows.length}組中</small></p><p>任意の連絡先は分析や同じ子どもの再回答の識別には使用しません。「人数」ではなく「回答組数」として扱ってください。</p>
+    <SurveyResponseManager adminKey={key} rows={filtered} onTrash={id => setRows(old => old?.filter(r => r.response.id !== id) ?? null)} onRestore={row => setRows(old => old && !old.some(r => r.response.id === row.response.id) ? [...old, row].sort((a, b) => a.seq - b.seq) : old)} />
     <Chart title="子ども：どうだった？" labels={CHILD_LABELS.fun} values={filtered.map(r => r.response.child.fun === null ? null : CHILD_LABELS.fun[r.response.child.fun])} />
     <Chart title="子ども：また遊びたい？" labels={CHILD_LABELS.again} values={filtered.map(r => r.response.child.again === null ? null : CHILD_LABELS.again[r.response.child.again])} />
     {(Object.keys(OPTIONS) as (keyof typeof OPTIONS)[]).filter(k => k !== "help" && k !== "usualPlay").map(k => <Chart key={k} title={LABELS[k]} labels={OPTIONS[k]} values={filtered.map(r => r.response.parent[k] as string)} />)}
