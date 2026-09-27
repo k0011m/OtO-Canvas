@@ -21,23 +21,26 @@ export const LABELS: Record<keyof typeof OPTIONS, string> = {
 };
 export const TEXT_LABELS = { initiative: "自分で選んだり工夫した場面があれば教えてください。なければ「なし」で構いません。", homeReason: "家庭で使わせたい・使わせたくない理由", settingsReason: "親向け設定で迷った点", feedback: "気になった点、変えてほしい点" };
 export const CHILD_LABELS = { fun: ["たのしかった", "ふつう", "たのしくなかった"], again: ["あそびたい", "どっちでもない", "あそびたくない"] };
-export type SurveyContact = { acknowledgmentName: string; publishConsent: boolean; email: string; mailConsent: boolean; childName: string };
+export type SurveyContact = { competitionScope?: "tech-koshien" | "tech-koshien-and-future"; acknowledgmentName: string; publishConsent: boolean; email: string; mailConsent: boolean; childName: string };
 /** 連絡先を希望しない回答と旧回答に共通の初期値を返す。 */
-export function emptyContact(): SurveyContact { return { acknowledgmentName: "", publishConsent: false, email: "", mailConsent: false, childName: "" }; }
+export function emptyContact(): SurveyContact { return { competitionScope: "tech-koshien-and-future", acknowledgmentName: "", publishConsent: false, email: "", mailConsent: false, childName: "" }; }
 /** 利用目的ごとの同意を検証し、同意のない名前・連絡先は受理しない。 */
 export function validateContact(value: unknown): SurveyContact | null {
   if (value === undefined) return emptyContact();
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const c = value as SurveyContact;
+  if (c.competitionScope !== undefined && !["tech-koshien", "tech-koshien-and-future"].includes(c.competitionScope)) return null;
   if (typeof c.publishConsent !== "boolean" || typeof c.mailConsent !== "boolean") return null;
   for (const field of ["acknowledgmentName", "childName", "email"] as const) if (typeof c[field] !== "string" || /[\r\n\x00-\x1f\x7f]/.test(c[field])) return null;
-  const result = { acknowledgmentName: c.acknowledgmentName.trim(), publishConsent: c.publishConsent, email: c.email.trim(), mailConsent: c.mailConsent, childName: c.childName.trim() };
+  const result = { ...(c.competitionScope === undefined ? {} : { competitionScope: c.competitionScope }), acknowledgmentName: c.acknowledgmentName.trim(), publishConsent: c.publishConsent, email: c.email.trim(), mailConsent: c.mailConsent, childName: c.childName.trim() };
   if (result.acknowledgmentName.length > 80 || result.childName.length > 80 || result.email.length > 254) return null;
   if (result.publishConsent !== Boolean(result.acknowledgmentName)) return null;
   if (result.mailConsent !== Boolean(result.email) || (result.childName && !result.mailConsent)) return null;
   if (result.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result.email)) return null;
   return result;
 }
+/** 旧回答の同意範囲を広げず、新しい同意と区別して表示する。 */
+export function contactScopeLabel(contact: SurveyContact): string { return contact.competitionScope === "tech-koshien-and-future" ? "テック甲子園や今後出場する大会" : "テック甲子園のみ（旧同意）"; }
 export type SurveyAnswer = {
   contact?: SurveyContact;
   version: 1; id: string; consent: true; child: { fun: number | null; again: number | null };
@@ -90,11 +93,11 @@ export function surveyCsv(rows: SurveyRow[]): string {
 
 /** 実験回答を含めず、同意済みの謝辞・お礼用情報だけを管理者向けCSVにする。 */
 export function contactCsv(rows: SurveyRow[]): string {
-  const header = ["謝辞掲載名", "謝辞掲載への同意", "結果・お礼メール送付先", "メール送付への同意", "メール内のお子さまの呼び名"];
+  const header = ["謝辞掲載名", "謝辞掲載への同意", "結果・お礼メール送付先", "メール送付への同意", "メール内のお子さまの呼び名", "同意した対象大会"];
   const records = rows.flatMap(row => {
     const c = validateContact(row.response.contact);
     if (!c || (!c.publishConsent && !c.mailConsent)) return [];
-    return [[c.acknowledgmentName, c.publishConsent ? "同意あり" : "", c.email, c.mailConsent ? "同意あり" : "", c.mailConsent ? c.childName || "お子さま" : ""]];
+    return [[c.acknowledgmentName, c.publishConsent ? "同意あり" : "", c.email, c.mailConsent ? "同意あり" : "", c.mailConsent ? c.childName || "お子さま" : "", contactScopeLabel(c)]];
   });
   return "\uFEFF" + [header, ...records].map(row => row.map(csvCell).join(",")).join("\r\n");
 }

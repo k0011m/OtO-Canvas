@@ -39,6 +39,11 @@ describe("survey model and authentication", () => {
     const rows = [{ seq: 1, created_at: "2026-09-27", response: answer }];
     expect(surveyCsv(rows)).not.toContain("parent@example.test"); expect(surveyCsv(rows)).not.toContain("謝辞テスト");
     expect(contactCsv(rows)).toContain("parent@example.test"); expect(contactCsv(rows)).toContain("お子さま"); expect(contactCsv(rows)).toContain("'=謝辞テスト");
+    expect(contactCsv(rows)).toContain("テック甲子園のみ（旧同意）");
+    const expanded = { ...answer, contact: { ...answer.contact, competitionScope: "tech-koshien-and-future" as const } };
+    expect(validateSurvey(expanded)?.contact?.competitionScope).toBe("tech-koshien-and-future");
+    expect(contactCsv([{ ...rows[0], response: expanded }])).toContain("テック甲子園や今後出場する大会");
+    expect(validateSurvey({ ...answer, contact: { ...answer.contact, competitionScope: "invalid" } })).toBeNull();
     expect(contactCsv(rows)).not.toContain(answer.id); expect(contactCsv(rows)).not.toContain("年齢");
     expect(validateSurvey({ ...answer, contact: undefined })?.contact).toEqual(emptyContact());
     expect(validateSurvey({ ...answer, contact: { ...answer.contact, publishConsent: false } })).toBeNull();

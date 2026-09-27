@@ -32,7 +32,7 @@ test("mobile child and parent survey retries and administrator can export", asyn
   await page.getByRole("radio", { name: "合っている", exact: true }).check();
   await page.getByRole("checkbox", { name: /謝辞に、入力した名前を掲載してよい/ }).check();
   await page.getByLabel("謝辞に載せるお名前（ニックネーム・本名どちらも可）").fill("ローカル謝辞テスト");
-  await page.getByRole("checkbox", { name: /大会結果と感謝のメールを受け取りたい/ }).check();
+  await page.getByRole("checkbox", { name: /大会の結果と感謝のメールを受け取りたい/ }).check();
   await page.getByLabel("保護者のメールアドレス", { exact: true }).fill("local-parent@example.test");
   await page.getByLabel("お礼メールで使うお子さまの呼び名（任意）").fill("テスト呼び名");
   await page.getByRole("heading", { name: "最後に、ご希望の方だけ" }).scrollIntoViewIfNeeded();
