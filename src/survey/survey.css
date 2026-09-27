@@ -44,3 +44,6 @@
 .survey-admin details { padding: 18px; border-bottom: 1px solid #d8e0da; }
 .survey-shell [role=alert] { background: #fff0e9; border-left: 4px solid #b85135; padding: 16px; }
 @media (max-width: 540px) { .survey-shell { padding: 0 10px 24px; } .survey-header { min-height: 65px; font-size: 12px; } .survey-paper { margin: 6px auto; padding: 24px 18px; border-radius: 22px; } .survey-faces { gap: 7px; } .survey-faces button { padding: 14px 4px; border-radius: 16px; } .survey-bar { grid-template-columns: 1fr 80px; } .survey-bar meter { grid-column: 1; } .survey-bar b { grid-column: 2; grid-row: auto; } }
+
+.survey-contact { margin-top: 32px; padding-top: 12px; border-top: 2px solid #d8e0da; overflow-wrap: anywhere; }
+.survey-contact h2 { font-size: 22px; }

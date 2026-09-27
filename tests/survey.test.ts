@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { emptySurvey, surveyCsv, validateSurvey } from "../src/survey/model";
+import { contactCsv, emptyContact, emptySurvey, surveyCsv, validateSurvey } from "../src/survey/model";
 import { authorized } from "../functions/api/survey";
 
 describe("survey model and authentication", () => {
@@ -31,6 +31,23 @@ describe("survey model and authentication", () => {
     expect(validateSurvey({ ...answer, parent: { ...answer.parent, usualPlay: ["不正な選択"] } })).toBeNull();
     expect(validateSurvey({ ...answer, parent: { ...answer.parent, usualPlay: ["外遊び・運動", "外遊び・運動"] } })).toBeNull();
     expect(validateSurvey({ ...answer, parent: { ...answer.parent, screenTime: "不正な選択" } })).toBeNull();
+  });
+  it("keeps optional contact consent separate from experiment exports", () => {
+    const answer = emptySurvey();
+    answer.contact = { acknowledgmentName: "=謝辞テスト", publishConsent: true, email: "parent@example.test", mailConsent: true, childName: "" };
+    expect(validateSurvey(answer)).toEqual(answer);
+    const rows = [{ seq: 1, created_at: "2026-09-27", response: answer }];
+    expect(surveyCsv(rows)).not.toContain("parent@example.test"); expect(surveyCsv(rows)).not.toContain("謝辞テスト");
+    expect(contactCsv(rows)).toContain("parent@example.test"); expect(contactCsv(rows)).toContain("お子さま"); expect(contactCsv(rows)).toContain("'=謝辞テスト");
+    expect(contactCsv(rows)).not.toContain(answer.id); expect(contactCsv(rows)).not.toContain("年齢");
+    expect(validateSurvey({ ...answer, contact: undefined })?.contact).toEqual(emptyContact());
+    expect(validateSurvey({ ...answer, contact: { ...answer.contact, publishConsent: false } })).toBeNull();
+    expect(validateSurvey({ ...answer, contact: { ...answer.contact, mailConsent: false } })).toBeNull();
+    expect(validateSurvey({ ...answer, contact: { ...answer.contact, email: "bad" } })).toBeNull();
+    expect(validateSurvey({ ...answer, contact: { ...answer.contact, childName: "a\nBcc:bad" } })).toBeNull();
+    expect(validateSurvey({ ...answer, contact: { ...emptyContact(), childName: "呼び名" } })).toBeNull();
+    expect(validateSurvey({ ...answer, contact: { ...emptyContact(), acknowledgmentName: "ニックネーム", publishConsent: true } })).not.toBeNull();
+    expect(validateSurvey({ ...answer, contact: { ...emptyContact(), email: "parent@example.test", mailConsent: true } })).not.toBeNull();
   });
   it("denies unauthenticated and unconfigured access", async () => {
     const secret = "local-test-only-survey-key-123456";

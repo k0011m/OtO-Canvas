@@ -30,10 +30,19 @@ test("mobile child and parent survey retries and administrator can export", asyn
   await page.getByRole("radio", { name: "30分未満", exact: true }).check();
   await page.getByRole("radio", { name: "タブレット", exact: true }).check();
   await page.getByRole("radio", { name: "合っている", exact: true }).check();
+  await page.getByRole("checkbox", { name: /謝辞に、入力した名前を掲載してよい/ }).check();
+  await page.getByLabel("謝辞に載せるお名前（ニックネーム・本名どちらも可）").fill("ローカル謝辞テスト");
+  await page.getByRole("checkbox", { name: /大会結果と感謝のメールを受け取りたい/ }).check();
+  await page.getByLabel("保護者のメールアドレス", { exact: true }).fill("local-parent@example.test");
+  await page.getByLabel("お礼メールで使うお子さまの呼び名（任意）").fill("テスト呼び名");
+  await page.getByRole("heading", { name: "最後に、ご希望の方だけ" }).scrollIntoViewIfNeeded();
+  await page.screenshot({ path: info.outputPath("optional-contact.png") });
   await page.getByRole("button", { name: "送信前に確認する" }).click();
+  await expect(page.getByText("local-parent@example.test", { exact: true })).toBeVisible();
   await page.route("**/api/survey", route => route.abort(), { times: 1 });
   await page.getByRole("button", { name: "同意して送信する" }).click();
   await expect(page.getByRole("alert")).toContainText("送信できません");
+  expect(await page.evaluate(() => sessionStorage.getItem("otocanvas.survey.pending.v1"))).not.toContain("local-parent@example.test");
   await page.getByRole("button", { name: "同意して送信する" }).click();
   await expect(page.getByRole("heading", { name: "ありがとう！" })).toBeVisible();
   await page.goto("/?survey=admin");
@@ -42,6 +51,8 @@ test("mobile child and parent survey retries and administrator can export", asyn
   await expect(page.getByRole("heading", { name: "子ども：また遊びたい？" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "普段、お子さまはどんな遊びをしていますか？（複数選択可）", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "普段、1日あたり端末をどれくらい使いますか？", exact: true })).toBeVisible();
+  await page.getByText("謝辞・お礼メール用の情報（分析には使用しない）", { exact: true }).click();
+  await expect(page.getByText("local-parent@example.test", { exact: true }).first()).toBeVisible();
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "絞り込んだ回答をCSV保存" }).click();
   expect((await download).suggestedFilename()).toBe("otocanvas-survey.csv");
