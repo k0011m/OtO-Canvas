@@ -4,7 +4,7 @@ import { contactScopeLabel, emptyContact, type SurveyContact } from "./model";
 export function ContactFields({ value, onChange }: { value?: SurveyContact; onChange: (value: SurveyContact) => void }) {
   const c = value ?? emptyContact();
   return <section className="survey-contact"><h2>最後に、ご希望の方だけ</h2>
-    <p>OtO-Canvasはテック甲子園への出場を予定しており、今後ほかの大会にも出場する可能性があります。ご協力への感謝をお伝えするため、以下はすべて任意でお伺いします。空欄のままでもアンケートを送信できます。</p>
+    <p>OtO-Canvasは、テック甲子園をはじめ、複数の大会への出場を検討しています。ご協力への感謝をお伝えするため、以下はすべて任意でお伺いします。空欄のままでもアンケートを送信できます。</p>
     <p>ここで入力する情報は実験の分析には使いません。Cloudflareに保存し、開発者が謝辞への掲載と、大会結果・お礼のご連絡のためだけに使います。メールアドレスとお子さまの呼び名は公開しません。</p>
     <fieldset><legend>謝辞へのお名前の掲載（任意）</legend>
       <label className="survey-consent"><input type="checkbox" checked={c.publishConsent} onChange={e => onChange({ ...c, publishConsent: e.target.checked, acknowledgmentName: e.target.checked ? c.acknowledgmentName : "" })} />テック甲子園や今後出場する大会の発表・提出資料の謝辞に、入力した名前を掲載してよい</label>
