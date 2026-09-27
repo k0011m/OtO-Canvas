@@ -54,6 +54,18 @@ describe("survey model and authentication", () => {
     expect(validateSurvey({ ...answer, contact: { ...emptyContact(), acknowledgmentName: "ニックネーム", publishConsent: true } })).not.toBeNull();
     expect(validateSurvey({ ...answer, contact: { ...emptyContact(), email: "parent@example.test", mailConsent: true } })).not.toBeNull();
   });
+  it("requires separate consent for experience contact and excludes it from analysis", () => {
+    const answer = emptySurvey();
+    answer.contact = { ...emptyContact(), experienceContactConsent: true, experienceEmail: " experience@example.test " };
+    expect(validateSurvey(answer)?.contact?.experienceEmail).toBe("experience@example.test");
+    const rows = [{ seq: 1, created_at: "2026-09-27", response: answer }];
+    expect(contactCsv(rows)).toContain("experience@example.test");
+    expect(surveyCsv(rows)).not.toContain("experience@example.test");
+    for (const patch of [{ experienceContactConsent: false }, { experienceEmail: "" }, { experienceEmail: "bad" }, { experienceEmail: "a\n@example.test" }, { experienceContactConsent: null }, { experienceEmail: null }]) {
+      expect(validateSurvey({ ...answer, contact: { ...answer.contact, ...patch } })).toBeNull();
+    }
+    expect(validateSurvey(emptySurvey())?.contact?.experienceContactConsent).toBeUndefined();
+  });
   it("denies unauthenticated and unconfigured access", async () => {
     const secret = "local-test-only-survey-key-123456";
     const hash = "8df43525bcca6f5882fabf9631756233ce97b76672e33cc2ec1c48428b94c4aa";

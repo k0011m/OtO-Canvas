@@ -5,7 +5,7 @@ export function ContactFields({ value, onChange }: { value?: SurveyContact; onCh
   const c = value ?? emptyContact();
   return <section className="survey-contact"><h2>最後に、ご希望の方だけ</h2>
     <p>OtO-Canvasは、テック甲子園をはじめ、複数の大会への出場を検討しています。ご協力への感謝をお伝えするため、以下はすべて任意でお伺いします。空欄のままでもアンケートを送信できます。</p>
-    <p>ここで入力する情報は実験の分析には使いません。Cloudflareに保存し、開発者が謝辞への掲載と、大会結果・お礼のご連絡のためだけに使います。メールアドレスとお子さまの呼び名は公開しません。</p>
+    <p>ここで入力する情報は実験の分析には使いません。Cloudflareに保存し、開発者が謝辞への掲載、大会結果・お礼のご連絡、希望された方への体験の様子の提供に関するご連絡のためだけに使います。メールアドレスとお子さまの呼び名は公開しません。</p>
     <fieldset><legend>謝辞へのお名前の掲載（任意）</legend>
       <label className="survey-consent"><input type="checkbox" checked={c.publishConsent} onChange={e => onChange({ ...c, publishConsent: e.target.checked, acknowledgmentName: e.target.checked ? c.acknowledgmentName : "" })} />テック甲子園や今後出場する大会の発表・提出資料の謝辞に、入力した名前を掲載してよい</label>
       <p>掲載した名前は資料の閲覧者に公開されます。ニックネームで構いません。本名も使用できます。掲載を希望しない場合はチェックを入れないでください。</p>
@@ -17,16 +17,23 @@ export function ContactFields({ value, onChange }: { value?: SurveyContact; onCh
       {c.mailConsent && <><label className="survey-text-field">保護者のメールアドレス<input type="email" maxLength={254} required value={c.email} onChange={e => onChange({ ...c, email: e.target.value })} autoComplete="off" /></label>
       <label className="survey-text-field">お礼メールで使うお子さまの呼び名（任意）<input type="text" maxLength={80} value={c.childName} onChange={e => onChange({ ...c, childName: e.target.value })} autoComplete="off" /></label><p>ニックネームでも構いません。空欄の場合は「お子さま」とお呼びします。この呼び名は謝辞には載せません。</p></>}
     </fieldset>
+    <fieldset><legend>体験している様子の提供へのご協力（任意）</legend>
+      <p>お子さまがOtO-Canvasで遊んでいる様子を、写真や動画で送ってくださる方を募集しています。</p>
+      <label className="survey-consent"><input type="checkbox" checked={c.experienceContactConsent ?? false} onChange={e => onChange({ ...c, experienceContactConsent: e.target.checked, experienceEmail: e.target.checked ? c.experienceEmail ?? "" : "" })} />体験している様子の提供に協力できるので、開発者から連絡を受け取ってよい</label>
+      <p>提供方法や利用目的を相談するため、開発者から個別にご連絡します。チェックは写真・動画の提出や公開への同意ではありません。説明を聞いてから提供するか決められます。メールアドレスは非公開で、この連絡のためだけに使います。</p>
+      {c.experienceContactConsent && <label className="survey-text-field">体験の様子の提供についての連絡用メールアドレス（保護者）<input type="email" maxLength={254} required value={c.experienceEmail ?? ""} onChange={e => onChange({ ...c, experienceEmail: e.target.value })} autoComplete="off" /></label>}
+    </fieldset>
   </section>;
 }
 
 /** 送信前に公開される名前と非公開の送付先を区別して確認する。 */
 export function ContactReview({ value }: { value?: SurveyContact }) {
   const c = value ?? emptyContact();
-  return <section className="survey-contact"><h2>謝辞・お礼のご希望</h2><dl>
+  return <section className="survey-contact"><h2>謝辞・お礼・体験の様子の提供について</h2><dl>
     {(c.publishConsent || c.mailConsent) && <><dt>同意した対象大会</dt><dd>{contactScopeLabel(c)}</dd></>}
     <dt>謝辞に公開するお名前</dt><dd>{c.publishConsent ? c.acknowledgmentName : "掲載を希望しない"}</dd>
     <dt>大会結果・お礼メールの送付先（非公開）</dt><dd>{c.mailConsent ? c.email : "メールを希望しない"}</dd>
     {c.mailConsent && <><dt>メールでのお子さまの呼び名（非公開）</dt><dd>{c.childName || "お子さま"}</dd></>}
+    <dt>体験の様子の提供に関する連絡先（非公開）</dt><dd>{c.experienceContactConsent ? c.experienceEmail : "連絡を希望しない"}</dd>
   </dl></section>;
 }

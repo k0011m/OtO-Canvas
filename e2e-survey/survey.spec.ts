@@ -35,6 +35,15 @@ test("mobile child and parent survey retries and administrator can export", asyn
   await page.getByRole("checkbox", { name: /大会の結果と感謝のメールを受け取りたい/ }).check();
   await page.getByLabel("保護者のメールアドレス", { exact: true }).fill("local-parent@example.test");
   await page.getByLabel("お礼メールで使うお子さまの呼び名（任意）").fill("テスト呼び名");
+  const cooperation = page.getByRole("checkbox", { name: "体験している様子の提供に協力できるので、開発者から連絡を受け取ってよい" });
+  const cooperationEmail = page.getByLabel("体験の様子の提供についての連絡用メールアドレス（保護者）");
+  await expect(cooperationEmail).toHaveCount(0);
+  await cooperation.check();
+  await cooperationEmail.fill("cleared@example.test");
+  await cooperation.uncheck();
+  await cooperation.check();
+  await expect(cooperationEmail).toHaveValue("");
+  await cooperationEmail.fill("experience@example.test");
   await page.getByRole("heading", { name: "最後に、ご希望の方だけ" }).scrollIntoViewIfNeeded();
   await page.screenshot({ path: info.outputPath("optional-contact.png") });
   await page.getByRole("button", { name: "送信前に確認する" }).click();
@@ -43,6 +52,7 @@ test("mobile child and parent survey retries and administrator can export", asyn
   await page.getByRole("button", { name: "同意して送信する" }).click();
   await expect(page.getByRole("alert")).toContainText("送信できません");
   expect(await page.evaluate(() => sessionStorage.getItem("otocanvas.survey.pending.v1"))).not.toContain("local-parent@example.test");
+  expect(await page.evaluate(() => sessionStorage.getItem("otocanvas.survey.pending.v1"))).not.toContain("experience@example.test");
   await page.getByRole("button", { name: "同意して送信する" }).click();
   await expect(page.getByRole("heading", { name: "ありがとう！" })).toBeVisible();
   await page.goto("/?survey=admin");
@@ -51,8 +61,9 @@ test("mobile child and parent survey retries and administrator can export", asyn
   await expect(page.getByRole("heading", { name: "子ども：また遊びたい？" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "普段、お子さまはどんな遊びをしていますか？（複数選択可）", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "普段、1日あたり端末をどれくらい使いますか？", exact: true })).toBeVisible();
-  await page.getByText("謝辞・お礼メール用の情報（分析には使用しない）", { exact: true }).click();
+  await page.getByText("謝辞・お礼・体験提供の連絡先（分析には使用しない）", { exact: true }).click();
   await expect(page.locator("details.survey-contact").getByText("local-parent@example.test", { exact: true }).first()).toBeVisible();
+  await expect(page.locator("details.survey-contact").getByText("experience@example.test", { exact: true }).first()).toBeVisible();
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "絞り込んだ回答をCSV保存" }).click();
   expect((await download).suggestedFilename()).toBe("otocanvas-survey.csv");
