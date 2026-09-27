@@ -400,3 +400,9 @@ OtoCanvas本体は[MIT License](./LICENSE)で提供します。利用中のOSS�
 - `index.html`の`title`と`meta description`を、図形で音楽と動画をつくる子ども向け創作アプリの紹介文へ変更しました。
 - `public/sitemap.xml`を追加。公開先は`https://oto-canvas.com/sitemap.xml`で、トップページだけを掲載します。アンケート・管理画面は含めません（サイトマップからの除外自体は検索掲載の禁止ではありません）。
 - 今回はrobots.txt・canonical・紹介ページの追加やGoogle Search Consoleの登録操作は行いません。検索結果の文面・掲載時期・順位はGoogleが判断します。
+
+## 2026-09-27 ドメイン転送
+
+- `otocanvas.com`はCloudflare Single Redirectで`https://oto-canvas.com`へ301転送します。条件は`http.host eq "otocanvas.com"`、転送先は`concat("https://oto-canvas.com", http.request.uri.path)`、Preserve query stringは有効です。
+- 新ドメインのルートにAレコード`192.0.2.1`（Proxied）を追加。アプリの配信元は引き続き`oto-canvas.com`です。転送はCloudflare上の設定で、ソースのデプロイには依存しません。
+- HTTPSの証明書検証、HTTP/HTTPSの301、パスと`?survey=1`の保持を確認しました。公開DNS（1.1.1.1）で名前解決済みですが、端末や回線のDNSキャッシュにより反映に時間差が出る場合があります。
