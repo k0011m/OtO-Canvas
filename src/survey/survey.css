@@ -6,7 +6,6 @@
 .survey-paper h1 { font-size: clamp(26px, 4.5vw, 40px); line-height: 1.5; margin: 14px 0 24px; letter-spacing: -.03em; }
 .survey-paper p { line-height: 1.9; }
 .survey-eyebrow { color: #517578; font-size: 15px; font-weight: 750; }
-.survey-notice { padding: 20px; border-radius: 18px; background: #eef5f2; line-height: 1.9; font-size: 14px; }
 .survey-consent { display: flex; gap: 14px; margin: 26px 0; align-items: start; line-height: 1.8; }
 .survey-shell input[type=checkbox], .survey-shell input[type=radio] { width: 22px; height: 22px; flex-shrink: 0; accent-color: #506f6d; }
 .survey-shell button, .survey-home { min-height: 48px; border-radius: 14px; padding: 12px 20px; border: 2px solid #d9dfdc; background: white; color: #303946; font-size: 16px; font-weight: 700; cursor: pointer; }
