@@ -1,5 +1,14 @@
 export const SURVEY_VERSION = 1;
+// 短縮版は旧設問と意味・選択肢が異なるため、別のキーで集計する。
+export const SHORT_OPTIONS = {
+  assistanceLevel: ["自分で遊べた", "少し手助けが必要だった", "多くの手助けが必要だった", "判断できない"],
+  shortDifficulty: ["簡単すぎた", "ちょうどよかった", "難しすぎた", "判断できない"],
+  playAgain: ["遊ばせたい", "どちらともいえない", "遊ばせたくない"],
+} as const;
+export const SHORT_KEYS = Object.keys(SHORT_OPTIONS) as (keyof typeof SHORT_OPTIONS)[];
+export const FEEDBACK_LABEL = "困ったことや、気づいたことがあれば教えてください。（任意）";
 export const OPTIONS = {
+  ...SHORT_OPTIONS,
   usualPlay: ["外遊び・運動", "お絵描き・工作", "積み木・ブロック・パズル", "ごっこ遊び・人形遊び", "絵本・読書", "歌・楽器・ダンス", "ゲーム・アプリ", "動画視聴", "その他"],
   screenTime: ["使わない", "30分未満", "30分以上〜1時間未満", "1時間以上〜2時間未満", "2時間以上〜3時間未満", "3時間以上", "わからない"],
   experience: ["ほぼない", "ときどき", "よく使う"],
@@ -13,6 +22,9 @@ export const OPTIONS = {
   parentSettings: ["選べた", "一部迷った", "選べなかった", "設定していない"],
 } as const;
 export const LABELS: Record<keyof typeof OPTIONS, string> = {
+  assistanceLevel: "お子さまは、どのくらい手助けが必要でしたか？",
+  shortDifficulty: "お子さまにとって、遊びの難しさはどうでしたか？",
+  playAgain: "ご家庭で、また遊ばせたいと思いますか？",
   usualPlay: "普段、お子さまはどんな遊びをしていますか？（複数選択可）",
   screenTime: "普段、1日あたり端末をどれくらい使いますか？",
   experience: "スマホ・タブレットの操作経験", device: "今回の端末", mode: "今回のモード", priorUse: "OtoCanvasの利用経験",
@@ -57,7 +69,7 @@ export type SurveyRow = { seq: number; created_at: string; response: SurveyAnswe
 /** 親子の回答を初期化し、謝辞・連絡先の同意は初期状態でオフにする。 */
 export function emptySurvey(): SurveyAnswer {
   return { contact: emptyContact(), version: 1, id: crypto.randomUUID(), consent: true, child: { fun: null, again: null }, parent: {
-    age: null, months: null, help: [], usualPlay: [], screenTime: "", experience: "", device: "", mode: "", priorUse: "", findControls: "", difficulty: "", homeUse: "", parentSettings: "", initiative: "", homeReason: "", settingsReason: "", feedback: "",
+    assistanceLevel: "", shortDifficulty: "", playAgain: "", age: null, months: null, help: [], usualPlay: [], screenTime: "", experience: "", device: "", mode: "", priorUse: "", findControls: "", difficulty: "", homeUse: "", parentSettings: "", initiative: "", homeReason: "", settingsReason: "", feedback: "",
   } };
 }
 /** APIと画面で同じ選択肢・長さ制限を使い、未知の情報を保存しない。 */
@@ -67,7 +79,7 @@ export function validateSurvey(value: unknown): SurveyAnswer | null {
   if (v.version !== 1 || v.consent !== true || !/^[0-9a-f-]{36}$/i.test(v.id ?? "") || !v.child || !v.parent) return null;
   if (![null, 0, 1, 2].includes(v.child.fun) || ![null, 0, 1, 2].includes(v.child.again)) return null;
   // 追加前の回答・送信待ちデータは、新項目を未回答として扱う。
-  const p = { ...v.parent, usualPlay: v.parent.usualPlay === undefined ? [] : v.parent.usualPlay, screenTime: v.parent.screenTime === undefined ? "" : v.parent.screenTime };
+  const p = { ...v.parent, assistanceLevel: v.parent.assistanceLevel === undefined ? "" : v.parent.assistanceLevel, shortDifficulty: v.parent.shortDifficulty === undefined ? "" : v.parent.shortDifficulty, playAgain: v.parent.playAgain === undefined ? "" : v.parent.playAgain, usualPlay: v.parent.usualPlay === undefined ? [] : v.parent.usualPlay, screenTime: v.parent.screenTime === undefined ? "" : v.parent.screenTime };
   if (!Array.isArray(p.usualPlay) || p.usualPlay.length > OPTIONS.usualPlay.length || new Set(p.usualPlay).size !== p.usualPlay.length || p.usualPlay.some(x => !(OPTIONS.usualPlay as readonly string[]).includes(x))) return null;
   if (p.age !== null && (!Number.isInteger(p.age) || p.age < 0 || p.age > 18)) return null;
   if (p.months !== null && (!Number.isInteger(p.months) || p.months < 0 || p.months > 11)) return null;

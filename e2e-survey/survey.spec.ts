@@ -24,12 +24,14 @@ test("mobile child and parent survey retries and administrator can export", asyn
   await page.screenshot({ path: info.outputPath("child-survey.png") });
   await page.getByRole("button", { name: "つぎへ →" }).click();
   await page.getByRole("button", { name: "こたえないで つぎへ" }).click();
-  await page.getByLabel("年齢（歳）").fill("5");
-  await page.getByRole("checkbox", { name: "外遊び・運動", exact: true }).check();
-  await page.getByRole("checkbox", { name: "お絵描き・工作", exact: true }).check();
-  await page.getByRole("radio", { name: "30分未満", exact: true }).check();
-  await page.getByRole("radio", { name: "タブレット", exact: true }).check();
-  await page.getByRole("radio", { name: "合っている", exact: true }).check();
+  await page.getByLabel("お子さまの年齢（歳）").selectOption("5");
+  await page.getByRole("radio", { name: "少し手助けが必要だった", exact: true }).check();
+  await page.getByRole("radio", { name: "ちょうどよかった", exact: true }).check();
+  await page.getByRole("radio", { name: "遊ばせたい", exact: true }).check();
+  await expect(page.locator('input[type="radio"]')).toHaveCount(11);
+  await expect(page.locator('textarea')).toHaveCount(1);
+  await expect(page.getByText("普段、1日あたり端末をどれくらい使いますか？", { exact: true })).toHaveCount(0);
+  await page.screenshot({ path: info.outputPath("short-parent.png") });
   await page.getByRole("checkbox", { name: /謝辞に、入力した名前を掲載してよい/ }).check();
   await page.getByLabel("謝辞に載せるお名前（ニックネーム・本名どちらも可）").fill("ローカル謝辞テスト");
   await page.getByRole("checkbox", { name: /大会の結果と感謝のメールを受け取りたい/ }).check();
@@ -64,6 +66,7 @@ test("mobile child and parent survey retries and administrator can export", asyn
   await page.getByText("謝辞・お礼・体験提供の連絡先（分析には使用しない）", { exact: true }).click();
   await expect(page.locator("details.survey-contact").getByText("local-parent@example.test", { exact: true }).first()).toBeVisible();
   await expect(page.locator("details.survey-contact").getByText("experience@example.test", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "お子さまは、どのくらい手助けが必要でしたか？", exact: true })).toBeVisible();
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "絞り込んだ回答をCSV保存" }).click();
   expect((await download).suggestedFilename()).toBe("otocanvas-survey.csv");

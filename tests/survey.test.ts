@@ -1,8 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { contactCsv, emptyContact, emptySurvey, surveyCsv, validateSurvey } from "../src/survey/model";
+import { SHORT_KEYS, contactCsv, emptyContact, emptySurvey, surveyCsv, validateSurvey } from "../src/survey/model";
 import { authorized } from "../functions/api/survey";
 
 describe("survey model and authentication", () => {
+  it("keeps short-form answers separate from historical choices", () => {
+    const answer = emptySurvey();
+    answer.parent.assistanceLevel = "少し手助けが必要だった";
+    answer.parent.shortDifficulty = "ちょうどよかった";
+    answer.parent.playAgain = "遊ばせたい";
+    expect(validateSurvey(answer)).toEqual(answer);
+    const csv = surveyCsv([{ seq: 1, created_at: "2026-10-04", response: answer }]);
+    expect(csv).toContain("少し手助けが必要だった");
+    expect(csv).toContain("遊ばせたい");
+    const legacy = structuredClone(answer) as any;
+    for (const key of SHORT_KEYS) delete legacy.parent[key];
+    legacy.parent.help = ["再生"];
+    const restored = validateSurvey(legacy);
+    expect(restored?.parent.help).toEqual(["再生"]);
+    for (const key of SHORT_KEYS) {
+      expect(restored?.parent[key]).toBe("");
+      expect(validateSurvey({ ...answer, parent: { ...answer.parent, [key]: "不正な選択" } })).toBeNull();
+    }
+  });
   it("keeps skipped answers distinct from negative answers and strips extra data", () => {
     const answer = emptySurvey(); answer.child.again = 2;
     expect(validateSurvey({ ...answer, email: "not-kept", child: { ...answer.child, name: "not-kept" } })).toEqual(answer);
