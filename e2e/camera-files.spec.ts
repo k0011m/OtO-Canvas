@@ -97,6 +97,15 @@ test.describe("first visit camera choice", () => {
     await finishWork(page);
     await page.getByRole("button", { name: /しゃしんを とる/ }).click();
     await page.getByRole("button", { name: "ピース！ とる", exact: true }).click();
+    await expect(page.locator(".camera-countdown")).toHaveText("3");
+    const preview = await page.locator(".camera-preview").boundingBox();
+    const counter = await page.locator(".camera-countdown span").boundingBox();
+    expect(Math.abs(preview!.x + preview!.width / 2 - counter!.x - counter!.width / 2)).toBeLessThan(2);
+    expect(Math.abs(preview!.y + preview!.height / 2 - counter!.y - counter!.height / 2)).toBeLessThan(2);
+    await page.screenshot({ path: info.outputPath("camera-countdown.png") });
+    await expect(page.getByRole("button", { name: "そとカメラに きりかえ" })).toBeDisabled();
+    await expect(page.locator(".camera-countdown")).toHaveText("2");
+    await expect(page.locator(".camera-countdown")).toHaveText("1");
     await expect(page.getByAltText("撮影した記念写真")).toBeVisible();
     const download = page.waitForEvent("download");
     await page.getByRole("button", { name: "しゃしんを ほぞん", exact: true }).click();
@@ -110,6 +119,44 @@ test.describe("first visit camera choice", () => {
     const calls = await page.evaluate(() => (window as any).cameraCalls);
     expect(calls).toHaveLength(3);
     for (const call of calls) { expect(call.audio).toBe(false); expect(call.video.facingMode.ideal).toBe("user"); }
+  });
+
+  test("switches camera, recovers missing rear camera and cancels countdown on close", async ({ page }) => {
+    await mockCamera(page);
+    await page.goto("/");
+    await page.getByRole("button", { name: "おとなの方：設定へすすむ" }).click();
+    await page.getByRole("button", { name: "同意してカメラを許可", exact: true }).click();
+    await finishWork(page);
+    await page.getByRole("button", { name: /しゃしんを とる/ }).click();
+    await expect(page.getByRole("button", { name: "ピース！ とる", exact: true })).toBeEnabled();
+    await page.getByRole("button", { name: "そとカメラに きりかえ" }).click();
+    await expect(page.getByRole("button", { name: "ピース！ とる", exact: true })).toBeEnabled();
+    await expect(page.locator(".celebration-video")).toHaveCSS("transform", "none");
+    expect(await page.evaluate(() => (window as any).cameraCalls.at(-1).video.facingMode.exact)).toBe("environment");
+    expect(await page.evaluate(() => (window as any).cameraStreams.slice(0, -1).every((s: MediaStream) => s.getTracks().every(t => t.readyState === "ended")))).toBe(true);
+    await page.getByRole("button", { name: "ピース！ とる", exact: true }).click();
+    await expect(page.getByAltText("撮影した記念写真")).toBeVisible();
+    await page.getByRole("button", { name: "とりなおす" }).click();
+    await expect(page.getByRole("button", { name: "ピース！ とる", exact: true })).toBeEnabled();
+    await page.getByRole("button", { name: "うちカメラに きりかえ" }).click();
+    await expect(page.getByRole("button", { name: "ピース！ とる", exact: true })).toBeEnabled();
+    await page.evaluate(() => {
+      const original = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = async constraints => {
+        if ((constraints?.video as MediaTrackConstraints)?.facingMode && ((constraints!.video as MediaTrackConstraints).facingMode as ConstrainDOMStringParameters).exact === "environment") throw new DOMException("missing", "OverconstrainedError");
+        return original(constraints);
+      };
+    });
+    await page.getByRole("button", { name: "そとカメラに きりかえ" }).click();
+    await expect(page.getByRole("alert")).toContainText("そとカメラを開けませんでした");
+    await page.getByRole("button", { name: "うちカメラに きりかえ" }).click();
+    await expect(page.getByRole("button", { name: "ピース！ とる", exact: true })).toBeEnabled();
+    await page.getByRole("button", { name: "ピース！ とる", exact: true }).click();
+    await expect(page.locator(".camera-countdown")).toHaveText("3");
+    await page.getByRole("button", { name: "撮影を閉じる" }).click();
+    await page.waitForTimeout(3200);
+    await expect(page.getByAltText("撮影した記念写真")).toHaveCount(0);
+    expect(await page.evaluate(() => (window as any).cameraStreams.every((s: MediaStream) => s.getTracks().every(t => t.readyState === "ended")))).toBe(true);
   });
 });
 

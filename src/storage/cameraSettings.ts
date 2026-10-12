@@ -17,6 +17,11 @@ export function saveCameraChoice(value: CameraChoice): boolean {
 
 /** 音声は取得せず、内カメラを優先して写真用の映像だけを要求する。 */
 export async function openFrontCamera(): Promise<MediaStream> {
+  return openCamera("user");
+}
+
+/** 外カメラ指定時は別のカメラへ黙って戻さず、利用できないことを画面へ返す。 */
+export async function openCamera(facing: "user" | "environment"): Promise<MediaStream> {
   if (!navigator.mediaDevices?.getUserMedia) throw new Error("このブラウザではカメラを使えません。");
-  return navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: "user" }, width: { ideal: 1280 }, height: { ideal: 960 } } });
+  return navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: facing === "user" ? { ideal: "user" } : { exact: "environment" }, width: { ideal: 1280 }, height: { ideal: 960 } } });
 }
