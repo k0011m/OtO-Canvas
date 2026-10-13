@@ -25,6 +25,7 @@ async function finishWork(page: Page) {
   await page.getByTestId("canvas-editor").locator("canvas").click({ position: { x: 250, y: 300 } });
   await page.getByTestId("play-button").click();
   await page.getByTestId("play-scene-plan").click();
+  await expect(page.getByTestId("pause-button")).toBeVisible();
   await page.evaluate(async () => {
     const path = "/src/music/audioEngine.ts";
     (await import(path)).audioEngine.finishNaturally();

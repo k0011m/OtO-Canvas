@@ -24,8 +24,9 @@ import { loadCreationMode, saveCreationMode, type CreationMode } from "../storag
 import { downloadJacketPng, downloadRecordedVideo } from "../export/artworkExporter";
 import { exportAndDownloadWav } from "../export/wavExporter";
 import { audioEngine, DEFAULT_MASTER_VOLUME } from "../music/audioEngine";
-import { buildArrangement, createProject, getSectionAtBeat } from "../music/arranger";
-import { buildSceneBackingTrack } from "../music/backingTrack";
+import { createDraftProject as createProject, getSectionAtBeat } from "../music/arranger";
+import { preparePerformance, type PreparedPerformance } from "../music/preparePerformance";
+import { version as appVersion } from "../../package.json";
 import { WORLD_SOUND_LABELS } from "../music/worldSounds";
 import { instrumentForShape } from "../music/shapeMapper";
 import {
@@ -70,6 +71,11 @@ import {
 } from "../visuals/animationMood";
 
 type Screen = "start" | "world" | "create" | "perform" | "finish" | "gallery";
+/** タイトルや保存時刻ではなく、演奏を変えるデータだけで書き出し結果の鮮度を確認する。 */
+function performanceSignature(project: OtoProject): string {
+  return JSON.stringify([project.shapes, project.seed, project.worldId, project.sceneCount,
+    project.sceneMoods, project.sceneSoundPrograms, project.soundProgramBgm]);
+}
 const EMPTY_PLAYBACK: PlaybackSnapshot = {
   beat: 0,
   progress: 0,
@@ -243,7 +249,22 @@ export function App() {
   const [exportProgress, setExportProgress] = useState(0);
 
   const [moodPickerOpen, setMoodPickerOpen] = useState(false);
-  const [remixVersion, setRemixVersion] = useState(0);
+  const [prepared, setPrepared] = useState<PreparedPerformance>({ events: [], mixedEvents: [] });
+  const [seedRevision, setSeedRevision] = useState(0);
+  const [preparing, setPreparing] = useState(false);
+  const preparationRef = useRef<AbortController | null>(null);
+  const preparedProjectRef = useRef<string | null>(null);
+  const appRef = useRef<HTMLElement | null>(null);
+
+  // 準備中はキーボード操作も遮断し、再生対象の作品が途中で変わらないようにする。
+  useEffect(() => {
+    if (!preparing) return;
+    const elements = Array.from(appRef.current?.children ?? []).filter((element): element is HTMLElement =>
+      element instanceof HTMLElement && !element.classList.contains("preparation-overlay"));
+    const previous = elements.map((element) => element.inert);
+    elements.forEach((element) => { element.inert = true; });
+    return () => { elements.forEach((element, index) => { element.inert = previous[index]; }); };
+  }, [preparing]);
   const [recordingVideo, setRecordingVideo] = useState(false);
 
   const projectIdRef = useRef(createId("project"));
@@ -265,18 +286,7 @@ export function App() {
     toolToggleRef.current?.focus({ preventScroll: true });
     setToolsOpen(false);
   }, []);
-  const events = useMemo(
-    () => buildArrangement(shapes, seedRef.current, worldId, sceneCount, sceneSoundPrograms),
-    [remixVersion, shapes, worldId, sceneCount, sceneSoundPrograms],
-  );
-  const mixedEvents = useMemo(
-    () =>
-      [
-        ...events,
-        ...buildSceneBackingTrack(worldId, sceneMoods, sceneCount, seedRef.current, sceneSoundPrograms, soundProgramBgm),
-      ].sort((left, right) => left.beat - right.beat || left.id.localeCompare(right.id)),
-    [sceneMoods, sceneCount, events, worldId, sceneSoundPrograms, soundProgramBgm],
-  );
+  const { events, mixedEvents } = prepared;
   const programStep = programStepAtBeat(playback.beat, sceneCount, sceneMoods, scenePrograms);
   const playingMood = programStep.mood;
   const activeMood = animationMoodOption(playingMood);
@@ -374,7 +384,7 @@ export function App() {
     audioEngine.setMasterVolume(volume);
   }, [volume]);
 
-  const screenBgmEnabled = screen !== "perform" && !soundProgramOpen;
+  const screenBgmEnabled = screen !== "perform" && !soundProgramOpen && !preparing;
   const screenBgmWorld = screen === "world" ? previewWorldId ?? worldId : worldId;
   // 作品の再生中は専用BGMを止め、選択・編集へ戻ったときだけ再開する。
   useEffect(() => {
@@ -408,10 +418,11 @@ export function App() {
     return () => {
       if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current);
     };
-  }, [events, projectTitle, screen, shapes, worldId, sceneCount, sceneMoods, scenePrograms, sceneSoundPrograms, soundProgramBgm]);
+  }, [seedRevision, projectTitle, screen, shapes, worldId, sceneCount, sceneMoods, scenePrograms, sceneSoundPrograms, soundProgramBgm]);
 
   useEffect(
     () => () => {
+      preparationRef.current?.abort();
       audioEngine.stop();
     },
     [],
@@ -477,7 +488,6 @@ export function App() {
     setShapes(cloneShapes(project.shapes).map((shape) => ({ ...shape, scene: shape.scene ?? 0 })));
     setProjectTitle(project.title ?? "わたしのおと");
     setCurrentScene(0);
-    setRemixVersion((value) => value + 1);
     setUndoStack([]);
     setSelectedId(null);
     setScreen("create");
@@ -566,33 +576,61 @@ export function App() {
   }, [activeShapes.length, commitActiveShapes]);
 
   const openMoodPicker = useCallback(() => {
-    if (shapes.length === 0 || events.length === 0) {
+    if (shapes.length === 0) {
       showToast("まず かたちを おいてみよう");
       return;
     }
     setEditingSceneMood(false);
     setMoodPickerOpen(true);
-  }, [events.length, shapes.length, showToast]);
+  }, [shapes.length, showToast]);
+
+  /** 編集中は作曲せず、明示的な再生要求だけをWorkerへ渡す。 */
+  const prepareForPlayback = useCallback(async (project: OtoProject) => {
+    if (preparationRef.current) return null;
+    const controller = new AbortController();
+    preparationRef.current = controller;
+    setPreparing(true);
+    try {
+      if (!(await startAudio()) || controller.signal.aborted) return null;
+      audioEngine.stopScreenBgm();
+      const result = await preparePerformance(project, controller.signal);
+      if (controller.signal.aborted) return null;
+      setPrepared(result);
+      preparedProjectRef.current = performanceSignature(project);
+      return result;
+    } catch {
+      if (!controller.signal.aborted) showToast("おとの じゅんびが できませんでした。もういちど ためしてね");
+      return null;
+    } finally {
+      if (preparationRef.current === controller) {
+        preparationRef.current = null;
+        setPreparing(false);
+      }
+    }
+  }, [startAudio, showToast]);
+
+  /** キャンセルした作曲結果が後から演奏を始めないようにする。 */
+  const cancelPreparation = useCallback(() => {
+    preparationRef.current?.abort();
+    preparationRef.current = null;
+    setPreparing(false);
+  }, []);
 
   const beginPerformance = useCallback(
     async (mood?: AnimationMood, saveVideo = false) => {
-      if (shapes.length === 0 || events.length === 0) {
+      if (shapes.length === 0) {
         showToast("まず かたちを おいてみよう");
         return;
       }
-      if (!(await startAudio())) return;
-
-      audioEngine.stopScreenBgm();
-
       const nextMoods = mood ? sceneMoods.map((value, index) => index === currentScene ? mood : value) : sceneMoods;
-      setSceneMoods(nextMoods);
-      const performanceEvents = [
-        ...events,
-        ...buildSceneBackingTrack(worldId, nextMoods, sceneCount, seedRef.current, sceneSoundPrograms, soundProgramBgm),
-      ].sort((left, right) => left.beat - right.beat || left.id.localeCompare(right.id));
-
-
       setMoodPickerOpen(false);
+      const result = await prepareForPlayback(createProject(shapes, seedRef.current, worldId, {
+        id: projectIdRef.current, title: projectTitle, timestamp: createdAtRef.current,
+        sceneCount, sceneMoods: nextMoods, scenePrograms, sceneSoundPrograms, soundProgramBgm,
+      }));
+      if (!result) return;
+      setSceneMoods(nextMoods);
+      const performanceEvents = result.mixedEvents;
       setPlayback({ ...EMPTY_PLAYBACK, section: "intro" });
       setScreen("perform");
 
@@ -655,7 +693,7 @@ export function App() {
         },
       });
     },
-    [sceneMoods, sceneCount, currentScene, events, shapes.length, showToast, startAudio, worldId, sceneSoundPrograms, soundProgramBgm],
+    [sceneMoods, sceneCount, currentScene, shapes, showToast, prepareForPlayback, worldId, scenePrograms, sceneSoundPrograms, soundProgramBgm, projectTitle],
   );
 
   const leavePerformance = useCallback(() => {
@@ -716,15 +754,14 @@ export function App() {
     setPlayback(EMPTY_PLAYBACK);
 
     setMoodPickerOpen(false);
-    setRemixVersion((value) => value + 1);
     setRestoredProject(null);
     setScreen("world");
   }, [simpleCreation]);
 
   const remix = useCallback(() => {
     seedRef.current = (seedRef.current + 0x9e3779b9) >>> 0;
-    setRemixVersion((value) => value + 1);
-    showToast("おなじ えから ちがう おとに なりました");
+    setSeedRevision((value) => value + 1);
+    showToast("つぎの さいせいで ちがう おとに なるよ");
   }, [showToast]);
 
   const copyPreviousScene = useCallback(() => {
@@ -778,21 +815,20 @@ export function App() {
     setCurrentScene(0);
     setUndoStack([]);
     setSelectedId(null);
-    setRemixVersion((value) => value + 1);
     setScreen("create");
   }, [startAudio]);
 
   const watchGalleryProject = useCallback(async (project: OtoProject) => {
-    if (!(await startAudio())) return;
+    const nextShapes = cloneShapes(project.shapes).map((shape) => ({ ...shape, scene: shape.scene ?? 0 }));
+    const result = await prepareForPlayback(createProject(nextShapes, project.seed, project.worldId, {
+      ...project, timestamp: project.createdAt,
+      sceneMoods: Array.from({ length: 10 }, (_, index) => project.sceneMoods?.[index] ?? DEFAULT_ANIMATION_MOOD),
+    }));
+    if (!result) return;
     projectIdRef.current = project.id;
     createdAtRef.current = project.createdAt;
     seedRef.current = project.seed;
-    const nextShapes = cloneShapes(project.shapes).map((shape) => ({ ...shape, scene: shape.scene ?? 0 }));
-    const nextEvents = buildArrangement(nextShapes, project.seed, project.worldId, normalizeSceneCount(project.sceneCount), project.sceneSoundPrograms);
-    const performanceEvents = [
-      ...nextEvents,
-      ...buildSceneBackingTrack(project.worldId, project.sceneMoods ?? [], normalizeSceneCount(project.sceneCount), project.seed, project.sceneSoundPrograms, project.soundProgramBgm),
-    ].sort((left, right) => left.beat - right.beat || left.id.localeCompare(right.id));
+    const performanceEvents = result.mixedEvents;
     setProjectTitle(project.title ?? "わたしのおと");
     setWorldId(project.worldId);
     setSceneCount(normalizeSceneCount(project.sceneCount));
@@ -813,7 +849,7 @@ export function App() {
         setScreen("finish");
       },
     });
-  }, [startAudio]);
+  }, [prepareForPlayback]);
 
   const duplicateGalleryProject = useCallback(async (project: OtoProject) => {
     const copy = createProject(project.shapes, (project.seed + 1) >>> 0, project.worldId, {
@@ -849,7 +885,15 @@ export function App() {
   }, [projectTitle, shapes, showToast, theme, sceneCount]);
 
   const exportWav = useCallback(async () => {
-    if (events.length === 0 || exporting) return;
+    if (exporting) return;
+    const current = createProject(shapes, seedRef.current, worldId, {
+      id: projectIdRef.current, title: projectTitle, timestamp: createdAtRef.current,
+      sceneCount, sceneMoods, scenePrograms, sceneSoundPrograms, soundProgramBgm,
+    });
+    if (preparedProjectRef.current !== performanceSignature(current)) {
+      showToast("さいせいしてから おとを ほぞんしてね");
+      return;
+    }
     setExporting(true);
     setExportProgress(0);
     try {
@@ -865,7 +909,7 @@ export function App() {
       setExporting(false);
       setExportProgress(0);
     }
-  }, [events.length, exporting, mixedEvents, showToast]);
+  }, [exporting, mixedEvents, showToast, shapes, worldId, projectTitle, sceneCount, sceneMoods, scenePrograms, sceneSoundPrograms, soundProgramBgm]);
 
   const deleteSavedData = useCallback(async () => {
     if (!window.confirm("このたんまつに ほぞんした作品を すべて消しますか？")) return;
@@ -927,9 +971,17 @@ export function App() {
   const remainingSeconds = Math.max(0, DURATION_SECONDS * (1 - playback.progress));
 
   return (
-    <main className={`app-shell${expanded ? " app-shell--expanded" : ""}`} style={worldStyle(worldId)}>
+    <main ref={appRef} className={`app-shell${expanded ? " app-shell--expanded" : ""}`} style={worldStyle(worldId)}>
+      {preparing && <div className="preparation-overlay" role="dialog" aria-modal="true" aria-label="再生の準備">
+        <div className="preparation-card">
+          <div className="preparation-shapes" aria-hidden="true"><i /><i /><i /></div>
+          <p role="status">おとと うごきを じゅんびちゅう</p>
+          <button className="pill-button" type="button" autoFocus onClick={cancelPreparation}>もどる</button>
+        </div>
+      </div>}
       {screen === "start" && !cameraIntro && (
         <section className="screen start-screen" aria-labelledby="start-title">
+          <small className="app-version" data-testid="app-version">ver {appVersion}</small>
           <a className="quiet-button start-survey-entry" href="/?survey=1">いまだけアンケート</a>
           <button
             className="quiet-button parent-entry"
@@ -1500,7 +1552,7 @@ export function App() {
               </label>
               <div className="setting-row">
                 <span><strong>音声を書き出す</strong><small>{exporting ? `WAVを作成中 ${Math.round(exportProgress * 100)}%` : "30秒のWAVファイル"}</small></span>
-                <button className="pill-button" type="button" disabled={events.length === 0 || exporting} onClick={() => void exportWav()}>
+                <button className="pill-button" type="button" disabled={shapes.length === 0 || exporting} onClick={() => void exportWav()}>
                   {exporting ? "作成中" : "WAV"}
                 </button>
               </div>

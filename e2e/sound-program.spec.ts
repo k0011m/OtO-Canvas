@@ -37,8 +37,8 @@ for (const [width, height] of [[390, 844], [667, 375]]) {
     await expect.poll(() => page.evaluate(async () => {
       const path = "/src/storage/projectStore.ts";
       const saved = await (await import(path)).loadLatestProject();
-      return saved?.events?.filter((event: {id: string}) => event.id.startsWith("sound-program-0-")).map((event: {midiNote: number}) => event.midiNote);
-    })).toEqual([71, 65, 71]);
+      return { events: saved?.events, notes: saved?.sceneSoundPrograms?.[0]?.map((id: string) => saved.shapes.find((shape: {id: string}) => shape.id === id)?.soundNote) };
+    })).toEqual({ events: [], notes: [6, 3, 6] });
     await page.reload();
     await page.getByRole("button", { name: "つづきから" }).click();
     await page.getByTestId("sound-program").click();

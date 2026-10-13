@@ -32,7 +32,7 @@ test("a child can draw, choose a motion and BGM mood, and play a 30-second MV", 
   await expect(page.getByTestId("tool-pen")).toHaveCount(1);
 
   await page.getByTestId("tool-star").click();
-  await expect(page.getByText("ほしは てっきんの おと")).toBeVisible();
+  await expect(page.getByTestId("tool-star")).toHaveAttribute("aria-pressed", "true");
   await editor.click({ position: { x: 220, y: 150 } });
 
   const oceanColor = page.getByTestId("color-ocean");
@@ -68,16 +68,15 @@ test("a child can draw, choose a motion and BGM mood, and play a 30-second MV", 
   await expect(playButton).toBeEnabled();
   await playButton.click();
 
-  const moodDialog = page.getByRole("dialog", { name: "どんな うごきで みる？" });
+  const moodDialog = page.getByRole("dialog", { name: "1ばんの うごき" });
   await expect(moodDialog).toBeVisible();
-  await expect(moodDialog.getByText("アニメと BGMを えらんでね")).toBeVisible();
   await expect(page.getByTestId("mood-float")).toHaveCount(1);
   await expect(page.getByTestId("mood-pop")).toHaveCount(1);
   await expect(page.getByTestId("mood-cosmic")).toHaveCount(1);
 
   await page.getByTestId("mood-pop").click();
   await expect(moodDialog).toBeHidden();
-  await expect(page.getByText("はじける · リズムBGM", { exact: true })).toBeVisible();
+  await expect(page.getByRole("application", { name: /はじけるの雰囲気/ })).toBeVisible();
 
   const pauseButton = page.getByTestId("pause-button");
   await expect(pauseButton).toBeVisible();

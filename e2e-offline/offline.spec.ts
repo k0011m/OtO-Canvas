@@ -64,6 +64,12 @@ test("cold offline launch, sound program, file export and cache cleanup", async 
   const data = JSON.parse(await readFile((await file.path())!, "utf8"));
   expect(data.project.shapes[0].soundNote).toBe(7);
   expect(data.project.sceneSoundPrograms[0]).toEqual([data.project.shapes[0].id]);
+  // 作曲は再生時だけ行うため、音源の書き出し前にオフラインで演奏を準備する。
+  await page.getByRole("button", { name: "閉じる", exact: true }).click();
+  await page.getByTestId("play-button").click();
+  await expect(page.getByTestId("pause-button")).toBeVisible();
+  await page.getByRole("button", { name: "編集へ戻る" }).click();
+  await page.getByRole("button", { name: "おとな向け設定" }).click();
   download = page.waitForEvent("download");
   await page.getByRole("button", { name: /WAV/ }).click();
   const wav = await readFile((await (await download).path())!);

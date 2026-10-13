@@ -36,6 +36,8 @@ export interface BarVariation {
 }
 
 export interface CreateProjectOptions {
+  /** 編集・保存では演奏イベントを生成しない。 */
+  generateEvents?: boolean;
   soundProgramBgm?: boolean;
   sceneSoundPrograms?: SceneSoundPrograms;
   scenePrograms?: OtoProject["scenePrograms"];
@@ -410,9 +412,14 @@ export function createProject(
     scenePrograms: options.scenePrograms?.map((program) => program ? { moves: [...program.moves], repeat: program.repeat } : null),
     sceneSoundPrograms: copySoundPrograms(options.sceneSoundPrograms),
     soundProgramBgm: options.soundProgramBgm ?? false,
-    events: buildArrangement(shapes, safeSeed, worldId, normalizeSceneCount(options.sceneCount), options.sceneSoundPrograms),
+    events: options.generateEvents === false ? [] : buildArrangement(shapes, safeSeed, worldId, normalizeSceneCount(options.sceneCount), options.sceneSoundPrograms),
   };
 
   if (options.title !== undefined) project.title = options.title;
   return project;
+}
+
+/** 編集・保存用の作品を作り、作曲は再生要求まで遅延する。 */
+export function createDraftProject(shapes: readonly CanvasShape[], seed: number, worldId: WorldId, options: CreateProjectOptions = {}): OtoProject {
+  return createProject(shapes, seed, worldId, { ...options, generateEvents: false });
 }
