@@ -51,9 +51,7 @@ for (const [width, height] of [[1440, 900], [390, 844], [740, 390]]) {
     await expect(page.getByRole("dialog", { name: "ぜんぶ けす？" })).toBeVisible();
     await page.screenshot({ path: info.outputPath("clear-confirm.png") });
     await page.getByRole("button", { name: "やめる", exact: true }).click();
-    await page.getByRole("button", { name: "場面と編集の設定", exact: true }).click();
-    await page.getByTestId("scene-count").waitFor();
-    await page.getByRole("button", { name: "編集の設定を閉じる" }).click();
+    await expect(page.getByRole("button", { name: "場面と編集の設定", exact: true })).toHaveCount(0);
     await page.getByTestId("play-button").click();
     await page.getByTestId("play-scene-plan").click();
     await expect(page.getByTestId("pause-button")).toBeVisible();
@@ -66,6 +64,7 @@ for (const [width, height] of [[1440, 900], [390, 844], [740, 390]]) {
     const beat = Number(await page.locator(".climax-snapshot").getAttribute("data-beat"));
     expect(beat).toBeGreaterThanOrEqual(32); expect(beat).toBeLessThan(40);
     await expect(page.getByRole("button", { name: "しゃしんを とる", exact: true })).toBeVisible();
+    await expect(page.getByText("ほぞん・そのほか", { exact: true })).toHaveCount(0);
     await page.waitForTimeout(650);
     await page.screenshot({ path: info.outputPath("finish.png"), fullPage: true });
     await page.getByRole("button", { name: "ホームへ", exact: true }).click();
@@ -88,10 +87,9 @@ test("narrow toolbar preserves primary actions without popups", async ({ page })
   await page.getByTestId("world-bounce").click();
   await expect(page.getByRole("button", { name: "ひとつ戻す" })).toBeVisible();
   await expect(page.getByTestId("play-button")).toBeVisible();
-  await expect(page.getByRole("button", { name: "ホームへ", exact: true })).toBeHidden();
+  await expect(page.getByRole("button", { name: "ホームへ", exact: true })).toBeVisible();
   await page.getByTestId("canvas-editor").locator("canvas").click({ position: { x: 30, y: 25 } });
   await expect(page.locator(".canvas-editor")).toHaveAttribute("data-shape-count", "1");
   await expect(page.locator(".toast")).toHaveCount(0);
-  await page.getByRole("button", { name: "場面と編集の設定", exact: true }).click();
-  await expect(page.getByRole("button", { name: "ホーム", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "場面と編集の設定", exact: true })).toHaveCount(0);
 });
