@@ -959,7 +959,7 @@ export function App() {
   useEffect(() => {
     if (screen !== "finish") return;
     setFinishPraise((previous) => {
-      const choices = ["できた！", "いいね！", "すごい！", "やったね！"].filter((word) => word !== previous);
+      const choices = ["やった！","わーい！","すてき！","いいね！","できた！","すごい！","ばっちり！","きらり！","やったー！","ばんざい！","さいこう！","いいおと！","たのしい！","わくわく！","できたね！","やったね！","うきうき！"].filter((word) => word !== previous);
       return choices[Math.floor(Math.random() * choices.length)]!;
     });
   }, [screen]);

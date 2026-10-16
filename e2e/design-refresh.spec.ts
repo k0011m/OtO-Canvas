@@ -59,7 +59,7 @@ for (const [width, height] of [[1440, 900], [390, 844], [740, 390]]) {
       const path = "/src/music/audioEngine.ts";
       (await import(path)).audioEngine.finishNaturally();
     });
-    await expect(page.locator("#finish-title")).toHaveText(/できた！|いいね！|すごい！|やったね！/);
+    await expect(page.locator("#finish-title")).toHaveText(/^(?:やった！|わーい！|すてき！|いいね！|できた！|すごい！|ばっちり！|きらり！|やったー！|ばんざい！|さいこう！|いいおと！|たのしい！|わくわく！|できたね！|やったね！|うきうき！)$/);
     await expect(page.locator(".climax-snapshot")).toHaveAttribute("data-shape-count", "2");
     const beat = Number(await page.locator(".climax-snapshot").getAttribute("data-beat"));
     expect(beat).toBeGreaterThanOrEqual(32); expect(beat).toBeLessThan(40);
