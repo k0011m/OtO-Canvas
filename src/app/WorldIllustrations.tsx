@@ -1,36 +1,27 @@
 import type { WorldId } from "../types/project";
 
-/** フォントや絵文字に依存しない、音の世界を表す小さなイラスト。 */
+/** 輪郭線を使わず、少ない淡い色と丸い面で音の世界を表す。 */
 export function WorldEmblem({ world }: { world: WorldId }) {
   return <svg viewBox="0 0 160 140" aria-hidden="true" className={`world-emblem world-emblem--${world}`}>
-    {world === "soft" ? <g stroke="#754c26" strokeWidth="3" strokeLinejoin="round">
-      <ellipse cx="85" cy="119" rx="62" ry="10" fill="#8acdd1" stroke="none" opacity=".55" />
-      <path d="M48 75 C26 70 23 39 44 30 C68 20 82 39 77 58 C88 56 106 61 121 70 L139 59 C144 89 124 111 91 114 C57 119 34 102 41 83Z" fill="#f6c34d" />
-      <path d="M31 47 L10 54 Q9 63 33 66 L42 59Z" fill="#e98b43" />
-      <circle cx="46" cy="45" r="4" fill="#3b302b" stroke="none" />
-      <circle cx="54" cy="62" r="7" fill="#ed9c66" stroke="none" opacity=".65" />
-      <path d="M76 77 Q109 64 114 86 Q96 104 73 91" fill="#edac35" stroke="none" />
-      <path d="M39 122 Q60 128 79 122 M109 124 L131 124" fill="none" stroke="#59aeb8" strokeLinecap="round" />
-    </g> : world === "bounce" ? <g stroke="#57423d" strokeWidth="3" strokeLinejoin="round">
-      <g className="drum-body"><path d="M28 64 L29 109 Q80 140 132 108 L132 64" fill="#db7373" />
-      <path d="M35 76 L49 118 L65 82 L80 124 L96 82 L112 119 L126 75" fill="none" stroke="#fff1d2" strokeWidth="5" />
-      <ellipse cx="80" cy="66" rx="53" ry="20" fill="#fff4db" />
-      <path d="M28 103 Q80 133 132 103" fill="none" stroke="#e6b74f" strokeWidth="8" />
-      <ellipse cx="80" cy="66" rx="53" ry="20" fill="none" stroke="#e6b74f" strokeWidth="7" /></g>
-      <g className="drum-stick"><path d="M24 17 L72 56" stroke="#a77443" strokeWidth="8" strokeLinecap="round" /><ellipse cx="73" cy="57" rx="9" ry="6" fill="#ebcc99" transform="rotate(38 73 57)" /></g>
-      <g className="drum-stick second"><path d="M141 17 L96 54" stroke="#a77443" strokeWidth="8" strokeLinecap="round" /><ellipse cx="95" cy="55" rx="9" ry="6" fill="#ebcc99" transform="rotate(-38 95 55)" /></g>
-      <path d="M74 30 L72 22 M88 28 L94 19" stroke="#d49e38" strokeLinecap="round" />
-    </g> : <g transform="rotate(-16 80 70)">
-      <defs><clipPath id="jupiter-disc"><circle cx="80" cy="72" r="51" /></clipPath></defs>
-      <circle cx="80" cy="72" r="51" fill="#e6ba8b" />
-      <g clipPath="url(#jupiter-disc)" fill="none" strokeLinecap="round">
-        <path d="M21 40 Q65 55 138 40 M18 68 Q75 83 140 65 M22 100 Q77 115 139 95" stroke="#ae765e" strokeWidth="12" />
-        <path d="M23 53 Q87 68 140 52 M20 87 Q78 103 137 84 M41 116 L125 115" stroke="#fff0cc" strokeWidth="8" />
-        <ellipse cx="103" cy="89" rx="17" ry="9" fill="#b76955" stroke="#d88d64" strokeWidth="4" />
+    {world === "soft" ? <g>
+      <ellipse cx="82" cy="119" rx="49" ry="7" fill="#dfb36f" opacity=".12" />
+      <path d="M48 75 C26 70 23 39 44 30 C68 20 82 39 77 58 C88 56 106 61 121 70 Q132 62 137 65 C141 90 122 111 91 114 C57 119 34 102 41 83Z" fill="#f1d58a" />
+      <path d="M32 49 Q21 49 13 54 Q7 63 33 65 Q42 62 41 58Z" fill="#dfb36f" />
+      <circle cx="46" cy="45" r="3.2" fill="#756452" />
+      <path d="M76 78 C89 71 108 74 110 84 C109 96 86 99 75 91 Q69 85 76 78Z" fill="#dfb36f" opacity=".3" />
+    </g> : world === "bounce" ? <g>
+      <g className="drum-body">
+        <path d="M29 65 L30 107 C30 132 131 132 131 107 L132 65Z" fill="#dba6a3" />
+        <path d="M47 78 Q48 96 55 111 M78 85 L80 116 M111 78 Q110 96 105 111" fill="none" stroke="#f5e8d4" strokeWidth="6" strokeLinecap="round" opacity=".65" />
+        <ellipse cx="80" cy="66" rx="52" ry="20" fill="#f5e8d4" />
       </g>
-      <circle cx="80" cy="72" r="51" fill="none" stroke="#896b72" strokeWidth="2" />
-      <path d="M17 27 V39 M11 33 H23 M141 106 V116 M136 111 H146" stroke="#efd69a" strokeWidth="3" strokeLinecap="round" />
-      <circle cx="135" cy="25" r="3" fill="#a8d2df" />
+      <g className="drum-stick" fill="#c7ad8b"><path d="M21 20 Q18 14 25 14 L76 52 Q83 59 76 63 Q71 66 67 59Z" /></g>
+      <g className="drum-stick second" fill="#c7ad8b"><path d="M144 20 Q147 14 140 14 L92 50 Q85 57 92 61 Q97 64 101 57Z" /></g>
+    </g> : <g transform="rotate(-20 80 72)">
+      <ellipse cx="80" cy="74" rx="72" ry="23" fill="none" stroke="#cbb5d1" strokeWidth="12" opacity=".85" />
+      <circle cx="80" cy="68" r="42" fill="#ead6ae" />
+      <path d="M46 66 Q79 79 114 65 Q114 83 104 94 Q80 110 58 94 Q48 83 46 66Z" fill="#d9bd90" opacity=".3" />
+      <path d="M8 74 C8 105 152 105 152 74" fill="none" stroke="#cbb5d1" strokeWidth="12" strokeLinecap="round" />
     </g>}
   </svg>;
 }
