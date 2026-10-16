@@ -45,14 +45,14 @@ export function WorldShapes({ world }: { world: WorldId }) {
   </svg>;
 }
 
-/** 記念写真の入口に使う、全端末で同じ形のピースイラスト。 */
+/** 記念写真の入口に使う、肌の色を表さない黄色で全端末共通のピースイラスト。 */
 export function PeaceIllustration() {
   return <svg className="peace-illustration" viewBox="0 0 140 150" aria-hidden="true">
-    <path d="M49 85 L37 29 Q34 15 45 13 Q56 11 59 25 L70 67 L80 23 Q83 10 94 14 Q104 17 100 30 L90 82 Q111 83 114 103 Q116 128 91 139 Q65 149 44 131 Q30 121 29 103 L27 82 Q26 70 37 69 Q47 69 48 80Z" fill="#f0ca8d" stroke="#654f42" strokeWidth="6" strokeLinejoin="round" />
-    <path d="M49 83 Q47 64 59 64 Q70 64 72 82 L73 97 Q72 107 63 106 Q53 106 51 96Z" fill="#f0ca8d" stroke="#654f42" strokeWidth="6" />
-    <path d="M29 85 Q27 73 38 73 Q48 73 49 85 L51 98 Q51 109 42 110 Q31 111 30 101Z" fill="#f0ca8d" stroke="#654f42" strokeWidth="6" />
-    <path d="M109 112 Q102 90 82 89 Q70 88 69 98 Q68 106 80 109 L89 115 M80 109 Q65 114 60 128" fill="#f0ca8d" stroke="#654f42" strokeWidth="6" strokeLinecap="round" />
-    <path d="M16 35 L8 27 M116 46 L127 41" stroke="#dba34c" strokeWidth="5" strokeLinecap="round" />
+    <path d="M49 85 L37 29 Q34 15 45 13 Q56 11 59 25 L70 67 L80 23 Q83 10 94 14 Q104 17 100 30 L90 82 Q111 83 114 103 Q116 128 91 139 Q65 149 44 131 Q30 121 29 103 L27 82 Q26 70 37 69 Q47 69 48 80Z" fill="#ffda38" stroke="#8b710e" strokeWidth="6" strokeLinejoin="round" />
+    <path d="M49 83 Q47 64 59 64 Q70 64 72 82 L73 97 Q72 107 63 106 Q53 106 51 96Z" fill="#ffda38" stroke="#8b710e" strokeWidth="6" />
+    <path d="M29 85 Q27 73 38 73 Q48 73 49 85 L51 98 Q51 109 42 110 Q31 111 30 101Z" fill="#ffda38" stroke="#8b710e" strokeWidth="6" />
+    <path d="M109 112 Q102 90 82 89 Q70 88 69 98 Q68 106 80 109 L89 115 M80 109 Q65 114 60 128" fill="#ffda38" stroke="#8b710e" strokeWidth="6" strokeLinecap="round" />
+    <path d="M16 35 L8 27 M116 46 L127 41" stroke="#edbe17" strokeWidth="5" strokeLinecap="round" />
   </svg>;
 }
 
