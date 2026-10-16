@@ -22,6 +22,8 @@ test("screen BGM loops, survives editing and yields to the performance", async (
   expect((await playback(page)).playing).toBe(true);
 
   await page.getByTestId("world-bounce").click();
+
+  await page.getByTestId("world-bounce").click();
   const editor = page.getByTestId("canvas-editor").locator("canvas");
   await editor.click({ position: { x: 150, y: 180 } });
   expect((await playback(page)).playing).toBe(true);

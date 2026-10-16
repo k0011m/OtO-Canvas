@@ -1,3 +1,4 @@
+import { openEditorOptions } from "./design-helpers";
 import { expect, test, type Page } from "@playwright/test";
 
 /** 自動保存された作品を読み、設定変更によるデータ欠落がないか比較する。 */
@@ -23,15 +24,16 @@ for (const [width, height] of [[390, 844], [667, 375]]) {
     await page.getByRole("button", { name: "閉じる", exact: true }).click();
     await page.getByTestId("start-button").click();
     await page.getByTestId("world-space").click();
+    await page.getByTestId("world-space").click();
     await expect(page.getByTestId("scene-motion")).toHaveCount(0);
     await expect(page.getByRole("tablist")).toHaveCount(0);
     const canvas = page.getByTestId("canvas-editor").locator("canvas");
     await canvas.click({ position: { x: width * .55, y: height * .5 } });
-    await page.getByTestId("tools-toggle").click();
+    await page.getByTestId("colors-toggle").click();
     await expect(page.getByRole("button", { name: "形を大きくする" })).toHaveCount(0);
     await expect(page.getByTestId("rotate-left")).toHaveCount(0);
     await page.getByTestId("color-sun").click();
-    await page.getByRole("button", { name: "図形ツールをしまう", exact: true }).first().click();
+    await page.getByTestId("colors-toggle").click();
     await expect.poll(async () => (await savedProject(page))?.shapes.length).toBe(1);
     const original = (await savedProject(page)).shapes[0];
     await canvas.focus();
@@ -56,17 +58,21 @@ test("mode changes preserve existing scene plan", async ({ page }) => {
   await page.goto("/");
   await page.getByTestId("start-button").click();
   await page.getByTestId("world-space").click();
+  await page.getByTestId("world-space").click();
+  await openEditorOptions(page);
   await page.getByRole("tab").nth(2).click();
   await page.getByTestId("canvas-editor").locator("canvas").click({ position: { x: 550, y: 350 } });
   await page.getByTestId("scene-motion").click();
   await page.getByTestId("mood-wave").click();
   await expect.poll(async () => (await savedProject(page))?.sceneMoods?.[2]).toBe("wave");
+  await openEditorOptions(page);
   await page.getByRole("button", { name: "おとな向け設定" }).click();
   await page.getByRole("radio", { name: /図形と色であそぶ/ }).check();
   await page.getByRole("button", { name: "閉じる", exact: true }).click();
   await expect(page.getByTestId("scene-motion")).toHaveCount(0);
   await page.reload();
   await page.getByRole("button", { name: "つづきから" }).click();
+  await openEditorOptions(page);
   await page.getByRole("button", { name: "おとな向け設定" }).click();
   await page.getByRole("radio", { name: /動きも編集する/ }).check();
   await page.getByRole("button", { name: "閉じる", exact: true }).click();

@@ -1,3 +1,4 @@
+import { openEditorOptions } from "../e2e/design-helpers";
 import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 
@@ -52,11 +53,14 @@ test("cold offline launch, sound program, file export and cache cleanup", async 
   await page.goto("/?offline=1");
   await page.getByTestId("start-button").click();
   await page.getByTestId("world-soft").click();
+  await page.getByTestId("world-soft").click();
   await page.getByTestId("canvas-editor").locator("canvas").click({ position: { x: 500, y: 350 } });
+  await openEditorOptions(page);
   await page.getByTestId("sound-program").click();
   await page.getByRole("button", { name: "高いド", exact: true }).click();
   await page.getByRole("button", { name: "じゅんばんに たす" }).click();
   await page.getByRole("button", { name: "できた", exact: true }).click();
+  await openEditorOptions(page);
   await page.getByRole("button", { name: "おとな向け設定" }).click();
   let download = page.waitForEvent("download");
   await page.getByRole("button", { name: "作品を書き出す", exact: true }).click();
@@ -69,6 +73,7 @@ test("cold offline launch, sound program, file export and cache cleanup", async 
   await page.getByTestId("play-button").click();
   await expect(page.getByTestId("pause-button")).toBeVisible();
   await page.getByRole("button", { name: "編集へ戻る" }).click();
+  await openEditorOptions(page);
   await page.getByRole("button", { name: "おとな向け設定" }).click();
   download = page.waitForEvent("download");
   await page.getByRole("button", { name: /WAV/ }).click();
@@ -76,6 +81,7 @@ test("cold offline launch, sound program, file export and cache cleanup", async 
   expect(wav.subarray(0, 4).toString()).toBe("RIFF");
   expect(wav.subarray(44).some((value) => value !== 0)).toBe(true);
   await page.getByLabel("作品ファイル").setInputFiles((await file.path())!);
+  await openEditorOptions(page);
   await page.getByRole("button", { name: "おとな向け設定" }).click();
   page.on("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "整理する", exact: true }).click();

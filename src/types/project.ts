@@ -155,7 +155,7 @@ export function shapeColorValue(colorId: string): string | undefined {
 export const WORLDS: Record<WorldId, WorldTheme> = {
   soft: {
     id: "soft",
-    name: "ふわり",
+    name: "おもちゃ",
     hint: "こえ・おもちゃ・まんがのおと",
     background: "#f7f4ed",
     surface: "#fffdf8",
@@ -167,7 +167,7 @@ export const WORLDS: Record<WorldId, WorldTheme> = {
   },
   bounce: {
     id: "bounce",
-    name: "ぽんぽん",
+    name: "がっき",
     hint: "がっきで えんそう",
     background: "#fff4dc",
     surface: "#fffaf0",
@@ -179,7 +179,7 @@ export const WORLDS: Record<WorldId, WorldTheme> = {
   },
   space: {
     id: "space",
-    name: "きらり",
+    name: "うちゅう",
     hint: "ピコピコ でんしのおと",
     background: "#10142c",
     surface: "#191f40",

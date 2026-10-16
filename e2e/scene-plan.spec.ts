@@ -1,3 +1,4 @@
+import { openEditorOptions } from "./design-helpers";
 import { expect, test } from "@playwright/test";
 
 for (const [width, height] of [[390, 844], [667, 375]]) {
@@ -7,13 +8,17 @@ for (const [width, height] of [[390, 844], [667, 375]]) {
     await page.goto("/");
     await page.getByTestId("start-button").click();
     await page.getByTestId("world-bounce").click();
+    await page.getByTestId("world-bounce").click();
     const canvas = page.getByTestId("canvas-editor").locator("canvas");
     await canvas.click({ position: { x: width * 0.6, y: height * 0.65 } });
+    await openEditorOptions(page);
     for (let count = 3; count < 10; count += 1) await page.getByRole("button", { name: "場面を増やす" }).click();
     await expect(page.getByRole("button", { name: "場面を増やす" })).toBeDisabled();
     await expect(page.getByRole("tab")).toHaveCount(10);
     await page.getByRole("tab").nth(9).click();
+    await page.getByRole("button", { name: "編集の設定を閉じる" }).click();
     await canvas.click({ position: { x: width * 0.6, y: height * 0.65 } });
+    await openEditorOptions(page);
     await page.getByTestId("scene-motion").click();
     await expect(page.locator(".mood-card")).toHaveCount(15);
     await page.getByTestId("mood-carousel").click();
@@ -35,6 +40,7 @@ for (const [width, height] of [[390, 844], [667, 375]]) {
     })).toBe("figure8");
     await page.reload();
     await page.getByRole("button", { name: "つづきから" }).click();
+    await openEditorOptions(page);
     await expect(page.getByTestId("scene-count")).toHaveText("10 ばめん");
     await expect(page.getByTestId("scene-motion")).toContainText("なみなみ");
     await expect.poll(() => page.locator(".create-screen").evaluate((element) => getComputedStyle(element).opacity)).toBe("1");

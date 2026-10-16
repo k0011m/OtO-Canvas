@@ -108,6 +108,6 @@ export function SoundProgramEditor({ shapes, world, steps, seconds, bgmEnabled, 
       })}
     </ol>
     <div className="camera-actions"><button className="pill-button" aria-label={playing === null ? "じゅんばんを きく" : "とめる"} disabled={!order.length} onClick={() => playing === null ? void trySequence() : stop()}><ControlIcon name={playing === null ? "play" : "pause"} /></button><button className="pill-button" aria-label="おまかせに もどす" onClick={() => { stop(); onChange(null); }}><ControlIcon name="undo" /></button><button className="pill-button" aria-label="できた" onClick={onClose}><svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12 L10 18 L21 5" fill="none" stroke="currentColor" strokeWidth="4" /></svg></button></div>
-    <p className="sr-only">おとは ドから 高いドまで。ぽんぽんの さんかくは マリンバ、せんは ピアノで なるよ。</p>
+    <p className="sr-only">おとは ドから 高いドまで。がっきの さんかくは マリンバ、せんは ピアノで なるよ。</p>
   </section></div>;
 }

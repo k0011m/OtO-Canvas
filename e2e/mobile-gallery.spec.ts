@@ -21,6 +21,8 @@ for (const [width, height] of [[320, 568], [390, 844], [667, 375], [844, 390]]) 
     const shelf = page.locator(".gallery-screen");
     const cards = page.locator(".project-card");
     await expect(cards).toHaveCount(8);
+    // 登場アニメーション終了後の座標で並びを比較する。
+    await expect.poll(() => shelf.evaluate((element) => getComputedStyle(element).opacity)).toBe("1");
     const dimensions = await shelf.evaluate((element) => ({
       width: element.clientWidth, scrollWidth: element.scrollWidth,
       height: element.clientHeight, scrollHeight: element.scrollHeight,

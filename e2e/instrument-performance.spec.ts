@@ -1,3 +1,4 @@
+import { openEditorOptions } from "./design-helpers";
 import { expect, test } from "@playwright/test";
 
 // 保存済みの密集作品を実際に編集・再生し、配置上限と音声側での楽器欠落を検証する。
@@ -28,6 +29,7 @@ test("fifty shapes retain every instrument in real playback", async ({ page }) =
   await canvas.press("Enter");
   await expect(drawing).toHaveAttribute("data-shape-count", "50");
   await expect(drawing.getByRole("status")).toContainText("図形は50こまでです");
+  await page.getByTestId("tools-toggle").click();
   await page.getByTestId("tool-pen").click();
   await canvas.click({ position: { x: 120, y: 180 } });
   await expect(drawing).toHaveAttribute("data-shape-count", "50");
@@ -54,6 +56,7 @@ test("fifty shapes retain every instrument in real playback", async ({ page }) =
   { timeout: 8_000 }).toBe(18);
   await page.getByRole("button", { name: "編集へ戻る" }).click();
   await expect(drawing).toHaveAttribute("data-shape-count", "50");
+  await openEditorOptions(page);
   await page.getByRole("tab").nth(1).click();
   await expect(drawing).toHaveAttribute("data-shape-count", "0");
   await page.getByRole("button", { name: "まえを うつす" }).click();

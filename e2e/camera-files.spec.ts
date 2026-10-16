@@ -1,3 +1,4 @@
+import { openEditorOptions } from "./design-helpers";
 import { expect, test, type Page } from "@playwright/test";
 
 /** 本物のカメラを使わずに映像を作り、音声要求と全トラックの解放を検証する。 */
@@ -22,6 +23,7 @@ async function mockCamera(page: Page, denied = false) {
 async function finishWork(page: Page) {
   await page.getByTestId("start-button").click();
   await page.getByTestId("world-bounce").click();
+  await page.getByTestId("world-bounce").click();
   await page.getByTestId("canvas-editor").locator("canvas").click({ position: { x: 250, y: 300 } });
   await page.getByTestId("play-button").click();
   await page.getByTestId("play-scene-plan").click();
@@ -30,7 +32,7 @@ async function finishWork(page: Page) {
     const path = "/src/music/audioEngine.ts";
     (await import(path)).audioEngine.finishNaturally();
   });
-  await expect(page.getByRole("heading", { name: "できた！", exact: true })).toBeVisible();
+  await expect(page.locator("#finish-title")).toBeVisible();
 }
 
 test.describe("first visit camera choice", () => {
@@ -166,18 +168,23 @@ test("project file round trip and cache cleanup preserve work", async ({ page })
   await page.goto("/");
   await page.getByTestId("start-button").click();
   await page.getByTestId("world-bounce").click();
+  await page.getByTestId("world-bounce").click();
   await page.getByTestId("canvas-editor").locator("canvas").click({ position: { x: 500, y: 350 } });
+  await openEditorOptions(page);
   await page.getByTestId("scene-motion").click();
   await page.getByTestId("mood-carousel").click();
+  await openEditorOptions(page);
   await page.getByRole("button", { name: "おとな向け設定" }).click();
   const downloadEvent = page.waitForEvent("download");
   await page.getByRole("button", { name: "作品を書き出す", exact: true }).click();
   const downloaded = await downloadEvent;
   expect(downloaded.suggestedFilename()).toBe("my-work.otocanvas");
   await page.getByLabel("作品ファイル").setInputFiles((await downloaded.path())!);
+  await openEditorOptions(page);
   await expect(page.getByTestId("scene-motion")).toContainText("かいてんもくば");
   await expect(page.locator(".canvas-editor")).toHaveAttribute("data-shape-count", "1");
   expect(await page.evaluate(async () => { const path = "/src/storage/projectStore.ts"; return (await (await import(path)).listProjects()).length; })).toBe(2);
+  await openEditorOptions(page);
   await page.getByRole("button", { name: "おとな向け設定" }).click();
   await page.getByLabel("作品ファイル").setInputFiles({ name: "broken.otocanvas", mimeType: "application/json", buffer: Buffer.from("broken") });
   await expect(page.getByText("作品ファイルのJSONが壊れています。", { exact: true })).toBeVisible();
@@ -189,9 +196,11 @@ test("project file round trip and cache cleanup preserve work", async ({ page })
   await page.getByRole("button", { name: "整理する", exact: true }).click();
   await page.waitForLoadState("domcontentloaded");
   await page.getByRole("button", { name: "つづきから" }).click();
+  await openEditorOptions(page);
   await expect(page.getByTestId("scene-motion")).toContainText("かいてんもくば");
   const keys = await page.evaluate(() => caches.keys());
   expect(keys).not.toContain("oto-canvas-shell-test"); expect(keys).toContain("unrelated-cache");
+  await openEditorOptions(page);
   await page.getByRole("button", { name: "おとな向け設定" }).click();
   await page.getByRole("button", { name: "すべて消す", exact: true }).click();
   await expect(page.getByText("ほぞんデータを けしました", { exact: true })).toBeVisible();
@@ -208,7 +217,9 @@ test("cache cleanup does not reload when work cannot be persisted", async ({ pag
   await page.goto("/");
   await page.getByTestId("start-button").click();
   await page.getByTestId("world-bounce").click();
+  await page.getByTestId("world-bounce").click();
   await page.getByTestId("canvas-editor").locator("canvas").click({ position: { x: 500, y: 350 } });
+  await openEditorOptions(page);
   await page.getByRole("button", { name: "おとな向け設定" }).click();
   page.on("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "整理する", exact: true }).click();

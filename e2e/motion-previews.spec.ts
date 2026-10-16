@@ -1,3 +1,4 @@
+import { openEditorOptions } from "./design-helpers";
 import { expect, test } from "@playwright/test";
 
 // 静止時にも15種類の図解が別々で、動きを減らす設定でアニメーションを止める。
@@ -7,6 +8,8 @@ test("distinct motion diagrams work at desktop and mobile sizes", async ({ page 
   await page.goto("/");
   await page.getByTestId("start-button").click();
   await page.getByTestId("world-bounce").click();
+  await page.getByTestId("world-bounce").click();
+  await openEditorOptions(page);
   await page.getByTestId("scene-motion").click();
   await expect(page.locator(".motion-diagram svg")).toHaveCount(15);
   await expect(page.locator("animateMotion, animate")).toHaveCount(0);

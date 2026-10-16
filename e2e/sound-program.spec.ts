@@ -1,3 +1,4 @@
+import { openEditorOptions } from "./design-helpers";
 import { expect, test } from "@playwright/test";
 
 for (const [width, height] of [[390, 844], [667, 375]]) {
@@ -10,11 +11,15 @@ for (const [width, height] of [[390, 844], [667, 375]]) {
     await page.getByRole("button", { name: "閉じる", exact: true }).click();
     await page.getByTestId("start-button").click();
     await page.getByTestId("world-bounce").click();
+    await page.getByTestId("world-bounce").click();
     await expect(page.getByTestId("scene-program")).toHaveCount(0);
+    await openEditorOptions(page);
     await expect(page.getByTestId("scene-motion")).toBeVisible();
+    await page.getByRole("button", { name: "編集の設定を閉じる" }).click();
     const canvas = page.getByTestId("canvas-editor").locator("canvas");
     await canvas.click({ position: { x: width * .6, y: height * .6 } });
     await canvas.click({ position: { x: width * .8, y: height * .45 } });
+    await openEditorOptions(page);
     await page.getByTestId("sound-program").click();
     await expect(page.getByRole("button", { name: "背景BGMなし", exact: true })).toHaveAttribute("aria-pressed", "true");
     await page.getByRole("button", { name: "背景BGMあり", exact: true }).click();
@@ -41,6 +46,7 @@ for (const [width, height] of [[390, 844], [667, 375]]) {
     })).toEqual({ events: [], notes: [6, 3, 6] });
     await page.reload();
     await page.getByRole("button", { name: "つづきから" }).click();
+    await openEditorOptions(page);
     await page.getByTestId("sound-program").click();
     await expect(page.getByRole("button", { name: "背景BGMあり", exact: true })).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByTestId("sound-step-0")).toContainText("シ");

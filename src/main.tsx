@@ -4,6 +4,7 @@ import { App } from "./app/App";
 import { SurveyApp } from "./survey/SurveyApp";
 import { registerServiceWorker } from "./pwa/registerServiceWorker";
 import "./styles/global.css";
+import "./styles/redesign.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

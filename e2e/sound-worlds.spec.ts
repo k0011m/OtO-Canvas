@@ -18,6 +18,8 @@ for (const [world, label] of [["soft", "あーのこえ"], ["bounce", "マリン
     });
     await page.getByTestId("start-button").click();
     await page.getByTestId(`world-${world}`).click();
+    await page.getByTestId(`world-${world}`).click();
+    await page.getByTestId("tools-toggle").click();
     await expect(page.getByRole("button", { name: `まる・${label}`, exact: true })).toBeVisible();
     await page.evaluate(() => { (window as any).soundCalls.length = 0; });
     await page.getByTestId("canvas-editor").locator("canvas").click({ position: { x: 250, y: 300 } });

@@ -1,3 +1,4 @@
+import { openEditorOptions } from "./design-helpers";
 import { expect, test } from "@playwright/test";
 
 test("a child can draw, choose a motion and BGM mood, and play a 30-second MV", async ({
@@ -11,6 +12,7 @@ test("a child can draw, choose a motion and BGM mood, and play a 30-second MV", 
 
   const softWorld = page.getByTestId("world-soft");
   await expect(softWorld).toBeVisible();
+  await softWorld.click();
   await softWorld.click();
 
   const editor = page.getByTestId("canvas-editor");
@@ -31,14 +33,17 @@ test("a child can draw, choose a motion and BGM mood, and play a 30-second MV", 
   }
   await expect(page.getByTestId("tool-pen")).toHaveCount(1);
 
+  await page.getByTestId("tools-toggle").click();
   await page.getByTestId("tool-star").click();
   await expect(page.getByTestId("tool-star")).toHaveAttribute("aria-pressed", "true");
   await editor.click({ position: { x: 220, y: 150 } });
 
+  await page.getByTestId("colors-toggle").click();
   const oceanColor = page.getByTestId("color-ocean");
   await expect(oceanColor).toBeVisible();
   await oceanColor.click();
 
+  await openEditorOptions(page);
   const rotateRight = page.getByTestId("rotate-right");
   const rotateLeft = page.getByTestId("rotate-left");
   await expect(rotateRight).toBeVisible();
@@ -46,6 +51,8 @@ test("a child can draw, choose a motion and BGM mood, and play a 30-second MV", 
   await rotateRight.click();
   await rotateLeft.click();
 
+  await page.getByRole("button", { name: "編集の設定を閉じる" }).click();
+  await page.getByTestId("tools-toggle").click();
   const penTool = page.getByTestId("tool-pen");
   await penTool.click();
   const drawingSurface = editor.locator("canvas").first();
@@ -83,7 +90,11 @@ test("a child can draw, choose a motion and BGM mood, and play a 30-second MV", 
   await pauseButton.click();
 
   await expect(pauseButton).toHaveAttribute("aria-label", "再開");
-  await expect(page.getByText(/あと 0:30/)).toBeVisible();
+  const remaining = page.getByText(/あと 0:\d{2}/);
+  await expect(remaining).toBeVisible();
+  const pausedTime = await remaining.textContent();
+  await page.waitForTimeout(1100);
+  await expect(remaining).toHaveText(pausedTime!);
 
   const backButton = page.getByRole("button", { name: "編集へ戻る" });
   await expect(backButton).toBeVisible();

@@ -1,4 +1,4 @@
-type IconName = "left" | "right" | "close" | "plus" | "minus" | "undo" | "redo" | "shuffle" | "trash" | "more" | "expand" | "collapse" | "pause" | "play";
+type IconName = "left" | "right" | "close" | "plus" | "minus" | "undo" | "redo" | "shuffle" | "trash" | "more" | "expand" | "collapse" | "pause" | "play" | "home";
 
 /** 細い文字記号を使わず、端末のフォントに左右されない太い操作アイコンを描く。 */
 export function ControlIcon({ name }: { name: IconName }) {
@@ -13,6 +13,7 @@ export function ControlIcon({ name }: { name: IconName }) {
   };
   return <svg className="control-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
     {paths[name] && <path d={paths[name]} />}
+    {name === "home" && <><path d="M2 11 L12 2 L22 11" /><path d="M5 10 V22 H10 V15 H14 V22 H19 V10 L12 4Z" fill="currentColor" stroke="none" /></>}
     {name === "left" && <path d="M18 3 L5 12 L18 21 Z" fill="currentColor" stroke="none" />}
     {(name === "right" || name === "play") && <path d="M6 3 L19 12 L6 21 Z" fill="currentColor" stroke="none" />}
     {name === "pause" && <path d="M8 5 V19 M16 5 V19" strokeWidth="5" />}

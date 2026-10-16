@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { readFileSync } from "node:fs";
+const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 
 test("編集と保存では作曲せず、再生準備の中止と再試行ができる", async ({ page }, info) => {
   let workers = 0;
@@ -9,9 +11,10 @@ test("編集と保存では作曲せず、再生準備の中止と再試行が�
   });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await expect(page.getByTestId("app-version")).toHaveText("ver 0.2.0");
+  await expect(page.getByTestId("app-version")).toHaveText(`ver ${version}`);
   await page.screenshot({ path: info.outputPath("home-version.png") });
   await page.getByTestId("start-button").click();
+  await page.getByTestId("world-bounce").click();
   await page.getByTestId("world-bounce").click();
   await page.getByTestId("canvas-editor").locator("canvas").click({ position: { x: 240, y: 310 } });
   await expect.poll(() => page.evaluate(async () => {
