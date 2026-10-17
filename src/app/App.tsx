@@ -185,6 +185,34 @@ export function App() {
   const { expanded, toggleFullscreen } = useFullscreen();
   const [toolsOpen, setToolsOpen] = useState(false);
   const [colorsOpen, setColorsOpen] = useState(false);
+  const lastOpenedPalette = useRef<"shapes" | "colors">("shapes");
+
+  // CSSの2段表示と同じ幅で排他制御し、回転・縮小時も最後に開いた方を残す。
+  useEffect(() => {
+    const compact = window.matchMedia("(max-width: 760px)");
+    const closeOtherPalette = () => {
+      if (!compact.matches) return;
+      if (lastOpenedPalette.current === "shapes") setColorsOpen(false);
+      else setToolsOpen(false);
+    };
+    compact.addEventListener("change", closeOtherPalette);
+    return () => compact.removeEventListener("change", closeOtherPalette);
+  }, []);
+
+  /** 1段で収まる幅では同時展開を許可し、2段になる幅では開くときだけ他方を閉じる。 */
+  const togglePalette = (palette: "shapes" | "colors") => {
+    const opening = palette === "shapes" ? !toolsOpen : !colorsOpen;
+    if (opening) {
+      lastOpenedPalette.current = palette;
+      if (window.matchMedia("(max-width: 760px)").matches) {
+        if (palette === "shapes") setColorsOpen(false);
+        else setToolsOpen(false);
+      }
+    }
+    if (palette === "shapes") setToolsOpen(opening);
+    else setColorsOpen(opening);
+  };
+
   const [clearOpen, setClearOpen] = useState(false);
   const [finishPraise, setFinishPraise] = useState("できた！");
   const [screen, setScreen] = useState<Screen>("start");
@@ -1075,7 +1103,7 @@ export function App() {
 
           </div>
           <EditorPalette side="left" label="かたち" open={toolsOpen} icon={<ToolIcon kind={selectedKind} />}
-            onToggle={() => { setToolsOpen((open) => !open); setColorsOpen(false); }}>
+            onToggle={() => togglePalette("shapes")}>
               {CREATION_TOOLS.map((kind) => (
                 <button
                   key={kind}
@@ -1111,7 +1139,7 @@ export function App() {
           </EditorPalette>
           <EditorPalette side="right" label="いろ" open={colorsOpen}
             icon={<PaintDrop color={SHAPE_COLOR_PALETTE.find((color) => color.id === selectedColorId)?.value ?? theme.circle} />}
-            onToggle={() => { setColorsOpen((open) => !open); setToolsOpen(false); }}>
+            onToggle={() => togglePalette("colors")}>
             {SHAPE_COLOR_PALETTE.map((color) => <button key={color.id} className="paint-choice" type="button"
               data-testid={`color-${color.id}`} aria-label={color.name} aria-pressed={selectedColorId === color.id}
               onClick={() => { setSelectedColorId(color.id); updateSelected((shape) => ({ ...shape, colorId: color.id }), `${color.name}に なりました`); }}>

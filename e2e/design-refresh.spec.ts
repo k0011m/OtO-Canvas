@@ -7,7 +7,7 @@ async function openDesign(page: Page) {
   await page.getByTestId("start-button").click();
 }
 
-for (const [width, height] of [[1440, 900], [390, 844], [740, 390]]) {
+for (const [width, height] of [[1440, 900], [768, 1024], [390, 844], [740, 390]]) {
   test(`design flow ${width}x${height}`, async ({ page }, info) => {
     await page.setViewportSize({ width, height });
     await openDesign(page);
@@ -41,12 +41,12 @@ for (const [width, height] of [[1440, 900], [390, 844], [740, 390]]) {
     await page.getByTestId("tool-star").click();
     await canvas.click({ position: { x: width * .36, y: height * .45 } });
     await page.getByTestId("colors-toggle").click();
-    await expect(page.getByTestId("tools-toggle")).toHaveAttribute("aria-expanded", "false");
+    await expect(page.getByTestId("tools-toggle")).toHaveAttribute("aria-expanded", String(width > 760));
     await page.getByTestId("color-ocean").click();
     await page.waitForTimeout(650);
     await page.screenshot({ path: info.outputPath("color-palette.png") });
-    await page.getByTestId("tools-toggle").click();
-    await expect(page.getByTestId("colors-toggle")).toHaveAttribute("aria-expanded", "false");
+    if (width <= 760) await page.getByTestId("tools-toggle").click();
+    await expect(page.getByTestId("colors-toggle")).toHaveAttribute("aria-expanded", String(width > 760));
     await page.getByTestId("tool-circle").click();
     await canvas.click({ position: { x: width * .65, y: height * .47 } });
     await page.getByTestId("tools-toggle").click();
@@ -95,4 +95,20 @@ test("narrow toolbar preserves primary actions without popups", async ({ page })
   await expect(page.locator(".canvas-editor")).toHaveAttribute("data-shape-count", "1");
   await expect(page.locator(".toast")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "場面と編集の設定", exact: true })).toHaveCount(0);
+});
+
+// 広い画面で両方を開いてから幅を狭めても、最後に開いたパレットを残す。
+test("palette resize keeps the last opened palette", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await openDesign(page);
+  await page.getByTestId("world-bounce").click();
+  await page.getByTestId("world-bounce").click();
+  await page.getByTestId("tools-toggle").click();
+  await page.getByTestId("colors-toggle").click();
+  await expect(page.getByTestId("tools-toggle")).toHaveAttribute("aria-expanded", "true");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByTestId("tools-toggle")).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByTestId("colors-toggle")).toHaveAttribute("aria-expanded", "true");
+  await page.getByTestId("tools-toggle").click();
+  await expect(page.getByTestId("colors-toggle")).toHaveAttribute("aria-expanded", "false");
 });
