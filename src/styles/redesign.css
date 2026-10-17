@@ -40,29 +40,54 @@
 .clear-actions .clear-confirm { background: #a95648; color: #fffaf0; }
 
 /* カードの位置を固定して縮尺だけを補間し、選択後も同じ場所を押して決定できる。 */
-.world-screen--redesign { overflow: hidden; display: flex; flex-direction: column; justify-content: flex-start; padding-top: clamp(30px, 5vh, 64px); }
-.world-screen--redesign .screen-heading { position: relative; z-index: 2; flex: 0 0 auto; margin: 0; text-align: center; }
-.world-screen--redesign .screen-heading h2 { font-size: clamp(26px, 3.2vw, 48px); }
-.world-screen--redesign .screen-heading p { min-height: 24px; font-size: 15px; }
-.world-screen--redesign .back-button { left: max(20px, env(safe-area-inset-left)); transform: none; }
-.world-carousel { position: relative; flex: 1; width: min(1200px, 100%); min-height: 320px; margin: 0 auto 55px; }
-.world-choice { position: absolute; top: 50%; left: 50%; width: clamp(180px, 21vw, 270px); height: clamp(240px, 27vw, 330px); padding: 22px; border: 1px solid color-mix(in srgb, var(--card-ink) 10%, transparent); border-radius: 34px; color: var(--card-ink); background: var(--card-bg); box-shadow: 0 12px 26px #31251b12; transform: translate(-50%, -50%); cursor: pointer; transition: transform 680ms cubic-bezier(.22,.75,.2,1), box-shadow 400ms; text-align: left; }
+.world-screen--redesign { width: 100vw; overflow: hidden; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
+.world-screen--redesign .screen-heading { position: relative; z-index: 2; margin: 0; text-align: center; }
+.world-screen--redesign .screen-heading h2 { margin: 0; font-size: clamp(24px, 3.2vw, 48px); }
+.world-screen--redesign .screen-heading p { margin: 8px 0 0; min-height: 0; font-size: clamp(11px, 1.2vw, 15px); }
+.world-screen--redesign .back-button { position: static; transform: none; margin: 0; justify-self: start; min-height: 44px; }
+/* 残りの高さを基準にカードを縮め、固定の最低高さによるスクロールを防ぐ。 */
+.world-carousel { position: relative; container-type: size; width: min(1200px, 100%); height: 100%; min-height: 0; margin: 0 auto; }
+.world-choice { position: absolute; top: 54%; left: 50%; width: min(21cqw, 43cqh, 270px); height: min(27cqw, 56cqh, 330px); padding: min(2cqw, 3cqh, 22px); border: 1px solid color-mix(in srgb, var(--card-ink) 10%, transparent); border-radius: 28px; color: var(--card-ink); background: var(--card-bg); box-shadow: 0 12px 26px #31251b12; transform: translate(-50%, -50%); cursor: pointer; transition: transform 680ms cubic-bezier(.22,.75,.2,1), box-shadow 400ms; text-align: left; }
 .world-choice[data-slot="0"] { left: 20%; }
 .world-choice[data-slot="2"] { left: 80%; }
-.world-carousel[data-selected="true"] .world-choice { transform: translate(-50%, -50%) scale(.68); }
-.world-carousel[data-selected="true"] .world-choice[data-active="true"] { transform: translate(-50%, -50%) scale(1.45); z-index: 3; box-shadow: 0 15px 40px #31251b18; }
-.world-choice:focus-visible { outline: 3px solid #9c7ac3; outline-offset: 8px; }
-.world-emblem { position: absolute; width: 108px; height: 96px; top: -58px; left: -32px; filter: drop-shadow(0 8px 6px #31251b15); animation: emblem-sway 5s ease-in-out infinite; transform-origin: 60% 80%; }
-.world-shapes { display: block; width: 100%; height: 65%; overflow: visible; animation: shapes-sway 6s ease-in-out infinite; }
+.world-carousel[data-selected="true"] .world-choice { transform: translate(-50%, -50%) scale(.88); }
+.world-carousel[data-selected="true"] .world-choice[data-active="true"] { transform: translate(-50%, -50%) scale(1.2); z-index: 3; box-shadow: 0 15px 40px #31251b18; }
+.world-choice:focus-visible { outline: 3px solid #9c7ac3; outline-offset: 4px; }
+.world-emblem { position: absolute; width: min(8cqw, 14cqh, 98px); height: min(7cqw, 12cqh, 86px); top: min(-12px, -5cqh); left: -12px; filter: drop-shadow(0 8px 6px #31251b15); animation: emblem-sway 5s ease-in-out infinite; transform-origin: 60% 80%; }
+.world-shapes { display: block; width: 100%; height: 57%; overflow: visible; animation: shapes-sway 6s ease-in-out infinite; }
 .world-shapes--soft { animation-delay: -1.5s; }
 .world-shapes--space { animation-delay: -3s; }
 .world-emblem--space { animation-delay: -2s; }
-.world-choice-label { display: grid; gap: 7px; }
-.world-choice-label strong { font-size: clamp(23px, 2.2vw, 32px); font-weight: 800; }
-.world-choice-label small { font-size: clamp(10px, 1.1vw, 14px); opacity: .7; }
-.world-confirm-hint { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; margin-top: 12px; opacity: 0; }
+.world-choice-label { display: grid; gap: 4px; }
+.world-choice-label strong { font-size: min(2.8cqw, 5cqh, 32px); font-weight: 800; }
+.world-choice-label small { font-size: min(1.1cqw, 2.2cqh, 14px); opacity: .7; white-space: nowrap; }
+.world-confirm-hint { display: flex; align-items: center; gap: 6px; font-size: min(1.1cqw, 2.2cqh, 11px); font-weight: 700; margin-top: min(1cqh, 8px); opacity: 0; }
 .world-confirm-hint .control-icon { width: 12px; height: 12px; }
 .world-choice[data-active="true"] .world-confirm-hint { opacity: .8; }
+@media (max-width: 600px) and (orientation: portrait) {
+  .world-screen--redesign { gap: 8px; padding: max(16px, env(safe-area-inset-top)) 18px max(12px, env(safe-area-inset-bottom)); }
+  .world-choice { width: min(76cqw, 350px); height: min(23cqh, 145px); padding: 12px; border-radius: 24px; }
+  .world-choice[data-slot] { left: 52%; }
+  .world-choice[data-slot="0"] { top: 19%; }
+  .world-choice[data-slot="1"] { top: 51%; }
+  .world-choice[data-slot="2"] { top: 83%; }
+  .world-carousel[data-selected="true"] .world-choice[data-active="true"] { transform: translate(-50%, -50%) scale(1.1); }
+  .world-shapes { position: absolute; width: 34%; height: 80%; left: 5%; top: 10%; }
+  .world-choice-label { margin-left: 42%; height: 68%; display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+  .world-choice-label strong { font-size: clamp(18px, 6cqw, 25px); }
+  .world-choice-label small { font-size: clamp(8px, 2.5cqw, 11px); white-space: normal; }
+  .world-confirm-hint { margin-left: 42%; margin-top: 0; font-size: 10px; }
+  .world-emblem { width: min(16cqw, 9cqh, 58px); height: min(15cqw, 8cqh, 52px); top: -15px; left: -16px; }
+}
+@media (max-height: 540px) and (orientation: landscape) {
+  .world-screen--redesign { gap: 4px; padding: max(8px, env(safe-area-inset-top)) 18px max(8px, env(safe-area-inset-bottom)); }
+  .world-screen--redesign .screen-heading h2 { font-size: 23px; }
+  .world-screen--redesign .screen-heading p { margin-top: 3px; font-size: 11px; }
+  .world-choice { width: min(21cqw, 62cqh, 220px); height: min(30cqw, 73cqh, 250px); border-radius: 20px; }
+  .world-choice-label strong { font-size: min(3cqw, 8cqh, 24px); }
+  .world-choice-label small, .world-confirm-hint { font-size: min(1.3cqw, 3.5cqh, 11px); }
+  .world-screen--redesign .back-button { padding: 6px 12px; min-height: 36px; font-size: 12px; }
+}
 .drum-stick { transform-origin: 24px 17px; animation: drum-tap 2.5s ease-in-out infinite; }
 .drum-stick.second { transform-origin: 141px 17px; animation-delay: .25s; }
 @keyframes drum-tap { 0%, 45%, 100% { transform: rotate(-7deg); } 55%, 65% { transform: rotate(5deg); } }
@@ -107,22 +132,6 @@
   .palette-items .tool-button > span { scale: .7; }
 }
 @media (max-width: 600px) and (orientation: portrait) {
-  .world-screen--redesign { padding: 24px 14px 14px; }
-  .world-screen--redesign .screen-heading p { font-size: 12px; }
-  .world-screen--redesign { overflow-y: auto; }
-  .world-carousel { min-height: 540px; margin-top: 60px; margin-bottom: 70px; }
-  .world-choice { width: 220px; height: 230px; padding: 18px; border-radius: 29px; }
-  .world-choice[data-slot] { left: 50%; transform: translate(-50%, -50%) scale(.72); }
-  .world-choice[data-slot="0"] { top: 20%; }
-  .world-choice[data-slot="1"] { top: 50%; }
-  .world-choice[data-slot="2"] { top: 80%; }
-  .world-carousel[data-selected="true"] .world-choice { transform: translate(-50%, -50%) scale(.55); }
-  .world-carousel[data-selected="true"] .world-choice[data-active="true"] { transform: translate(-50%, -50%) scale(.98); }
-  .world-choice-label strong { font-size: 27px; }
-  .world-choice-label small { font-size: 12px; }
-  .world-emblem { width: 94px; top: -40px; left: -30px; }
-  .world-shapes { height: 58%; }
-  .world-confirm-hint { margin-top: 7px; }
   .finish-screen--redesign { display: flex; flex-direction: column; justify-content: flex-start; gap: 24px; padding: 26px 22px; }
   .finish-screen--redesign .finish-art { flex: none; width: min(100%, 360px); height: auto; aspect-ratio: 1; }
   .finish-screen--redesign .finish-content { flex: none; width: min(100%, 420px); gap: 18px; }
@@ -134,19 +143,6 @@
   .finish-main-actions button { min-height: 78px; }
 }
 @media (max-height: 540px) and (orientation: landscape) {
-  .world-screen--redesign { padding: 14px 18px; }
-  .world-screen--redesign .screen-heading h2 { font-size: 27px; margin: 0; }
-  .world-screen--redesign .screen-heading p { font-size: 12px; margin: 6px 0; }
-  .world-carousel { min-height: 190px; margin-bottom: 24px; }
-  .world-choice { width: 152px; height: 180px; padding: 14px; border-radius: 24px; }
-  .world-choice[data-slot] { top: 56%; }
-  .world-carousel[data-selected="true"] .world-choice[data-active="true"] { transform: translate(-50%, -50%) scale(1.25); }
-  .world-choice-label strong { font-size: 20px; }
-  .world-choice-label small { font-size: 8px; }
-  .world-shapes { height: 55%; }
-  .world-emblem { width: 68px; height: 64px; top: -25px; left: -25px; }
-  .world-confirm-hint { margin-top: 5px; font-size: 9px; }
-  .world-screen--redesign .back-button { bottom: 9px; padding: 8px 14px; font-size: 12px; }
   .finish-screen--redesign { padding: 22px 36px; gap: 30px; }
   .finish-screen--redesign .finish-art { max-height: calc(100dvh - 44px); width: auto; justify-self: center; }
   .finish-screen--redesign .finish-content { gap: 10px; }

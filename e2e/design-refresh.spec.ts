@@ -140,3 +140,37 @@ for (const [width, height] of [[1440, 900], [390, 844]]) {
     await expect(page.getByTestId("canvas-editor")).toBeVisible();
   });
 }
+
+for (const [width, height] of [[280, 568], [320, 480], [390, 844], [667, 375], [768, 1024], [1440, 900]]) {
+  // 初期状態と全カードの選択状態で、スクロール不要・カード間の余白を確認する。
+  test(`world picker fits without scrolling at ${width}x${height}`, async ({ page }, info) => {
+    await page.setViewportSize({ width, height });
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await openDesign(page);
+    await expect.poll(() => page.locator(".world-screen").evaluate(el => getComputedStyle(el).opacity)).toBe("1");
+    for (const id of [null, "soft", "bounce", "space"]) {
+      if (id) await page.getByTestId(`world-${id}`).click();
+      const layout = await page.locator(".world-screen").evaluate(el => {
+        const boxes = [...el.querySelectorAll(".world-choice")].map(card => {
+          const b = card.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom };
+        });
+        const heading = el.querySelector(".screen-heading")!.getBoundingClientRect();
+        const back = el.querySelector(".back-button")!.getBoundingClientRect();
+        return { boxes, scroll: el.scrollHeight - el.clientHeight, horizontal: el.scrollWidth - el.clientWidth, headingBottom: heading.bottom, backTop: back.top };
+      });
+      expect(layout.scroll).toBeLessThanOrEqual(1);
+      expect(layout.horizontal).toBeLessThanOrEqual(1);
+      for (const box of layout.boxes) {
+        expect(box.left).toBeGreaterThanOrEqual(0);
+        expect(box.right).toBeLessThanOrEqual(width);
+        expect(box.top).toBeGreaterThan(layout.headingBottom);
+        expect(box.bottom).toBeLessThan(layout.backTop);
+      }
+      for (let i = 0; i < 2; i++) {
+        const first = layout.boxes[i], next = layout.boxes[i+1];
+        expect(width <= 600 && height >= width ? next.top - first.bottom : next.left - first.right).toBeGreaterThan(8);
+      }
+      await page.screenshot({ path: info.outputPath(`fit-${id ?? "initial"}.png`) });
+    }
+  });
+}
