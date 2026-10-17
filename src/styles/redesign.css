@@ -8,24 +8,23 @@
 .editor-toolbar .control-icon { width: 31px; height: 31px; }
 .editor-toolbar .play-button { margin: 0 0 0 5px; min-width: 0; width: auto; min-height: 56px; height: 56px; padding: 0 22px; border-radius: 19px; gap: 12px; font-size: 17px; box-shadow: 0 6px 20px #342d1910; }
 .editor-toolbar .play-icon { border-top-width: 12px; border-bottom-width: 12px; border-left-width: 19px; }
-.create-screen .shape-count { bottom: 135px; left: 24px; opacity: .65; }
 .create-screen .canvas-hint { pointer-events: none; opacity: .65; }
 .app-shell:has(.create-screen) > .toast { top: auto; bottom: max(145px, calc(env(safe-area-inset-bottom) + 135px)); }
 
-/* どちらのパレットも高さを固定し、反対側の丸ボタンの手前まで伸びる。 */
-.editor-palette { --toggle: 74px; --palette-height: 100px; --expanded-width: min(680px, calc(100vw - 128px)); position: absolute; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 50; height: var(--palette-height); width: var(--toggle); border-radius: 50px; background: transparent; transition: width 560ms cubic-bezier(.22,.75,.2,1), background-color 350ms, box-shadow 350ms; }
+/* 左下に図形、その一段上に色を置き、どちらも同じ高さのまま右へ伸びる。 */
+.editor-palette { --palette-bottom: max(20px, env(safe-area-inset-bottom)); --toggle: 74px; --palette-height: 100px; --expanded-width: min(680px, calc(100vw - 128px)); position: absolute; bottom: var(--palette-bottom); z-index: 50; height: var(--palette-height); width: var(--toggle); border-radius: 50px; background: transparent; transition: width 560ms cubic-bezier(.22,.75,.2,1), background-color 350ms, box-shadow 350ms; }
 .editor-palette--left { left: max(20px, env(safe-area-inset-left)); }
-.editor-palette--right { right: max(20px, env(safe-area-inset-right)); }
+.editor-palette--right { left: max(20px, env(safe-area-inset-left)); bottom: calc(var(--palette-bottom) + var(--palette-height) + 8px); }
 .editor-palette[data-open="true"] { width: var(--expanded-width); background: var(--surface); box-shadow: 0 9px 35px #352a1721; }
 .palette-toggle { position: absolute; top: 50%; transform: translateY(-50%); width: var(--toggle); height: var(--toggle); border-radius: 50%; border: 3px solid color-mix(in srgb, var(--ink) 12%, transparent); background: var(--surface); color: var(--ink); display: grid; place-items: center; cursor: pointer; box-shadow: 0 4px 16px #352a1715; z-index: 2; }
 .editor-palette--left .palette-toggle { left: 0; }
-.editor-palette--right .palette-toggle { right: 0; }
+.editor-palette--right .palette-toggle { left: 0; }
 .editor-palette[data-open="true"] .palette-toggle { border-color: var(--accent); }
 .palette-toggle > span { scale: 1.18; }
 .paint-drop { display: block; width: 38px; height: 45px; }
 .palette-toggle .paint-drop { width: 42px; height: 49px; }
 .palette-items { position: absolute; inset: 0 10px 0 calc(var(--toggle) + 8px); display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); align-items: center; justify-items: center; gap: 4px; opacity: 0; visibility: hidden; overflow: hidden; transition: opacity 160ms, visibility 160ms; }
-.editor-palette--right .palette-items { inset: 0 calc(var(--toggle) + 8px) 0 10px; grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.editor-palette--right .palette-items { inset: 0 10px 0 calc(var(--toggle) + 8px); grid-template-columns: repeat(8, minmax(0, 1fr)); }
 .editor-palette[data-open="true"] .palette-items { opacity: 1; visibility: visible; transition: opacity 250ms 160ms, visibility 0ms; }
 .palette-items .tool-button, .paint-choice { display: grid; place-items: center; width: 48px; max-width: 100%; height: 56px; min-height: 44px; padding: 3px; margin: 0; border: 2px solid transparent; border-radius: 17px; background: transparent; cursor: pointer; box-shadow: none; }
 .palette-items .tool-button[aria-pressed="true"], .paint-choice[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
@@ -93,11 +92,11 @@
   .editor-toolbar .control-icon { width: 26px; height: 26px; }
   .editor-toolbar .play-button { min-height: 44px; height: 44px; padding: 0 12px; font-size: 13px; gap: 8px; border-radius: 15px; }
   .editor-toolbar .play-icon { border-top-width: 9px; border-bottom-width: 9px; border-left-width: 14px; }
-  .editor-palette { --toggle: 62px; --palette-height: 112px; --expanded-width: calc(100vw - 94px); bottom: max(12px, env(safe-area-inset-bottom)); }
+  .editor-palette { --palette-bottom: max(12px, env(safe-area-inset-bottom)); --toggle: 62px; --palette-height: 112px; --expanded-width: calc(100vw - 94px); }
   .editor-palette--left { left: 12px; }
-  .editor-palette--right { right: 12px; }
+  .editor-palette--right { left: 12px; }
   .palette-items { grid-template-columns: repeat(5, minmax(0, 1fr)); grid-template-rows: repeat(2, 1fr); inset: 6px 8px 6px 68px; gap: 0; }
-  .editor-palette--right .palette-items { inset: 6px 68px 6px 8px; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(2, 1fr); }
+  .editor-palette--right .palette-items { inset: 6px 8px 6px 68px; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(2, 1fr); }
   .palette-items .tool-button, .paint-choice { width: 44px; height: 46px; padding: 3px; border-radius: 13px; }
   .palette-items .tool-button > span { scale: .8; }
   .paint-choice .paint-drop { width: 30px; height: 38px; }

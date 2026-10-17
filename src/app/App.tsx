@@ -43,7 +43,6 @@ import {
 } from "../storage/projectStore";
 import {
   colorSoundProfile,
-  relationshipCount,
   sceneForBeat,
   normalizeSceneCount,
   shapesForScene,
@@ -52,7 +51,6 @@ import {
   BARS,
   BPM,
   DURATION_SECONDS,
-  MAX_SHAPES_PER_SCENE,
   SHAPE_COLOR_PALETTE,
   STAMP_SHAPE_KINDS,
   TOTAL_BEATS,
@@ -271,10 +269,6 @@ export function App() {
   const performanceShapes = useMemo(
     () => shapesForScene(shapes, sceneForBeat(playback.beat, sceneCount), sceneCount),
     [playback.beat, shapes, sceneCount],
-  );
-  const activeRelationships = useMemo(
-    () => relationshipCount(activeShapes),
-    [activeShapes],
   );
 
   const showToast = useCallback((message: string) => {
@@ -1076,9 +1070,6 @@ export function App() {
                 ? <>かたちを えらんで<br />ひろいところに おいてみよう</>
                 : <>ひだりしたの まるから<br />かたちを えらんでね</>}</p>
             )}
-            <span className="shape-count" aria-live="polite">
-              {activeRelationships > 0 ? `♪ ${activeRelationships}コンボ · ` : ""}{activeShapes.length} / {MAX_SHAPES_PER_SCENE}
-            </span>
 
 
 
