@@ -1,3 +1,4 @@
+import { isNativeApp } from "../platform/native";
 import { useState, useSyncExternalStore } from "react";
 import { applyOfflineUpdate, getOfflineState, retryOfflinePreparation, subscribeOffline } from "../pwa/registerServiceWorker";
 
@@ -17,6 +18,8 @@ export function OfflineSettings({ beforeUpdate }: { beforeUpdate: () => Promise<
     try { await beforeUpdate(); await applyOfflineUpdate(); }
     catch (cause) { setError(cause instanceof Error ? cause.message : "更新できませんでした。"); setBusy(false); }
   }
+
+  if (isNativeApp) return <fieldset className="creation-settings"><legend>オフラインで使う</legend><p data-testid="offline-status">アプリに音源と必要なデータを同梱しています。初回から通信なしで起動・編集・演奏・作品の保存ができます。</p><p>更新はGoogle Playから行います。アンケートは通信が必要です。アプリのデータ削除・アンインストールでは作品も消えるため、大切な作品は作品ファイルとして書き出してください。</p></fieldset>;
 
   return <fieldset className="creation-settings">
     <legend>オフラインで使う</legend>

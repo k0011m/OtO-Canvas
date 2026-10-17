@@ -113,7 +113,7 @@ export function CelebrationCamera({ onClose, onDenied }: { onClose: () => void; 
     </div>
     {error && <p role="alert">{error}</p>}
     <div className="camera-actions">{photo ? <>
-      <button className="pill-button" onClick={() => downloadFile(photo, "otocanvas-peace.jpg")}>しゃしんを ほぞん</button>
+      <button className="pill-button" onClick={() => void downloadFile(photo, "otocanvas-peace.jpg").catch(() => setError("写真を保存できませんでした。もう一度ためしてね。"))}>しゃしんを ほぞん</button>
       <button className="pill-button" onClick={() => { setPhoto(null); setPhotoUrl(""); setError(""); setAttempt((n) => n + 1); }}>とりなおす</button>
     </> : <>
       <button className="pill-button" disabled={!ready || !!error || countdown !== null} onClick={startCountdown}>ピース！ とる</button>

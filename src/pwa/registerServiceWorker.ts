@@ -1,8 +1,9 @@
+import { isNativeApp } from "../platform/native";
 export interface OfflineState {
   status: "preparing" | "ready" | "error" | "unsupported" | "development";
   updateAvailable: boolean;
 }
-let state: OfflineState = { status: import.meta.env.DEV ? "development" : "preparing", updateAvailable: false };
+let state: OfflineState = { status: isNativeApp ? "ready" : import.meta.env.DEV ? "development" : "preparing", updateAvailable: false };
 const listeners = new Set<() => void>();
 let registrationPromise: Promise<ServiceWorkerRegistration | null> | null = null;
 let currentRegistration: ServiceWorkerRegistration | null = null;
@@ -57,6 +58,7 @@ function watchWorker(worker: ServiceWorker): void {
 
 /** 本番の全ファイル入りWorkerだけを登録し、開発用コードはキャッシュしない。 */
 export function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
+  if (isNativeApp) return Promise.resolve(null);
   if (registrationPromise) return registrationPromise;
   if (import.meta.env.DEV) return Promise.resolve(null);
   if (!("serviceWorker" in navigator) || !window.isSecureContext) {
@@ -107,6 +109,7 @@ export async function applyOfflineUpdate(): Promise<void> {
 
 /** 起動に必要な現行版は残し、旧キャッシュと再起動後の作業メモリだけ整理する。 */
 export async function cleanAppCache(): Promise<void> {
+  if (isNativeApp) return;
   if (import.meta.env.PROD) {
     const registration = await registerServiceWorker();
     if (!registration?.active) throw new Error("Offline cache is not ready");

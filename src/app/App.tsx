@@ -1,3 +1,4 @@
+import { isNativeApp } from "../platform/native";
 import { WorldPicker } from "./WorldPicker";
 import { EditorPalette } from "./EditorPalette";
 import { ClearCanvasDialog } from "./ClearCanvasDialog";
@@ -653,13 +654,19 @@ export function App() {
           recorder.ondataavailable = (event) => {
             if (event.data.size > 0) chunks.push(event.data);
           };
-          recorder.onstop = () => {
-            if (chunks.length > 0) downloadRecordedVideo(chunks, recorder?.mimeType || "video/webm");
+          // Androidの保存先選択が完了してから保存結果を知らせる。
+          recorder.onstop = async () => {
             recordingStream?.getTracks().forEach((track) => track.stop());
             audioEngine.stopCaptureStream();
             recorderRef.current = null;
             setRecordingVideo(false);
-            showToast(chunks.length > 0 ? "MVを ほぞんしました" : "MVを ほぞんできませんでした");
+            try {
+              if (!chunks.length) throw new Error("録画データがありません");
+              const saved = await downloadRecordedVideo(chunks, recorder?.mimeType || "video/webm");
+              showToast(saved ? "MVを ほぞんしました" : "ほぞんを やめました");
+            } catch {
+              showToast("MVを ほぞんできませんでした");
+            }
           };
           recorder.start(500);
           recorderRef.current = recorder;
@@ -927,11 +934,13 @@ export function App() {
   }), [screen, restoredProject, shapes, worldId, projectTitle, sceneCount, sceneMoods, scenePrograms, sceneSoundPrograms, soundProgramBgm]);
 
   /** 専用ファイルに書き出し、写真と親向け設定は含めない。 */
-  const exportProjectFile = useCallback(() => {
+  const exportProjectFile = useCallback(async () => {
     const project = currentFileProject();
     if (!project) return;
-    downloadFile(new Blob([serializeProject(project)], { type: "application/json" }), "my-work.otocanvas");
-    setFileMessage("作品ファイルを書き出しました。");
+    try {
+      const saved = await downloadFile(new Blob([serializeProject(project)], { type: "application/json" }), "my-work.otocanvas");
+      setFileMessage(saved ? "作品ファイルを書き出しました。" : "保存をキャンセルしました。");
+    } catch { setFileMessage("作品ファイルを保存できませんでした。"); }
   }, [currentFileProject]);
 
   /** 読み込んだ作品は別IDで追加し、現在の作品を上書きせず編集画面へ渡す。 */
@@ -1000,7 +1009,7 @@ export function App() {
       {screen === "start" && !cameraIntro && (
         <section className="screen start-screen" aria-labelledby="start-title">
           <small className="app-version" data-testid="app-version">ver {appVersion}</small>
-          <a className="quiet-button start-survey-entry" href="/?survey=1">いまだけアンケート</a>
+          <a hidden={isNativeApp} className="quiet-button start-survey-entry" href={isNativeApp ? "https://oto-canvas.com/?survey=1" : "/?survey=1"}>いまだけアンケート</a>
           <button
             className="quiet-button parent-entry"
             type="button"
@@ -1292,7 +1301,7 @@ export function App() {
               const project = currentFileProject();
               if (project?.shapes.length) await saveProject(project, { requirePersistent: true });
             }} />
-            <p><a href="/?survey=1">体験アンケートに回答する</a></p>
+            <p><a href={isNativeApp ? "https://oto-canvas.com/?survey=1" : "/?survey=1"}>体験アンケートに回答する</a></p>
             <fieldset className="creation-settings">
               <legend>できた記念の写真</legend>
               <p>完成画面で子どもが選んだときだけ、内カメラで撮影します。写真は端末へ保存でき、閉じるとアプリ内から消えます。ピースの自動認識は行いません。許可の確認時にも一度カメラへ接続し、すぐ停止します。</p>

@@ -1,3 +1,4 @@
+import { downloadFile } from "../platform/saveFile";
 import { playfulDuration } from "../music/playfulSounds";
 import { BARS, BPM, type InstrumentId, type MusicEvent } from "../types/project";
 import { worldSoundNoise, worldSoundSample } from "../music/worldSounds";
@@ -414,21 +415,9 @@ function normalizeWavFileName(fileName: string): string {
   return safe.toLowerCase().endsWith(".wav") ? safe : `${safe}.wav`;
 }
 
-/** Starts a user-visible browser download for a WAV Blob. */
-export function downloadWav(blob: Blob, fileName = "oto-canvas.wav"): void {
-  if (typeof document === "undefined" || typeof URL === "undefined") {
-    throw new Error("WAV downloads require a browser document.");
-  }
-
-  const objectUrl = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = objectUrl;
-  anchor.download = normalizeWavFileName(fileName);
-  anchor.hidden = true;
-  document.body.append(anchor);
-  anchor.click();
-  anchor.remove();
-  setTimeout(() => URL.revokeObjectURL(objectUrl), 1_000);
+/** 音声ファイルを各環境の保存先選択へ渡す。 */
+export async function downloadWav(blob: Blob, fileName = "oto-canvas.wav"): Promise<boolean> {
+  return downloadFile(blob, normalizeWavFileName(fileName));
 }
 
 export async function exportAndDownloadWav(
@@ -437,6 +426,6 @@ export async function exportAndDownloadWav(
   options: WavExportOptions = {},
 ): Promise<Blob> {
   const blob = await renderMusicEventsToWav(events, options);
-  downloadWav(blob, fileName);
+  await downloadWav(blob, fileName);
   return blob;
 }

@@ -4,15 +4,7 @@ import { isOtoProject } from "../storage/projectStore";
 
 export const MAX_PROJECT_FILE_BYTES = 10 * 1024 * 1024;
 
-/** ダウンロード用URLは使い終わったら解放し、写真などをメモリに残し続けない。 */
-export function downloadFile(blob: Blob, name: string): void {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = name;
-  anchor.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
+export { downloadFile } from "../platform/saveFile";
 
 /** 再生成できる音符を除き、絵・音世界・シード・全場面を専用JSON形式で保存する。 */
 export function serializeProject(project: OtoProject): string {

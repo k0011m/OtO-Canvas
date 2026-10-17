@@ -1,15 +1,7 @@
+import { downloadFile } from "../platform/saveFile";
 import { drawCanvasBackdrop, renderShapes } from "../canvas/shapeRenderer";
 import { shapesForScene, normalizeSceneCount } from "../music/creativeRules";
 import type { CanvasShape, SceneIndex, WorldTheme } from "../types/project";
-
-function downloadBlob(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
 
 /** 使用中の全場面を1枚に収め、1〜10場面の作品を同じ正方形で保存する。 */
 export async function downloadJacketPng(
@@ -69,9 +61,10 @@ export async function downloadJacketPng(
   const blob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((value) => value ? resolve(value) : reject(new Error("PNG export failed.")), "image/png");
   });
-  downloadBlob(blob, "otocanvas-jacket.png");
+  await downloadFile(blob, "otocanvas-jacket.png");
 }
 
-export function downloadRecordedVideo(chunks: readonly Blob[], mimeType: string): void {
-  downloadBlob(new Blob([...chunks], { type: mimeType }), "otocanvas-mv.webm");
+/** 録画した映像を端末の保存先選択またはブラウザへ渡す。 */
+export async function downloadRecordedVideo(chunks: readonly Blob[], mimeType: string): Promise<boolean> {
+  return downloadFile(new Blob([...chunks], { type: mimeType }), "otocanvas-mv.webm");
 }

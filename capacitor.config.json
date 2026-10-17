@@ -1,0 +1,12 @@
+{
+  "appId": "com.otocanvas.app",
+  "appName": "OtO Canvas",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  }
+}
