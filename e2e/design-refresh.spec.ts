@@ -112,3 +112,31 @@ test("palette resize keeps the last opened palette", async ({ page }) => {
   await page.getByTestId("tools-toggle").click();
   await expect(page.getByTestId("colors-toggle")).toHaveAttribute("aria-expanded", "false");
 });
+
+for (const [width, height] of [[1440, 900], [390, 844]]) {
+  // 左右や上下のカードでも選択前後の中心を保ち、縮尺だけが変わることを確かめる。
+  test(`world cards enlarge in place at ${width}x${height}`, async ({ page }, info) => {
+    await page.setViewportSize({ width, height });
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await openDesign(page);
+    for (const id of ["soft", "space", "bounce"]) {
+      const card = page.getByTestId(`world-${id}`);
+      await card.scrollIntoViewIfNeeded();
+      const before = await card.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        return { x: box.x + box.width / 2, y: box.y + box.height / 2 + element.closest("section")!.scrollTop, width: box.width };
+      });
+      await card.click();
+      const after = await card.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        return { x: box.x + box.width / 2, y: box.y + box.height / 2 + element.closest("section")!.scrollTop, width: box.width };
+      });
+      expect(after.x).toBeCloseTo(before.x, 0);
+      expect(after.y).toBeCloseTo(before.y, 0);
+      expect(after.width).toBeGreaterThan(before.width);
+      await page.screenshot({ path: info.outputPath(`selected-${id}.png`) });
+    }
+    await page.getByTestId("world-bounce").click();
+    await expect(page.getByTestId("canvas-editor")).toBeVisible();
+  });
+}

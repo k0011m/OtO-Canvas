@@ -39,18 +39,16 @@
 .clear-actions button { min-width: 120px; min-height: 58px; font-size: 20px; }
 .clear-actions .clear-confirm { background: #a95648; color: #fffaf0; }
 
-/* カードの位置と縮尺を補間し、一度目の選択と二度目の決定を視覚的に区別する。 */
+/* カードの位置を固定して縮尺だけを補間し、選択後も同じ場所を押して決定できる。 */
 .world-screen--redesign { overflow: hidden; display: flex; flex-direction: column; justify-content: flex-start; padding-top: clamp(30px, 5vh, 64px); }
 .world-screen--redesign .screen-heading { position: relative; z-index: 2; flex: 0 0 auto; margin: 0; text-align: center; }
 .world-screen--redesign .screen-heading h2 { font-size: clamp(26px, 3.2vw, 48px); }
 .world-screen--redesign .screen-heading p { min-height: 24px; font-size: 15px; }
 .world-screen--redesign .back-button { left: max(20px, env(safe-area-inset-left)); transform: none; }
 .world-carousel { position: relative; flex: 1; width: min(1200px, 100%); min-height: 320px; margin: 0 auto 55px; }
-.world-choice { position: absolute; top: 50%; left: 50%; width: clamp(180px, 21vw, 270px); height: clamp(240px, 27vw, 330px); padding: 22px; border: 1px solid color-mix(in srgb, var(--card-ink) 10%, transparent); border-radius: 34px; color: var(--card-ink); background: var(--card-bg); box-shadow: 0 12px 26px #31251b12; transform: translate(-50%, -50%); cursor: pointer; transition: left 680ms cubic-bezier(.22,.75,.2,1), top 680ms cubic-bezier(.22,.75,.2,1), transform 680ms cubic-bezier(.22,.75,.2,1), box-shadow 400ms; text-align: left; }
+.world-choice { position: absolute; top: 50%; left: 50%; width: clamp(180px, 21vw, 270px); height: clamp(240px, 27vw, 330px); padding: 22px; border: 1px solid color-mix(in srgb, var(--card-ink) 10%, transparent); border-radius: 34px; color: var(--card-ink); background: var(--card-bg); box-shadow: 0 12px 26px #31251b12; transform: translate(-50%, -50%); cursor: pointer; transition: transform 680ms cubic-bezier(.22,.75,.2,1), box-shadow 400ms; text-align: left; }
 .world-choice[data-slot="0"] { left: 20%; }
 .world-choice[data-slot="2"] { left: 80%; }
-.world-carousel[data-selected="true"] .world-choice[data-slot="0"] { left: 13%; }
-.world-carousel[data-selected="true"] .world-choice[data-slot="2"] { left: 87%; }
 .world-carousel[data-selected="true"] .world-choice { transform: translate(-50%, -50%) scale(.68); }
 .world-carousel[data-selected="true"] .world-choice[data-active="true"] { transform: translate(-50%, -50%) scale(1.45); z-index: 3; box-shadow: 0 15px 40px #31251b18; }
 .world-choice:focus-visible { outline: 3px solid #9c7ac3; outline-offset: 8px; }
@@ -111,15 +109,15 @@
 @media (max-width: 600px) and (orientation: portrait) {
   .world-screen--redesign { padding: 24px 14px 14px; }
   .world-screen--redesign .screen-heading p { font-size: 12px; }
-  .world-carousel { min-height: 470px; margin-bottom: 42px; }
+  .world-screen--redesign { overflow-y: auto; }
+  .world-carousel { min-height: 540px; margin-top: 60px; margin-bottom: 70px; }
   .world-choice { width: 220px; height: 230px; padding: 18px; border-radius: 29px; }
   .world-choice[data-slot] { left: 50%; transform: translate(-50%, -50%) scale(.72); }
-  .world-choice[data-slot="0"] { top: 17%; }
+  .world-choice[data-slot="0"] { top: 20%; }
   .world-choice[data-slot="1"] { top: 50%; }
-  .world-choice[data-slot="2"] { top: 83%; }
-  .world-carousel[data-selected="true"] .world-choice[data-slot="1"] { left: 50%; top: 37%; transform: translate(-50%, -50%) scale(1.13); }
-  .world-carousel[data-selected="true"] .world-choice[data-slot="0"] { left: 24%; top: 84%; transform: translate(-50%, -50%) scale(.55); }
-  .world-carousel[data-selected="true"] .world-choice[data-slot="2"] { left: 76%; top: 84%; transform: translate(-50%, -50%) scale(.55); }
+  .world-choice[data-slot="2"] { top: 80%; }
+  .world-carousel[data-selected="true"] .world-choice { transform: translate(-50%, -50%) scale(.55); }
+  .world-carousel[data-selected="true"] .world-choice[data-active="true"] { transform: translate(-50%, -50%) scale(.98); }
   .world-choice-label strong { font-size: 27px; }
   .world-choice-label small { font-size: 12px; }
   .world-emblem { width: 94px; top: -40px; left: -30px; }
