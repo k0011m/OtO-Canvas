@@ -53,6 +53,19 @@ try {
   await page.getByTestId('colors-toggle').click();
   await page.getByTestId('color-ocean').click();
   if(await page.getByTestId('editor-guide').count()) throw new Error('hint did not dismiss');
+  // Homeからの再開は保存作品、新規開始は空のキャンバスになることを確認する。
+  await page.getByRole('button',{name:'ホームへ',exact:true}).click();
+  await page.getByRole('button',{name:'つづきから',exact:true}).click();
+  await page.getByRole('button',{name:'ホームへ',exact:true}).click();
+  await page.getByTestId('start-button').click();
+  await page.getByTestId('world-bounce').click();
+  await page.waitForTimeout(700);
+  await page.getByTestId('world-bounce').click();
+  if(!(await page.getByTestId('editor-guide').textContent()).includes('かたちを')) throw new Error('previous shapes remain');
+  await page.getByTestId('colors-toggle').click();
+  if(await page.getByTestId('color-sun').getAttribute('aria-pressed')!=='true') throw new Error('previous color remains');
+  await page.getByTestId('colors-toggle').click();
+  await page.getByTestId('canvas-editor').locator('canvas').click({position:{x:200,y:300}});
   await page.getByTestId("play-button").click();
   await page.getByTestId("play-scene-plan").click();
   await page.getByTestId("pause-button").waitFor({state:"visible",timeout:15000});

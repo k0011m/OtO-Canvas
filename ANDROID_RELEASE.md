@@ -92,3 +92,10 @@ package.jsonのversionを新しい表示版番号へ、androidVersionCodeを前�
 - redesign.css：幅760px以下のパレットボタンを8px間隔で下端へ配置。図形一覧は上側、色一覧は下側へ展開。相互収納・開閉アニメーションを維持。
 - 署名鍵・applicationIdは0.4.0と同一。成果物はandroid-release/0.4.1/へ生成します。
 - scripts/check-editor-refresh.mjs：同梱予定のdistのみを使用し、背景色、配置後ガイド、幅320/390/760/1024pxのパレット、ガイド終了と再生を確認します。
+
+## 0.4.2 / versionCode 3（2026-10-18）
+
+- App.tsxのhandleStart()をnewProject()へ接続。Homeの「はじめる」は音の選択画面へ移る前に新規作品へ初期化します。
+- newProject()で図形・色の選択、パレット、色変更案内、演奏準備をリセットし、保留中の保存予約と作曲を解除。図形・場面・Undo履歴は従来の新規初期化処理で消去します。
+- Homeへ戻る際に保存した作品は作品棚に残ります。「つづきから」は従来通り再開します。
+- scripts/check-editor-refresh.mjsでHomeへの往復、再開、新規開始後の空キャンバスと初期色を検証。Android成果物はandroid-release/0.4.2/。

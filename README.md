@@ -1,5 +1,11 @@
 # OtO-Canvas
 
+## バージョン 0.4.2 / Homeから新しく始める（2026-10-18）
+
+- src/app/App.tsx：handleStart()からnewProject()を呼び、前の図形・編集状態・選択色・演奏準備をリセット。「つづきから」と作品棚の保存作品は維持します。
+- scripts/check-editor-refresh.mjs：Homeへの往復後の再開・空の新規開始を確認。Android版も同じ変更を同梱し、versionCodeを3へ更新。
+
+
 ## バージョン 0.4.1 / 選択背景・色変更ガイド・スマホパレット（2026-10-18）
 
 - src/app/WorldPicker.tsx：試聴時に選んだ音の世界の背景色・文字色へ滑らかに切り替えます。

@@ -465,10 +465,6 @@ export function App() {
     }
   }, [showToast]);
 
-  const handleStart = useCallback(async () => {
-    await startAudio();
-    setScreen("world");
-  }, [startAudio]);
 
   const restorePrevious = useCallback(async () => {
     const project = restoredProject;
@@ -739,8 +735,19 @@ export function App() {
     void beginPerformance();
   }, [beginPerformance]);
 
-  // 作品棚・完了画面から新規作成へ移っても、画面BGMは継続する。
+  // 新規作成は作品ID・編集道具・演奏準備を初期化し、前の作品を混ぜない。
   const newProject = useCallback(() => {
+    if (saveTimerRef.current !== null) { window.clearTimeout(saveTimerRef.current); saveTimerRef.current = null; }
+    preparationRef.current?.abort();
+    preparedProjectRef.current = null;
+    setPrepared({ events: [], mixedEvents: [] });
+    setPreparing(false);
+    setSelectedKind("circle");
+    setSelectedColorId("sun");
+    setWorldId("soft");
+    setPreviewWorldId(null);
+    setToolsOpen(false); setColorsOpen(false); setClearOpen(false);
+    setEditingSceneMood(false);
     setColorHintDone(false);
     projectIdRef.current = createId("project");
     createdAtRef.current = Date.now();
@@ -763,6 +770,12 @@ export function App() {
     setRestoredProject(null);
     setScreen("world");
   }, [simpleCreation]);
+
+  /** Homeの「はじめる」は常に新規作成し、再開は「つづきから」に分ける。 */
+  const handleStart = useCallback(async () => {
+    await startAudio();
+    newProject();
+  }, [startAudio, newProject]);
 
   const remix = useCallback(() => {
     seedRef.current = (seedRef.current + 0x9e3779b9) >>> 0;
