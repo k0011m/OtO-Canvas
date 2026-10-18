@@ -382,7 +382,7 @@ export function App() {
     audioEngine.setMasterVolume(volume);
   }, [volume]);
 
-  const screenBgmEnabled = screen !== "perform" && !soundProgramOpen && !preparing;
+  const screenBgmEnabled = screen !== "perform" && screen !== "create" && !soundProgramOpen && !preparing;
   const screenBgmWorld = screen === "world" ? previewWorldId ?? worldId : worldId;
   // 作品の再生中は専用BGMを止め、選択・編集へ戻ったときだけ再開する。
   useEffect(() => {
@@ -717,6 +717,14 @@ export function App() {
   const conduct = useCallback((gesture: ConductGesture) => {
     if (gesture.phase === "end") return;
     const now = performance.now();
+    const draggedShape = performanceShapes.find((shape) => shape.id === gesture.sourceId);
+    if (draggedShape) {
+      if (now - lastLiveShapeAtRef.current > 130) {
+        audioEngine.previewShape(draggedShape, worldId);
+        lastLiveShapeAtRef.current = now;
+      }
+      return;
+    }
     const nearest = performanceShapes
       .map((shape) => ({
         shape,
@@ -1223,7 +1231,7 @@ export function App() {
               return event && shape ? `${Number(event.id.split("-").at(-1)) + 1}ばん · ${NOTE_NAMES[shape.soundNote ?? 0]}` : "おやすみ";
             })()}
           </div>}
-          <p className="conduct-hint">さわって おとを うごかそう · あと {formatClock(remainingSeconds)}</p>
+          <p className="conduct-hint">ひっぱって かたちを うごかそう · あと {formatClock(remainingSeconds)}</p>
           <div className="progress-track" role="progressbar" aria-label="曲の進み具合" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(playback.progress * 100)}>
             <div className="progress-fill" style={{ "--progress": playback.progress } as CSSProperties} />
           </div>

@@ -99,3 +99,10 @@ package.jsonのversionを新しい表示版番号へ、androidVersionCodeを前�
 - newProject()で図形・色の選択、パレット、色変更案内、演奏準備をリセットし、保留中の保存予約と作曲を解除。図形・場面・Undo履歴は従来の新規初期化処理で消去します。
 - Homeへ戻る際に保存した作品は作品棚に残ります。「つづきから」は従来通り再開します。
 - scripts/check-editor-refresh.mjsでHomeへの往復、再開、新規開始後の空キャンバスと初期色を検証。Android成果物はandroid-release/0.4.2/。
+
+## 0.4.3 / versionCode 4（2026-10-18）
+
+- PerformanceCanvas.tsx：描画済み図形をポインター位置でつかみ、ドラッグで移動。指と図形中心の差を維持し、離した位置はそのMV画面内だけ保持。再生し直すと元の配置に戻り、保存作品は変えません。タッチ・ペン・マウスのPointer Eventsを使用。
+- App.tsx：conduct()はドラッグ対象のsourceIdから音源を選択。screenBgmEnabledはcreate画面を除外し、編集の背景BGMを停止。操作時の音とMVの音楽は維持します。
+- scripts/check-performance-drag.mjs：PerformanceCanvas単体を固定条件で描画し、黄色い図形の実描画ピクセルを測ってドラッグ移動と離した後の位置保持を検証。
+- Androidにも同梱。成果物はandroid-release/0.4.3/。実機でのタッチ・音声確認は未実施です。

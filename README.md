@@ -1,5 +1,12 @@
 # OtO-Canvas
 
+## バージョン 0.4.3 / MVドラッグ・編集BGM停止（2026-10-18）
+
+- src/visuals/PerformanceCanvas.tsx：描画位置で図形をつかみドラッグ移動。離した場所をその演奏中だけ保持し、編集配置には保存しません。
+- src/app/App.tsx：conduct()はつかんだ図形の音を使用。create画面では背景BGMを停止し、操作音は残します。
+- scripts/check-performance-drag.mjsで描画ピクセルを測定して移動を検証。Androidも同じUIへ更新（versionCode 4）。
+
+
 ## バージョン 0.4.2 / Homeから新しく始める（2026-10-18）
 
 - src/app/App.tsx：handleStart()からnewProject()を呼び、前の図形・編集状態・選択色・演奏準備をリセット。「つづきから」と作品棚の保存作品は維持します。

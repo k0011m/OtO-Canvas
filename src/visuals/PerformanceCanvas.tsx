@@ -24,6 +24,7 @@ import {
 export type InteractionPulse = number | VisualInteraction;
 
 export interface ConductGesture {
+  sourceId?: string;
   phase: "start" | "move" | "end";
   /** Normalised canvas position. */
   x: number;
@@ -212,6 +213,8 @@ export function PerformanceCanvas({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const viewportRef = useRef<Viewport>({ width: 1, height: 1, dpr: 1 });
   const pointerRef = useRef<PointerState | null>(null);
+  const draggedRef = useRef<{ id: string; sourceId: string; dx: number; dy: number } | null>(null);
+  const movedNodesRef = useRef(new Map<string, { x: number; y: number }>());
   const localInteractionRef = useRef<LocalInteraction>({
     x: 0.5,
     y: 0.5,
@@ -373,7 +376,15 @@ export function PerformanceCanvas({
         interaction,
         reducedMotion: props.reducedMotion,
         lowPower: props.lowPower,
-      }, (nodes) => slideVisualNodes(nodes, displayedNodesRef.current, nodeFollow));
+      }, (nodes) => {
+        const displayed = slideVisualNodes(nodes, displayedNodesRef.current, nodeFollow);
+        // 指で置いた位置は演奏中だけ保持し、編集データや作曲結果には書き戻さない。
+        for (const node of displayed) {
+          const moved = movedNodesRef.current.get(node.id);
+          if (moved) { node.x = moved.x * viewport.width; node.y = moved.y * viewport.height; }
+        }
+        return displayed;
+      });
     };
 
     animationFrame = window.requestAnimationFrame(render);
@@ -388,10 +399,13 @@ export function PerformanceCanvas({
     };
   }, []);
 
+  /** ドラッグ位置と音の反応を同じポインター入力から更新する。 */
   const updatePointer = useCallback(
     (event: ReactPointerEvent<HTMLCanvasElement>, phase: ConductGesture["phase"]) => {
       const point = pointFromPointer(event);
       const timeMs = performance.now();
+      const dragged = draggedRef.current;
+      if (dragged) movedNodesRef.current.set(dragged.id, { x: clamp01(point.x + dragged.dx), y: clamp01(point.y + dragged.dy) });
       const previous = pointerRef.current;
       const deltaX = previous ? point.x - previous.x : 0;
       const deltaY = previous ? point.y - previous.y : 0;
@@ -409,6 +423,7 @@ export function PerformanceCanvas({
         rawPointerType === "touch" || rawPointerType === "pen" ? rawPointerType : "mouse";
       renderPropsRef.current.onConduct?.({
         phase,
+        sourceId: dragged?.sourceId,
         ...point,
         deltaX,
         deltaY,
@@ -421,8 +436,15 @@ export function PerformanceCanvas({
     [pointFromPointer],
   );
 
+  /** 描画済みの位置で図形をつかみ、指とのずれを保ったまま移動する。 */
   const handlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLCanvasElement>) => {
+      if (!renderPropsRef.current.onConduct || pointerRef.current || event.button !== 0) return;
+      const point = pointFromPointer(event);
+      const viewport = viewportRef.current;
+      const node = [...displayedNodesRef.current.values()].reverse().find((candidate) =>
+        candidate.opacity > .1 && Math.hypot(candidate.x - point.x * viewport.width, candidate.y - point.y * viewport.height) <= Math.max(22, candidate.radius * candidate.scale));
+      draggedRef.current = node ? { id: node.id, sourceId: node.sourceId, dx: node.x / viewport.width - point.x, dy: node.y / viewport.height - point.y } : null;
       event.currentTarget.setPointerCapture?.(event.pointerId);
       updatePointer(event, "start");
     },
@@ -441,6 +463,7 @@ export function PerformanceCanvas({
     (event: ReactPointerEvent<HTMLCanvasElement>) => {
       if (pointerRef.current?.id !== event.pointerId) return;
       updatePointer(event, "end");
+      draggedRef.current = null;
       if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
         event.currentTarget.releasePointerCapture?.(event.pointerId);
       }
@@ -494,13 +517,14 @@ export function PerformanceCanvas({
       onPointerMove={handlePointerMove}
       onPointerUp={finishPointer}
       onPointerCancel={finishPointer}
+      onLostPointerCapture={finishPointer}
       onKeyDown={handleKeyDown}
       style={{
         width: "100%",
         height: "100%",
         display: "block",
         touchAction: "none",
-        cursor: onConduct ? "crosshair" : "default",
+        cursor: onConduct ? "grab" : "default",
         ...style,
       }}
     />
