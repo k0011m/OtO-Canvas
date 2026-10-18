@@ -16,6 +16,7 @@ import type {
 import type { CanvasShape, Point, ShapeKind, WorldTheme } from "../types/project";
 import { MAX_SHAPES_PER_SCENE } from "../types/project";
 import { createId } from "../utils/id";
+import type { DraggedShapeArea } from "../app/useEditorControlAvoidance";
 import {
   clampShapePosition,
   clampShapeSize,
@@ -39,6 +40,7 @@ export interface CanvasEditorProps {
   onShapesChange: (next: CanvasShape[], actionLabel: string) => void;
   onSelect: (id: string | null) => void;
   onPreview?: (shape: CanvasShape) => void;
+  onDragAreaChange?: (area: DraggedShapeArea | null) => void;
 }
 
 type InteractionMode = "move" | "scale" | "rotate";
@@ -127,6 +129,7 @@ export function CanvasEditor({
   onShapesChange,
   onSelect,
   onPreview,
+  onDragAreaChange,
 }: CanvasEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -139,10 +142,12 @@ export function CanvasEditor({
     height: 1,
     dpr: 1,
   });
-  const [focused, setFocused] = useState(false);
   const [status, setStatus] = useState("キャンバスのじゅんびができました");
   const instructionsId = useId();
   const statusId = useId();
+
+  // キャンバスが画面遷移で外れた場合も、操作ボタンの退避状態を解除する。
+  useEffect(() => () => onDragAreaChange?.(null), [onDragAreaChange]);
 
   const visibleShapes = draftShapes ?? shapes;
   const selectedShape = useMemo(
@@ -202,8 +207,9 @@ export function CanvasEditor({
     if (interactionRef.current && !shapes.some((shape) => shape.id === interactionRef.current?.shapeId)) {
       interactionRef.current = null;
       setDraftShapes(null);
+      onDragAreaChange?.(null);
     }
-  }, [shapes]);
+  }, [shapes, onDragAreaChange]);
 
   const pointFromClient = useCallback(
     (clientX: number, clientY: number): CanvasShape["position"] => {
@@ -333,6 +339,7 @@ export function CanvasEditor({
         }
         interactionRef.current = null;
         setDraftShapes(null);
+        onDragAreaChange?.(null);
       } else {
         const pendingStroke = pendingStrokeRef.current;
         if (pendingStroke?.pointerId === pointerId) {
@@ -376,6 +383,7 @@ export function CanvasEditor({
     [
       addShape,
       makeStrokeShape,
+      onDragAreaChange,
       onPreview,
       onSelect,
       onShapesChange,
@@ -542,11 +550,19 @@ export function CanvasEditor({
         (point.y - interaction.startPoint.y) * viewport.height,
       );
       const nextShapes = replaceShape(shapes, nextShape);
+      if (interaction.mode === "move") {
+        const bounds = event.currentTarget.getBoundingClientRect();
+        onDragAreaChange?.({
+          x: bounds.left + nextShape.position.x * bounds.width,
+          y: bounds.top + nextShape.position.y * bounds.height,
+          radius: nextShape.size * Math.min(bounds.width, bounds.height) * 0.55,
+        });
+      }
       interaction.draftShapes = nextShapes;
       interaction.changed = interaction.changed || distanceFromStart >= MOVE_THRESHOLD_PX;
       setDraftShapes(nextShapes);
     },
-    [disabled, makeStrokeShape, pointFromClient, shapes, viewport],
+    [disabled, makeStrokeShape, onDragAreaChange, pointFromClient, shapes, viewport],
   );
 
   const handlePointerUp = useCallback(
@@ -766,12 +782,11 @@ export function CanvasEditor({
         aria-describedby={`${instructionsId} ${statusId}`}
         aria-disabled={disabled}
         tabIndex={disabled ? -1 : 0}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
+        onLostPointerCapture={handlePointerCancel}
         onWheel={handleWheel}
         onKeyDown={handleKeyDown}
         style={{
@@ -786,8 +801,7 @@ export function CanvasEditor({
               : selectedKind === "pen"
                 ? "crosshair"
                 : "copy",
-          outline: focused ? `4px solid ${theme.accent}` : "none",
-          outlineOffset: -4,
+          outline: "none",
           userSelect: "none",
           WebkitUserSelect: "none",
         }}

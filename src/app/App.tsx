@@ -2,6 +2,7 @@ import { watchMediaQuery } from "../platform/watchMediaQuery";
 import { isNativeApp } from "../platform/native";
 import { WorldPicker } from "./WorldPicker";
 import { EditorPalette } from "./EditorPalette";
+import { useEditorControlAvoidance } from "./useEditorControlAvoidance";
 import { ClearCanvasDialog } from "./ClearCanvasDialog";
 import { ClimaxSnapshot } from "./ClimaxSnapshot";
 import { PaintDrop, PeaceIllustration } from "./WorldIllustrations";
@@ -268,6 +269,7 @@ export function App() {
   const preparationRef = useRef<AbortController | null>(null);
   const preparedProjectRef = useRef<string | null>(null);
   const appRef = useRef<HTMLElement | null>(null);
+  const updateDraggedShapeArea = useEditorControlAvoidance(appRef);
 
   // 準備中はキーボード操作も遮断し、再生対象の作品が途中で変わらないようにする。
   useEffect(() => {
@@ -1123,6 +1125,7 @@ export function App() {
               selectedId={selectedId}
               theme={theme}
               onShapesChange={commitActiveShapes}
+              onDragAreaChange={updateDraggedShapeArea}
               onSelect={selectShape}
               onPreview={(shape) => audioEngine.previewShape(shape, worldId)}
             />

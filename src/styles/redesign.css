@@ -12,7 +12,7 @@
 .app-shell:has(.create-screen) > .toast { top: auto; bottom: max(145px, calc(env(safe-area-inset-bottom) + 135px)); }
 
 /* 左下に図形、その一段上に色を置き、どちらも同じ高さのまま右へ伸びる。 */
-.editor-palette { --palette-bottom: max(20px, env(safe-area-inset-bottom)); --toggle: 74px; --palette-height: 100px; --expanded-width: min(680px, calc(100vw - 128px)); position: absolute; bottom: var(--palette-bottom); z-index: 50; height: var(--palette-height); width: var(--toggle); border-radius: 50px; background: transparent; transition: width 560ms cubic-bezier(.22,.75,.2,1), background-color 350ms, box-shadow 350ms; }
+.editor-palette { --palette-bottom: max(20px, env(safe-area-inset-bottom)); --toggle: 74px; --palette-height: 100px; --expanded-width: min(680px, calc(100vw - 128px)); position: absolute; bottom: var(--palette-bottom); z-index: 50; height: var(--palette-height); width: var(--toggle); border-radius: 50px; background: transparent; transition: width 560ms cubic-bezier(.22,.75,.2,1), background-color 350ms, box-shadow 350ms, transform 280ms ease, opacity 220ms ease; }
 .editor-palette--left { left: max(20px, env(safe-area-inset-left)); }
 .editor-palette--right { left: max(20px, env(safe-area-inset-left)); bottom: calc(var(--palette-bottom) + var(--palette-height) + 8px); }
 .editor-palette[data-open="true"] { width: var(--expanded-width); background: var(--surface); box-shadow: 0 9px 35px #352a1721; }
@@ -209,4 +209,15 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .start-screen .brand-piece { animation: none; }
+}
+
+/* 退避してもレイアウトは保ち、指を離した位置へボタンを誤入力させない。 */
+.editor-toolbar { pointer-events: none; }
+.editor-toolbar > button { pointer-events: auto; transition: transform 280ms ease, opacity 220ms ease; }
+.editor-toolbar > button[data-drag-avoid="true"] { transform: translateY(calc(-100% - 40px)); opacity: 0; }
+.editor-palette[data-drag-avoid="true"] { transform: translateX(calc(-100% - 40px)); opacity: 0; }
+.create-screen [data-drag-avoid="true"],
+.create-screen [data-drag-avoid="true"] * { pointer-events: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .editor-toolbar > button, .editor-palette { transition: none; }
 }

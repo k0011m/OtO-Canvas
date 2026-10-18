@@ -1,5 +1,12 @@
 # OtO-Canvas
 
+## バージョン 0.4.9 / 編集中の操作ボタン退避（2026-10-19）
+
+- CanvasEditor.tsxから移動中の図形領域を通知し、App.tsxとuseEditorControlAvoidance.tsで近くの操作ボタン・パレットだけを退避します。指を離す・キャンセルする・遠ざけると復帰し、パレットの開閉状態は維持します。
+- redesign.cssで上部ボタンは上へ、パレットは左へ滑らかに収納。動きを減らす設定では即時切替。キャンバス全周の紫色フォーカス枠は削除しました。
+- 対象は編集画面の図形ドラッグです。手描き・拡大回転・MV再生中の操作は対象外。Androidも同じUIを同梱（versionCode 10）。
+- 確認：`npm run build`後に`node scripts/check-editor-avoidance.mjs`で390px/1280pxの退避・復帰・開いたパレットの維持・タッチキャンセル・枠削除を検証できます（Playwright Chromiumが必要）。
+
 ## バージョン 0.4.8 / MVの慣性移動と壁反射（2026-10-18）
 
 - PerformanceCanvas.tsxとfloatingMotion.ts：指を離した勢いでふわっと進み、画面の四辺で減速しながら反射。再度つかんで操作可能。止めて離した場合はその位置に置きます。
