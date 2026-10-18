@@ -236,6 +236,7 @@ export function App() {
   const [galleryProjects, setGalleryProjects] = useState<OtoProject[]>([]);
   const [selectedKind, setSelectedKind] = useState<ShapeKind>("circle");
   const [selectedColorId, setSelectedColorId] = useState("sun");
+  const [colorHintDone, setColorHintDone] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [undoStack, setUndoStack] = useState<CanvasShape[][]>([]);
   const [playback, setPlayback] = useState<PlaybackSnapshot>(EMPTY_PLAYBACK);
@@ -740,6 +741,7 @@ export function App() {
 
   // 作品棚・完了画面から新規作成へ移っても、画面BGMは継続する。
   const newProject = useCallback(() => {
+    setColorHintDone(false);
     projectIdRef.current = createId("project");
     createdAtRef.current = Date.now();
     seedRef.current = seedFromText(projectIdRef.current);
@@ -1102,8 +1104,10 @@ export function App() {
               onSelect={selectShape}
               onPreview={(shape) => audioEngine.previewShape(shape, worldId)}
             />
-            {activeShapes.length === 0 && (
-              <p className="canvas-hint">{toolsOpen
+            {(activeShapes.length === 0 || !colorHintDone) && (
+              <p className="canvas-hint" data-testid="editor-guide">{activeShapes.length > 0
+                ? <>ひだりしたの いろを おして<br />いろを かえてみよう</>
+                : toolsOpen
                 ? <>かたちを えらんで<br />ひろいところに おいてみよう</>
                 : <>ひだりしたの まるから<br />かたちを えらんでね</>}</p>
             )}
@@ -1151,7 +1155,7 @@ export function App() {
             onToggle={() => togglePalette("colors")}>
             {SHAPE_COLOR_PALETTE.map((color) => <button key={color.id} className="paint-choice" type="button"
               data-testid={`color-${color.id}`} aria-label={color.name} aria-pressed={selectedColorId === color.id}
-              onClick={() => { setSelectedColorId(color.id); updateSelected((shape) => ({ ...shape, colorId: color.id }), `${color.name}に なりました`); }}>
+              onClick={() => { if (selectedId && activeShapes.some((shape) => shape.id === selectedId && shape.colorId !== color.id)) setColorHintDone(true); setSelectedColorId(color.id); updateSelected((shape) => ({ ...shape, colorId: color.id }), `${color.name}に なりました`); }}>
               <PaintDrop color={color.value} />
             </button>)}
           </EditorPalette>

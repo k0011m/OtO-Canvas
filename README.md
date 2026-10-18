@@ -1,5 +1,13 @@
 # OtO-Canvas
 
+## バージョン 0.4.1 / 選択背景・色変更ガイド・スマホパレット（2026-10-18）
+
+- src/app/WorldPicker.tsx：試聴時に選んだ音の世界の背景色・文字色へ滑らかに切り替えます。
+- src/app/App.tsx：図形配置後に「ひだりしたの いろを おして／いろを かえてみよう」を表示。選択図形を違う色へ変えると消え、新規作品でリセットします。
+- src/styles/redesign.css：幅760px以下では丸ボタンを8px間隔で下へ寄せ、図形は上・色は下へ張り出します。反対のボタンを覆わず、相互収納とアニメーションを維持します。
+- Android版にも同じUIを同梱。version 0.4.1、androidVersionCode 2。公開・更新方法はANDROID_RELEASE.md参照。
+
+
 ## バージョン 0.4.0 / オフラインAndroid版（2026-10-18）
 
 - Capacitor 8.5.3で画面・音源・作曲Workerをアプリ内へ同梱。ネイティブ版はService Workerを使用せず、ストアから更新します。
@@ -108,4 +116,3 @@
 - `CelebrationCamera.tsx`・`global.css`：映像中央の3秒カウントダウン、カメラ切替、終了時の撮影予約取消を追加。
 - `cameraSettings.ts`：`openCamera(facing)`を追加。既存の`openFrontCamera()`は保護者の許可確認用として維持。
 - 外カメラがない端末や対応しないブラウザでは案内を表示し、内カメラへ戻せます。カウント中は二重撮影と切替を無効にし、閉じる操作は可能です。
-

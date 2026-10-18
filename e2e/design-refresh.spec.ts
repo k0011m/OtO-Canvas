@@ -32,7 +32,7 @@ for (const [width, height] of [[1440, 900], [768, 1024], [390, 844], [740, 390]]
     await page.waitForTimeout(650);
     await expect(page.getByTestId("tool-star")).toBeVisible();
     expect(await page.locator(".editor-palette--left").evaluate((element) => element.getBoundingClientRect().height)).toBe(closedHeight);
-    const left = await page.locator(".editor-palette--left").boundingBox();
+    const left = await page.getByTestId("tools-toggle").boundingBox();
     const right = await page.getByTestId("colors-toggle").boundingBox();
     expect(right!.x).toBe(left!.x);
     expect(right!.y + right!.height).toBeLessThanOrEqual(left!.y);

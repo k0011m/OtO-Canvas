@@ -12,7 +12,8 @@ export function WorldPicker({ onPreview, onConfirm, onBack }: {
   onBack: () => void;
 }) {
   const [selected, setSelected] = useState<WorldId | null>(null);
-  return <section className="screen world-screen world-screen--redesign" aria-labelledby="world-title">
+  return <section className="screen world-screen world-screen--redesign" aria-labelledby="world-title"
+    style={selected ? { backgroundColor: WORLDS[selected].background, color: WORLDS[selected].ink } : undefined}>
     <header className="screen-heading"><h2 id="world-title">どんな おとにする？</h2>
       <p aria-live="polite">{selected ? "えらんだものを もういちど おすと はじまるよ" : "ひとつ えらんで おとを きいてみよう"}</p>
     </header>

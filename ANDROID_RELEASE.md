@@ -84,3 +84,11 @@ package.jsonのversionを新しい表示版番号へ、androidVersionCodeを前�
 - apksigner verify：APKのv2署名検証成功。aapt：applicationId、versionName 0.4.0、versionCode 1、minSdk24、targetSdk36を確認。
 - jarsigner：AAB署名検証成功。自己署名証明書・タイムスタンプ・ZIPエントリ順序の警告あり。Play Console側の受理確認は未実施。
 - 既存の開発サーバー経由UIテストは起動待ちで停止し、同梱ファイル検査に切り替えました。
+
+## 0.4.1 / versionCode 2（2026-10-18）
+
+- WorldPicker.tsx：試聴中のカードの背景色と文字色を選択画面へ反映。
+- App.tsx：図形配置後に色変更の案内を表示し、選択図形の色を変更すると終了。
+- redesign.css：幅760px以下のパレットボタンを8px間隔で下端へ配置。図形一覧は上側、色一覧は下側へ展開。相互収納・開閉アニメーションを維持。
+- 署名鍵・applicationIdは0.4.0と同一。成果物はandroid-release/0.4.1/へ生成します。
+- scripts/check-editor-refresh.mjs：同梱予定のdistのみを使用し、背景色、配置後ガイド、幅320/390/760/1024pxのパレット、ガイド終了と再生を確認します。
