@@ -1,3 +1,4 @@
+import { advanceFloatingPosition, type FloatingPosition } from "./floatingMotion";
 import { watchMediaQuery } from "../platform/watchMediaQuery";
 import {
   useCallback,
@@ -215,7 +216,7 @@ export function PerformanceCanvas({
   const viewportRef = useRef<Viewport>({ width: 1, height: 1, dpr: 1 });
   const pointerRef = useRef<PointerState | null>(null);
   const draggedRef = useRef<{ id: string; sourceId: string; dx: number; dy: number } | null>(null);
-  const movedNodesRef = useRef(new Map<string, { x: number; y: number }>());
+  const movedNodesRef = useRef(new Map<string, FloatingPosition>());
   const localInteractionRef = useRef<LocalInteraction>({
     x: 0.5,
     y: 0.5,
@@ -381,7 +382,12 @@ export function PerformanceCanvas({
         // 指で置いた位置は演奏中だけ保持し、編集データや作曲結果には書き戻さない。
         for (const node of displayed) {
           const moved = movedNodesRef.current.get(node.id);
-          if (moved) { node.x = moved.x * viewport.width; node.y = moved.y * viewport.height; }
+          if (moved) {
+            if (draggedRef.current?.id !== node.id && props.playing && !props.reducedMotion) {
+              advanceFloatingPosition(moved, elapsedFrameMs / 1000, node.radius * node.scale / viewport.width, node.radius * node.scale / viewport.height);
+            }
+            node.x = moved.x * viewport.width; node.y = moved.y * viewport.height;
+          }
         }
         return displayed;
       });
@@ -405,7 +411,20 @@ export function PerformanceCanvas({
       const point = pointFromPointer(event);
       const timeMs = performance.now();
       const dragged = draggedRef.current;
-      if (dragged) movedNodesRef.current.set(dragged.id, { x: clamp01(point.x + dragged.dx), y: clamp01(point.y + dragged.dy) });
+      if (dragged) {
+        const old = movedNodesRef.current.get(dragged.id);
+        const x = clamp01(point.x + dragged.dx), y = clamp01(point.y + dragged.dy);
+        const dt = old ? Math.max(.008, (timeMs - old.lastMovedAt) / 1000) : 1;
+        // pointerupのゼロ移動で直前の速度を消さず、止めてから離した場合は投げない。
+        const moving = phase === "move" && old && (x !== old.x || y !== old.y);
+        const vx = moving ? Math.max(-2, Math.min(2, (x - old.x) / dt)) : old?.vx ?? 0;
+        const vy = moving ? Math.max(-2, Math.min(2, (y - old.y) / dt)) : old?.vy ?? 0;
+        const stale = phase === "end" && (!old || timeMs - old.lastMovedAt > 120);
+        movedNodesRef.current.set(dragged.id, {
+          x, y, vx: stale ? 0 : vx, vy: stale ? 0 : vy,
+          lastMovedAt: moving || !old ? timeMs : old.lastMovedAt,
+        });
+      }
       const previous = pointerRef.current;
       const deltaX = previous ? point.x - previous.x : 0;
       const deltaY = previous ? point.y - previous.y : 0;
@@ -445,6 +464,7 @@ export function PerformanceCanvas({
       const node = [...displayedNodesRef.current.values()].reverse().find((candidate) =>
         candidate.opacity > .1 && Math.hypot(candidate.x - point.x * viewport.width, candidate.y - point.y * viewport.height) <= Math.max(22, candidate.radius * candidate.scale));
       draggedRef.current = node ? { id: node.id, sourceId: node.sourceId, dx: node.x / viewport.width - point.x, dy: node.y / viewport.height - point.y } : null;
+      if (node) movedNodesRef.current.set(node.id, { x: node.x / viewport.width, y: node.y / viewport.height, vx: 0, vy: 0, lastMovedAt: performance.now() });
       event.currentTarget.setPointerCapture?.(event.pointerId);
       updatePointer(event, "start");
     },
@@ -463,6 +483,10 @@ export function PerformanceCanvas({
     (event: ReactPointerEvent<HTMLCanvasElement>) => {
       if (pointerRef.current?.id !== event.pointerId) return;
       updatePointer(event, "end");
+      if (event.type !== "pointerup" && draggedRef.current) {
+        const body = movedNodesRef.current.get(draggedRef.current.id);
+        if (body) { body.vx = 0; body.vy = 0; }
+      }
       draggedRef.current = null;
       if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
         event.currentTarget.releasePointerCapture?.(event.pointerId);
