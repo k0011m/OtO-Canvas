@@ -126,3 +126,8 @@ package.jsonのversionを新しい表示版番号へ、androidVersionCodeを前�
 - App.tsxのBrandShapes()を同じ形状のインラインSVGへ変更し、丸・三角・曲線を別グループに分割。
 - redesign.css：Homeだけ各図形を異なる周期でゆっくり上下・回転。0.4.5の大きさを維持し、prefers-reduced-motionでは停止。ファビコンは静止画を維持。
 - scripts/check-mobile-boot.mjsのロゴ検査をインラインSVGに対応。Android成果物はandroid-release/0.4.6/。
+
+## 0.4.7 / versionCode 8（2026-10-18）
+
+- redesign.css：Homeの丸の上下幅を24→56、三角を18→40 SVG単位へ拡大。三角の回転を±3→±8度、曲線を±2→±6度へ変更。周期を3.6・4・4.8秒へ短縮し、動きを見分けやすくしました。
+- ロゴのサイズと動きを減らす設定を維持。Android成果物はandroid-release/0.4.7/。
