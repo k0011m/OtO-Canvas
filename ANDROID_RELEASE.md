@@ -106,3 +106,12 @@ package.jsonのversionを新しい表示版番号へ、androidVersionCodeを前�
 - App.tsx：conduct()はドラッグ対象のsourceIdから音源を選択。screenBgmEnabledはcreate画面を除外し、編集の背景BGMを停止。操作時の音とMVの音楽は維持します。
 - scripts/check-performance-drag.mjs：PerformanceCanvas単体を固定条件で描画し、黄色い図形の実描画ピクセルを測ってドラッグ移動と離した後の位置保持を検証。
 - Androidにも同梱。成果物はandroid-release/0.4.3/。実機でのタッチ・音声確認は未実施です。
+
+## 0.4.4 / versionCode 5（2026-10-18）
+
+- 旧MediaQueryList APIしかない環境でApp起動時にaddEventListenerが例外となり白画面になる条件を再現。src/platform/watchMediaQuery.tsでaddListener/removeListenerへフォールバックし、App.tsx・MotionPreview.tsx・PerformanceCanvas.tsxへ適用。
+- index.html：起動失敗時に復旧ボタンを表示。通信確認後、アプリ用Service Worker・キャッシュだけを整理して再読込。IndexedDBの作品・localStorageの設定は削除しません。
+- public/sw.js：起動互換問題のある0.4.0〜0.4.3のキャッシュを検出した更新は待機させず適用。開いている画面を強制再読込しません。
+- public/icon.svgは正方形SVG案v3へ更新。App.tsxのBrandShapes()、PWA PNG、Androidのランチャーと起動アイコンも同じマークへ統一。scripts/render-brand-icons.mjsでSVGからPNGを生成。
+- scripts/check-mobile-boot.mjsは旧APIを再現して起動・編集・再生を検証します。ユーザー実機のログは取得できていないため、端末固有の原因一致までは未確認です。
+- Android成果物：android-release/0.4.4/、実機確認未実施。

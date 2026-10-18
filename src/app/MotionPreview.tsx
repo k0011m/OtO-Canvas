@@ -1,3 +1,4 @@
+import { watchMediaQuery } from "../platform/watchMediaQuery";
 import { useEffect, useId, useState } from "react";
 import type { AnimationMood } from "../visuals/animationMood";
 
@@ -35,8 +36,7 @@ export function MotionPreview({ mood }: { mood: AnimationMood }) {
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setReduced(query.matches);
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
+    return watchMediaQuery(query, update);
   }, []);
   const example = EXAMPLES[mood];
   return <span className="mood-preview motion-diagram" data-motion={mood} aria-hidden="true">

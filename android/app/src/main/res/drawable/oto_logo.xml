@@ -1,8 +1,11 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="768" android:viewportHeight="768">
-    <group android:translateX="128" android:translateY="128">
-        <path android:fillColor="#f4b942" android:pathData="M80,190a92,92 0,1 0,184 0a92,92 0,1 0,-184 0"/>
-        <path android:fillColor="#e56b6f" android:pathData="M319,90L433,287H205Z"/>
-        <path android:strokeColor="#4d96a9" android:strokeWidth="42" android:strokeLineCap="round" android:pathData="M94,359c74,-74 136,75 210,0s109,4 128,36"/>
-        <path android:fillColor="#6c63ff" android:pathData="M371,121a25,25 0,1 0,50 0a25,25 0,1 0,-50 0"/>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="1536" android:viewportHeight="1536">
+  <group android:translateX="256" android:translateY="256">
+    <path android:fillColor="#FFBE18" android:pathData="M133,326a192,192 0,1 0,384 0a192,192 0,1 0,-384 0"/>
+    <group android:rotation="-8" android:pivotX="700" android:pivotY="437">
+      <path android:fillColor="#FF6958" android:pathData="M590,302A36,36 0,0 1,644 270.823L878,405.923A36,36 0,0 1,878 468.277L644,603.377A36,36 0,0 1,590 572.2Z"/>
     </group>
+    <group android:rotation="5" android:pivotX="505.5" android:pivotY="717">
+      <path android:strokeColor="#18B7B7" android:strokeWidth="142" android:strokeLineCap="round" android:pathData="M193,657C354,817 657,817 818,657"/>
+    </group>
+  </group>
 </vector>

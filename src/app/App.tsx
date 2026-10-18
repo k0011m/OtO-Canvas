@@ -1,3 +1,4 @@
+import { watchMediaQuery } from "../platform/watchMediaQuery";
 import { isNativeApp } from "../platform/native";
 import { WorldPicker } from "./WorldPicker";
 import { EditorPalette } from "./EditorPalette";
@@ -143,14 +144,9 @@ function worldStyle(worldId: WorldId): CSSProperties {
   } as CSSProperties;
 }
 
+/** Homeと作品棚で同じSVGロゴを表示する。 */
 function BrandShapes() {
-  return (
-    <div className="brand-shapes" aria-hidden="true">
-      <span className="brand-circle" />
-      <span className="brand-triangle" />
-      <span className="brand-line" />
-    </div>
-  );
+  return <div className="brand-shapes" aria-hidden="true"><img className="brand-logo" src="./icon.svg" alt="" /></div>;
 }
 
 function ToolIcon({ kind }: { kind: ShapeKind }) {
@@ -196,8 +192,7 @@ export function App() {
       if (lastOpenedPalette.current === "shapes") setColorsOpen(false);
       else setToolsOpen(false);
     };
-    compact.addEventListener("change", closeOtherPalette);
-    return () => compact.removeEventListener("change", closeOtherPalette);
+    return watchMediaQuery(compact, closeOtherPalette);
   }, []);
 
   /** 1段で収まる幅では同時展開を許可し、2段になる幅では開くときだけ他方を閉じる。 */

@@ -15,6 +15,12 @@ async function installShell() {
   const oldKeys = (await caches.keys()).filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME);
   for (const key of oldKeys) {
     const oldCache = await caches.open(key);
+    // 起動時の旧MediaQuery API非対応がある0.4.0〜0.4.3は、更新操作ができないため待機しない。
+    const entries = await oldCache.keys();
+    for (const entry of entries.filter((entry) => /\/assets\/index-[^/]+\.js$/.test(new URL(entry.url).pathname))) {
+      const script = await oldCache.match(entry);
+      if (script && /const \w+=["']0\.4\.[0-3]["']/.test(await script.text())) await self.skipWaiting();
+    }
     const oldShell = await oldCache.match(new URL("index.html", SCOPE_URL).href);
     if (oldShell?.redirected) {
       // 障害の印も修復し、次回以降の正常な更新まで自動適用してしまわないようにする。

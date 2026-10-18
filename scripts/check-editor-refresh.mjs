@@ -16,7 +16,7 @@ await context.route("**/*", async route => {
   const url = new URL(route.request().url());
   if (url.origin !== "https://localhost") { failures.push("External: " + url.href); return route.abort(); }
   const name = url.pathname === "/" ? "index.html" : decodeURIComponent(url.pathname.slice(1));
-  const mime = name.endsWith(".js") ? "text/javascript" : name.endsWith(".css") ? "text/css" : name.endsWith(".html") ? "text/html" : "application/octet-stream";
+  const mime = name.endsWith(".svg") ? "image/svg+xml" : name.endsWith(".png") ? "image/png" : name.endsWith(".js") ? "text/javascript" : name.endsWith(".css") ? "text/css" : name.endsWith(".html") ? "text/html" : "application/octet-stream";
   try { await route.fulfill({ body: await readFile(path.join(root, name)), contentType: mime }); }
   catch { failures.push("Missing: " + name); await route.abort(); }
 });

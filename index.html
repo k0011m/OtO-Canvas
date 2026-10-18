@@ -13,6 +13,46 @@
   </head>
   <body>
     <div id="root"></div>
+    <div id="boot-recovery" hidden style="position:fixed;inset:0;z-index:9999;background:#f7f4ed;color:#252525;padding:24px;display:none;place-content:center;text-align:center;font-family:sans-serif">
+      <h1 style="font-size:24px">うまく ひらけませんでした</h1>
+      <p id="boot-message">通信を確認して、もう一度お試しください。作品や設定は消しません。</p>
+      <button id="boot-retry" style="padding:16px 24px;font-size:18px;border-radius:24px">読み込みをやり直す</button>
+    </div>
+    <script>
+      (function () {
+        var root = document.getElementById("root");
+        var panel = document.getElementById("boot-recovery");
+        // JS取得失敗・起動例外でも白い画面だけを残さない。
+        function checkBoot() {
+          if (!root.hasChildNodes()) { panel.hidden = false; panel.style.display = "grid"; }
+        }
+        setTimeout(checkBoot, 10000);
+        window.addEventListener("error", function () { setTimeout(checkBoot, 100); }, true);
+        // 通信できることを先に確認し、作品領域には触れずアプリキャッシュだけを修復する。
+        document.getElementById("boot-retry").onclick = async function () {
+          this.disabled = true;
+          try {
+            var url = new URL(location.href); url.searchParams.set("repair", Date.now());
+            var response = await fetch(url.href, {cache:"no-store"});
+            if (!response.ok) throw new Error("offline");
+            if ("serviceWorker" in navigator) {
+              var registrations = await navigator.serviceWorker.getRegistrations();
+              for (var registration of registrations) {
+                if (registration.scope === new URL("./", location.href).href) await registration.unregister();
+              }
+            }
+            if ("caches" in window) {
+              var names = await caches.keys();
+              await Promise.all(names.filter(function (name) { return name.indexOf("oto-canvas-shell-") === 0; }).map(function (name) { return caches.delete(name); }));
+            }
+            location.replace(url.href);
+          } catch (error) {
+            document.getElementById("boot-message").textContent = "通信できませんでした。インターネットにつないで、もう一度お試しください。";
+            this.disabled = false;
+          }
+        };
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

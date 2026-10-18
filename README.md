@@ -1,5 +1,13 @@
 # OtO-Canvas
 
+## バージョン 0.4.4 / スマホ起動互換・新ロゴ（2026-10-18）
+
+- src/platform/watchMediaQuery.tsを追加。App/MotionPreview/PerformanceCanvasは旧スマホのMediaQueryList APIでも起動可能に変更。旧APIで白画面になる条件を再現して修正しました。
+- index.htmlに読み込み失敗時の復旧表示を追加。作品・設定を保持したままアプリキャッシュを再取得します。public/sw.jsは障害対象版の更新待機を解除。
+- public/icon.svg・PNG、HomeのBrandShapes()、Androidのアイコンを最新SVG案v3へ統一。PNG再生成はnode scripts/render-brand-icons.mjs。
+- Android版0.4.4 / versionCode 5。実機固有の障害原因と本番端末での復旧は未確認です。
+
+
 ## バージョン 0.4.3 / MVドラッグ・編集BGM停止（2026-10-18）
 
 - src/visuals/PerformanceCanvas.tsx：描画位置で図形をつかみドラッグ移動。離した場所をその演奏中だけ保持し、編集配置には保存しません。

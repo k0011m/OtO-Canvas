@@ -1,3 +1,4 @@
+import { watchMediaQuery } from "../platform/watchMediaQuery";
 import {
   useCallback,
   useEffect,
@@ -275,8 +276,7 @@ export function PerformanceCanvas({
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setSystemReducedMotion(media.matches);
     update();
-    media.addEventListener?.("change", update);
-    return () => media.removeEventListener?.("change", update);
+    return watchMediaQuery(media, update);
   }, []);
 
   useEffect(() => {
