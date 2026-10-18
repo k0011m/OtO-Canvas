@@ -144,9 +144,15 @@ function worldStyle(worldId: WorldId): CSSProperties {
   } as CSSProperties;
 }
 
-/** Homeと作品棚で同じSVGロゴを表示する。 */
+/** 同じロゴの形状を保ち、Homeでは図形ごとのCSSアニメーションを適用する。 */
 function BrandShapes() {
-  return <div className="brand-shapes" aria-hidden="true"><img className="brand-logo" src="./icon.svg" alt="" /></div>;
+  return <div className="brand-shapes" aria-hidden="true">
+    <svg className="brand-logo" viewBox="0 0 1024 1024" focusable="false">
+      <g className="brand-piece brand-piece--circle"><circle cx="325" cy="326" r="192" fill="#FFBE18" /></g>
+      <g className="brand-piece brand-piece--triangle"><path d="M590 302 A36 36 0 0 1 644 270.823 L878 405.923 A36 36 0 0 1 878 468.277 L644 603.377 A36 36 0 0 1 590 572.2 Z" fill="#FF6958" transform="rotate(-8 700 437)" /></g>
+      <g className="brand-piece brand-piece--wave"><path d="M193 657 C354 817 657 817 818 657" fill="none" stroke="#18B7B7" strokeWidth="142" strokeLinecap="round" transform="rotate(5 505.5 717)" /></g>
+    </svg>
+  </div>;
 }
 
 function ToolIcon({ kind }: { kind: ShapeKind }) {

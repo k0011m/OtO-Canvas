@@ -120,3 +120,9 @@ package.jsonのversionを新しい表示版番号へ、androidVersionCodeを前�
 
 - src/styles/redesign.css：Home限定でロゴ領域を従来の約2倍（通常220〜340px四方）へ拡大。低い縦画面では高さを制限し、スマホ横画面ではロゴと開始操作を左右に配置。ファビコンと作品棚のロゴサイズは維持。
 - Android成果物はandroid-release/0.4.5/。実機確認未実施。
+
+## 0.4.6 / versionCode 7（2026-10-18）
+
+- App.tsxのBrandShapes()を同じ形状のインラインSVGへ変更し、丸・三角・曲線を別グループに分割。
+- redesign.css：Homeだけ各図形を異なる周期でゆっくり上下・回転。0.4.5の大きさを維持し、prefers-reduced-motionでは停止。ファビコンは静止画を維持。
+- scripts/check-mobile-boot.mjsのロゴ検査をインラインSVGに対応。Android成果物はandroid-release/0.4.6/。

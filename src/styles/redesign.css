@@ -190,3 +190,23 @@
   .start-screen .brand-lockup, .start-screen .start-button, .start-screen .start-subactions { grid-column: 2; }
   .start-screen .start-button { width: 88px; height: 88px; }
 }
+
+/* 図形ごとに周期をずらし、元の傾きとロゴの大きさを保ってゆっくり揺らす。 */
+.start-screen .brand-piece { transform-box: fill-box; transform-origin: center; animation: home-piece-float 4.8s ease-in-out infinite; }
+.start-screen .brand-piece--triangle { animation-name: home-piece-rock; animation-duration: 5.6s; animation-delay: -1.6s; }
+.start-screen .brand-piece--wave { animation-name: home-piece-wave; animation-duration: 6.4s; animation-delay: -3.2s; }
+@keyframes home-piece-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-24px); }
+}
+@keyframes home-piece-rock {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-18px) rotate(3deg); }
+}
+@keyframes home-piece-wave {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .start-screen .brand-piece { animation: none; }
+}

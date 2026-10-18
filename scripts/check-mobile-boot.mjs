@@ -25,8 +25,7 @@ try {
   await page.goto("https://localhost/");
   await page.getByTestId("start-button").waitFor();
   const logo = page.locator('.start-screen .brand-logo');
-  await logo.evaluate(el => el.decode());
-  if (!(await logo.evaluate(el => el.complete && el.naturalWidth > 0))) throw new Error('Logo failed');
+  if (await logo.locator(".brand-piece").count() !== 3) throw new Error("Logo failed");
   await page.getByTestId("start-button").click();
   await page.getByTestId("world-bounce").click();
   await page.waitForTimeout(700);
