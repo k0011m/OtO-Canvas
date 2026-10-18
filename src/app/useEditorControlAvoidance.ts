@@ -40,7 +40,7 @@ export function useEditorControlAvoidance(root: RefObject<HTMLElement | null>) {
     if (!area) { restore(); return; }
     if (!controls.current) {
       controls.current = Array.from(root.current?.querySelectorAll<HTMLElement>(
-        ".editor-toolbar > button, .editor-palette",
+        ".editor-toolbar > button, .editor-palette, .editor-world-switch",
       ) ?? []).map(element => {
         const parts = element.matches(".editor-palette")
           ? Array.from(element.querySelectorAll<HTMLElement>(element.dataset.open === "true"

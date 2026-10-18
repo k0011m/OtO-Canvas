@@ -221,3 +221,24 @@
 @media (prefers-reduced-motion: reduce) {
   .editor-toolbar > button, .editor-palette { transition: none; }
 }
+
+/* 音世界の入口は左上。狭い画面でも右上の操作と重ならない余白を確保する。 */
+.editor-world-switch { position: absolute; z-index: 35; top: max(16px, env(safe-area-inset-top)); left: max(16px, env(safe-area-inset-left)); width: 64px; height: 64px; padding: 5px; border: 0; border-radius: 22px; background: var(--surface); color: var(--ink); box-shadow: 0 5px 20px #29231d18; cursor: pointer; transition: transform 280ms ease, opacity 220ms ease; }
+.editor-world-switch .world-emblem { position: static; width: 100%; height: 100%; animation: none; filter: none; }
+.editor-world-switch > span { position: absolute; right: 1px; bottom: -2px; font-size: 24px; font-weight: bold; }
+.editor-world-switch[data-drag-avoid="true"] { transform: translateY(calc(-100% - 40px)); opacity: 0; }
+.world-wave { position: absolute; inset: 0; z-index: 25; overflow: hidden; outline: none; touch-action: none; }
+.create-screen[data-world-changing="true"] button { pointer-events: none; }
+.world-wave canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+@media (max-width: 760px) {
+  .editor-world-switch { top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); width: 52px; height: 52px; border-radius: 18px; }
+}
+@media (max-width: 360px) {
+  .editor-toolbar { display: grid; grid-template-columns: repeat(3, 1fr); width: calc(100% - 88px); }
+  .editor-toolbar > button[aria-label="ひとつ戻す"] { grid-column: 1; grid-row: 1; }
+  .editor-toolbar .play-button { grid-column: 2 / 4; grid-row: 1; }
+  .editor-toolbar .editor-secondary-control { grid-row: 2; justify-self: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .editor-world-switch { transition: none; }
+}

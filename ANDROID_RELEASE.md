@@ -1,5 +1,10 @@
 # Android版の配布・更新
 
+## 0.4.10 / versionCode 11（2026-10-19）
+
+- App.tsx・WorldWave.tsx・redesign.css・useEditorControlAvoidance.ts：編集画面左上に音世界の循環ボタンを追加。左上から波が広がり、図形がふわっと膨らんで世界の音源とテーマを切り替えます。
+- 図形の種類・配置・色・音階は維持。演出中は編集を止め、動きを減らす設定は短いフェードに変更。成果物はandroid-release/0.4.10/。Android実機での確認は別途必要です。
+
 ## 0.4.9 / versionCode 10（2026-10-19）
 
 - CanvasEditor.tsx・App.tsx・useEditorControlAvoidance.ts・redesign.css：編集中、図形を操作部に近づけると該当ボタンが退避し、ドラッグ終了・キャンセル・離脱で復帰。キャンバス全周の紫色枠を削除。

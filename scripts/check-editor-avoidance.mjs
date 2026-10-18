@@ -4,7 +4,7 @@ import path from "node:path";
 
 const browser = await chromium.launch({ headless: true });
 try {
-  for (const width of [390, 1280]) {
+  for (const width of [320, 390, 1280]) {
     const context = await browser.newContext({ viewport: { width, height: 844 }, serviceWorkers: "block" });
     await context.addInitScript(() => {
       window.androidBridge = {};
@@ -31,6 +31,30 @@ try {
     const center = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
     await page.mouse.click(center.x, center.y);
     expect(await canvas.evaluate(el => getComputedStyle(el).outlineStyle)).toBe("none");
+    const worldSwitch = page.getByTestId("editor-world-switch");
+    const switchBounds = await worldSwitch.boundingBox();
+    const toolbarBounds = await page.locator(".editor-toolbar").boundingBox();
+    expect(switchBounds.x + switchBounds.width).toBeLessThan(toolbarBounds.x);
+    const originalDrawing = await canvas.evaluate(el => el.toDataURL());
+    // 一周して同じ描画へ戻ることにより、保存図形の配置や色を変えていないことを確認する。
+    for (const name of ["うちゅう", "おもちゃ", "がっき"]) {
+      await worldSwitch.click();
+      await expect(page.locator(".world-wave")).toBeVisible();
+      await expect(worldSwitch).toBeDisabled();
+      if (width === 390 && name === "うちゅう") {
+        await page.waitForTimeout(350);
+        await page.screenshot({ path: "tmp/world-wave-mobile.png" });
+      }
+      await expect(page.locator(".world-wave")).toHaveCount(0);
+      await expect(worldSwitch).toHaveAttribute("aria-label", `つぎのおとのせかいへ：いまは${name}`);
+      await expect(page.locator(".canvas-editor")).toHaveAttribute("data-shape-count", "1");
+    }
+    await expect.poll(() => canvas.evaluate(el => el.toDataURL())).toBe(originalDrawing);
+    // 動きを減らす設定では波の拡大を行わず、短いフェードで完了する。
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await worldSwitch.click();
+    await expect(page.locator(".world-wave")).toHaveCount(0, { timeout: 1000 });
+    await page.emulateMedia({ reducedMotion: "no-preference" });
     const home = page.getByRole("button", { name: "ホームへ", exact: true });
     const homeBounds = await home.boundingBox();
     await page.mouse.move(center.x, center.y);
@@ -71,7 +95,7 @@ try {
     await touch.send("Input.dispatchTouchEvent", { type: "touchCancel", touchPoints: [] });
     await expect(page.locator('[data-drag-avoid="true"]')).toHaveCount(0);
     expect(errors).toEqual([]);
-    console.log(`PASS: ${width}px drag avoidance, restore, open palette, cancellation, no purple border`);
+    console.log(`PASS: ${width}px world cycle, preserved shapes, reduced motion, no overlap; drag avoidance, restore, cancellation, no purple border`);
     await context.close();
   }
 } finally {
