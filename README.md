@@ -1,5 +1,11 @@
 # OtO-Canvas
 
+## バージョン 0.4.5 / Homeロゴを拡大（2026-10-18）
+
+- src/styles/redesign.cssのHome限定ルールでロゴを約2倍へ拡大。高さの低い縦画面は収まりを優先し、横画面は左右配置で開始ボタンとの重なりを防ぎます。
+- ファビコンのデザイン・サイズは維持。Android版も更新（versionCode 6）。
+
+
 ## バージョン 0.4.4 / スマホ起動互換・新ロゴ（2026-10-18）
 
 - src/platform/watchMediaQuery.tsを追加。App/MotionPreview/PerformanceCanvasは旧スマホのMediaQueryList APIでも起動可能に変更。旧APIで白画面になる条件を再現して修正しました。

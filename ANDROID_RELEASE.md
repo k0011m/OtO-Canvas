@@ -115,3 +115,8 @@ package.jsonのversionを新しい表示版番号へ、androidVersionCodeを前�
 - public/icon.svgは正方形SVG案v3へ更新。App.tsxのBrandShapes()、PWA PNG、Androidのランチャーと起動アイコンも同じマークへ統一。scripts/render-brand-icons.mjsでSVGからPNGを生成。
 - scripts/check-mobile-boot.mjsは旧APIを再現して起動・編集・再生を検証します。ユーザー実機のログは取得できていないため、端末固有の原因一致までは未確認です。
 - Android成果物：android-release/0.4.4/、実機確認未実施。
+
+## 0.4.5 / versionCode 6（2026-10-18）
+
+- src/styles/redesign.css：Home限定でロゴ領域を従来の約2倍（通常220〜340px四方）へ拡大。低い縦画面では高さを制限し、スマホ横画面ではロゴと開始操作を左右に配置。ファビコンと作品棚のロゴサイズは維持。
+- Android成果物はandroid-release/0.4.5/。実機確認未実施。

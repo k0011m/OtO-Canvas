@@ -176,3 +176,17 @@
 
 /* Homeのマークをファビコンと同じ正方形SVGへ統一する。 */
 .brand-logo { display: block; width: 100%; height: 100%; object-fit: contain; }
+
+/* Homeだけロゴを約2倍にし、作品棚の空表示には影響させない。 */
+.start-screen .brand-shapes { width: clamp(220px, 36vw, 340px); height: clamp(220px, 36vw, 340px); }
+@media (max-height: 700px) and (orientation: portrait) {
+  .start-screen .brand-shapes { width: min(280px, calc(100svh - 320px)); height: min(280px, calc(100svh - 320px)); }
+  .start-screen .start-center { gap: 12px; }
+  .start-screen .start-button { width: 88px; height: 88px; }
+}
+@media (max-height: 640px) and (orientation: landscape) {
+  .start-screen .start-center { grid-template-columns: minmax(0, 180px) minmax(0, 1fr); column-gap: 32px; }
+  .start-screen .brand-shapes { width: 180px; height: 180px; grid-column: 1; grid-row: 1 / 4; }
+  .start-screen .brand-lockup, .start-screen .start-button, .start-screen .start-subactions { grid-column: 2; }
+  .start-screen .start-button { width: 88px; height: 88px; }
+}
