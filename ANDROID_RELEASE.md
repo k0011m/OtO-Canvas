@@ -1,5 +1,10 @@
 # Android版の配布・更新
 
+## 0.4.11 / versionCode 12（2026-10-19）
+
+- App.tsx・redesign.css・useEditorControlAvoidance.tsから編集画面左上の音世界切り替えを撤去。専用のWorldWave.tsxも削除しました。音世界の選択画面とドラッグ時の既存ボタン退避は維持。
+- 成果物はandroid-release/0.4.11/。Android実機での確認は別途必要です。
+
 ## 0.4.10 / versionCode 11（2026-10-19）
 
 - App.tsx・WorldWave.tsx・redesign.css・useEditorControlAvoidance.ts：編集画面左上に音世界の循環ボタンを追加。左上から波が広がり、図形がふわっと膨らんで世界の音源とテーマを切り替えます。

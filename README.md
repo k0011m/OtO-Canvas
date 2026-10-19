@@ -1,5 +1,10 @@
 # OtO-Canvas
 
+## バージョン 0.4.11 / 編集画面の音世界ボタンを撤去（2026-10-19）
+
+- App.tsxの左上ボタンとcycleEditorWorld・finishWorldWave、WorldWave.tsx、redesign.cssの専用演出・配置調整を撤去。左上を空け、音世界は従来の選択画面で選びます。
+- useEditorControlAvoidance.tsとscripts/check-editor-avoidance.mjsを更新。既存ボタンのドラッグ退避は維持し、320px・390px・1280pxで左上ボタンがないことと退避・復帰を検証します。Androidも同梱更新（versionCode 12）。
+
 ## バージョン 0.4.10 / 編集画面で音世界を切り替え（2026-10-19）
 
 - App.tsxのcycleEditorWorldで左上ボタンから「おもちゃ→がっき→うちゅう→おもちゃ」を循環。配置・図形の種類・選択色・音階は維持し、音源と背景・輪郭などのテーマを更新、既存の自動保存へ渡します。

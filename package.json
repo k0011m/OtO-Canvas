@@ -1,7 +1,7 @@
 {
   "name": "oto-canvas",
   "private": true,
-  "version": "0.4.10",
+  "version": "0.4.11",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -33,5 +33,5 @@
     "vitest": "^2.1.8",
     "wrangler": "^4.141.0"
   },
-  "androidVersionCode": 11
+  "androidVersionCode": 12
 }

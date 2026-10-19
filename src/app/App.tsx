@@ -5,8 +5,7 @@ import { EditorPalette } from "./EditorPalette";
 import { useEditorControlAvoidance } from "./useEditorControlAvoidance";
 import { ClearCanvasDialog } from "./ClearCanvasDialog";
 import { ClimaxSnapshot } from "./ClimaxSnapshot";
-import { PaintDrop, PeaceIllustration, WorldEmblem } from "./WorldIllustrations";
-import { WorldWave } from "./WorldWave";
+import { PaintDrop, PeaceIllustration } from "./WorldIllustrations";
 import { OfflineSettings } from "./OfflineSettings";
 import { cleanAppCache } from "../pwa/registerServiceWorker";
 import { SoundProgramEditor } from "./SoundProgramEditor";
@@ -221,7 +220,6 @@ export function App() {
   const [finishPraise, setFinishPraise] = useState("できた！");
   const [screen, setScreen] = useState<Screen>("start");
   const [worldId, setWorldId] = useState<WorldId>("soft");
-  const [worldWave, setWorldWave] = useState<HTMLCanvasElement | null>(null);
   const [previewWorldId, setPreviewWorldId] = useState<WorldId | null>(null);
   const [shapes, setShapes] = useState<CanvasShape[]>([]);
   const [creationMode, setCreationMode] = useState(loadCreationMode);
@@ -501,24 +499,6 @@ export function App() {
     },
     [],
   );
-
-  /** 編集内容を保って次の音世界へ移り、変更前のキャンバスを波の演出へ渡す。 */
-  const cycleEditorWorld = useCallback(() => {
-    if (worldWave) return;
-    const canvas = appRef.current?.querySelector<HTMLCanvasElement>(".canvas-editor canvas");
-    if (!canvas) return;
-    const snapshot = document.createElement("canvas");
-    snapshot.width = canvas.width;
-    snapshot.height = canvas.height;
-    snapshot.getContext("2d")?.drawImage(canvas, 0, 0);
-    const next: WorldId = worldId === "soft" ? "bounce" : worldId === "bounce" ? "space" : "soft";
-    setWorldWave(snapshot);
-    setWorldId(next);
-    audioEngine.previewShape(demoShape(next), next);
-  }, [worldId, worldWave]);
-
-  /** 演出用画像を解放し、通常の編集操作へ戻す。 */
-  const finishWorldWave = useCallback(() => setWorldWave(null), []);
 
   /** 確定した作品の世界は変えず、カードの試聴と背景BGMの音源をそろえる。 */
   const previewWorld = useCallback(async (nextWorld: WorldId) => {
@@ -1125,11 +1105,7 @@ export function App() {
       {screen === "world" && <WorldPicker onPreview={previewWorld} onConfirm={chooseWorld} onBack={() => setScreen("start")} />}
 
       {screen === "create" && !soundProgramOpen && (
-        <section className="screen create-screen" aria-label="おとをつくる" data-tools-open={toolsOpen} data-world-changing={!!worldWave}>
-          <button className="editor-world-switch" type="button" data-testid="editor-world-switch" disabled={!!worldWave}
-            aria-label={`つぎのおとのせかいへ：いまは${theme.name}`} onClick={cycleEditorWorld}>
-            <WorldEmblem world={worldId} /><span aria-hidden="true">↻</span>
-          </button>
+        <section className="screen create-screen" aria-label="おとをつくる" data-tools-open={toolsOpen}>
           <header className="editor-toolbar" aria-label="編集の操作">
             <button className="icon-button editor-secondary-control" type="button" aria-label={expanded ? "最大化を解除" : "画面を最大化"} aria-pressed={expanded} onClick={() => void toggleFullscreen()}><ControlIcon name={expanded ? "collapse" : "expand"} /></button>
             <button className="icon-button" type="button" disabled={undoStack.length === 0} onClick={undo} aria-label="ひとつ戻す"><ControlIcon name="undo" /></button>
@@ -1142,7 +1118,6 @@ export function App() {
           </header>
           <div className="canvas-stage" data-testid="canvas-editor">
             <CanvasEditor
-              disabled={!!worldWave}
               allowTransforms={!simpleCreation}
               shapes={activeShapes}
               selectedKind={selectedKind}
@@ -1210,8 +1185,6 @@ export function App() {
             </button>)}
           </EditorPalette>
           {clearOpen && <ClearCanvasDialog onCancel={() => setClearOpen(false)} onConfirm={clearCanvas} />}
-          {worldWave && <WorldWave before={worldWave} shapes={activeShapes} theme={theme} selectedId={selectedId}
-            allowTransforms={!simpleCreation} onComplete={finishWorldWave} />}
 
         </section>
       )}
