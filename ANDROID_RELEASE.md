@@ -153,3 +153,9 @@ package.jsonのversionを新しい表示版番号へ、androidVersionCodeを前�
 - src/visuals/floatingMotion.ts：時間に応じた指数減衰、図形半径を考慮した四辺の反射を追加。壁で速度を78%へ落とし、弱い動きは停止。編集データへの保存は行いません。
 - tests/floatingMotion.test.tsで減速・四辺反射・30/60fpsの移動一致を検証。Android成果物はandroid-release/0.4.8/。
 - 検証結果：慣性の単体テスト3件、ブラウザ上のフリック後移動・右壁反射・停止して離す操作が成功。Androidリリースビルド成功。実機での触り心地は未確認です。
+
+## 友人への配信引き継ぎ（2026-10-20）
+
+- ANDROID_FRIEND_HANDOFF.mdに公開アカウントの選択、提出手順、未準備素材、実機テスト、更新担当の引き継ぎを整理しました。
+- share/OtO-Canvas-Android-0.4.11-handoff.zipに署名済みAPK・AAB、公開証明書、アイコン、ストア原稿、検証情報、SHA-256一覧を同梱。秘密鍵やパスワード・作品データは含めません。
+- アプリ本体は0.4.11のまま。APK署名・AAB署名の検証と元成果物のハッシュ照合、ZIP展開内容のハッシュ照合を実施。Play Consoleへの提出と実機テストは未実施。
