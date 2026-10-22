@@ -2,7 +2,7 @@
 
 ## 利用者向けマニュアル
 
-- [あそびかたガイドPDF（ver 0.4.11）](output/pdf/OtO-Canvas_User_Guide_0.4.11.pdf)：Android・ブラウザ版共通、全6ページ。遊び始め、編集、再生と写真、保存・再開、保護者設定、オフライン、困ったときの対応を掲載。
+- あそびかたガイドPDF（ver 0.4.11）はリポジトリに同梱していません。必要な場合は下記スクリプトで生成してください。
 - scripts/build-user-guide.pyで生成。Pythonのreportlab・pypdfとWindowsのBIZ UDゴシックが必要です。PDFのページ数・文字抽出に加え、全ページを画像化して文字切れと重なりを確認済み。
 - 現行App.tsxでは音階プログラム編集へ進む入口がないため、その操作手順は掲載していません。アプリの変更は行っていません。
 
@@ -189,7 +189,7 @@
 
 ## Androidクローズドテスト参加案内
 
-- 配布資料：`output/pdf/OtO-Canvas_Closed_Test_Guide.pdf`（2ページ）。参加登録、インストール、初回確認、参加継続のお願いを掲載。
+- クローズドテスト参加案内PDFはリポジトリに同梱していません。必要な場合は下記スクリプトで生成してください。
 - OtO Canvasの画像は`output/manual-assets/`の実画面スクリーンショット。ver 0.4.11のAndroid同梱ファイルをブラウザで実行して撮影しており、Android実機の表示とは一部異なります。
 - 未公開のGoogle Play画面は説明用イメージと明記。参加URLと日程は募集者が別途案内する前提です。
 - `scripts/build-closed-test-guide.py`でPDFを生成。ReportLab・pypdfとWindowsのBIZ UDゴシックを使用します。
