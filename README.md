@@ -1,5 +1,11 @@
 # OtO-Canvas
 
+## 利用者向けマニュアル
+
+- [あそびかたガイドPDF（ver 0.4.11）](output/pdf/OtO-Canvas_User_Guide_0.4.11.pdf)：Android・ブラウザ版共通、全6ページ。遊び始め、編集、再生と写真、保存・再開、保護者設定、オフライン、困ったときの対応を掲載。
+- scripts/build-user-guide.pyで生成。Pythonのreportlab・pypdfとWindowsのBIZ UDゴシックが必要です。PDFのページ数・文字抽出に加え、全ページを画像化して文字切れと重なりを確認済み。
+- 現行App.tsxでは音階プログラム編集へ進む入口がないため、その操作手順は掲載していません。アプリの変更は行っていません。
+
 ## バージョン 0.4.11 / 編集画面の音世界ボタンを撤去（2026-10-19）
 
 - App.tsxの左上ボタンとcycleEditorWorld・finishWorldWave、WorldWave.tsx、redesign.cssの専用演出・配置調整を撤去。左上を空け、音世界は従来の選択画面で選びます。
