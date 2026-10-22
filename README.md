@@ -186,3 +186,12 @@
 - `CelebrationCamera.tsx`・`global.css`：映像中央の3秒カウントダウン、カメラ切替、終了時の撮影予約取消を追加。
 - `cameraSettings.ts`：`openCamera(facing)`を追加。既存の`openFrontCamera()`は保護者の許可確認用として維持。
 - 外カメラがない端末や対応しないブラウザでは案内を表示し、内カメラへ戻せます。カウント中は二重撮影と切替を無効にし、閉じる操作は可能です。
+
+## Androidクローズドテスト参加案内
+
+- 配布資料：`output/pdf/OtO-Canvas_Closed_Test_Guide.pdf`（2ページ）。参加登録、インストール、初回確認、参加継続のお願いを掲載。
+- OtO Canvasの画像は`output/manual-assets/`の実画面スクリーンショット。ver 0.4.11のAndroid同梱ファイルをブラウザで実行して撮影しており、Android実機の表示とは一部異なります。
+- 未公開のGoogle Play画面は説明用イメージと明記。参加URLと日程は募集者が別途案内する前提です。
+- `scripts/build-closed-test-guide.py`でPDFを生成。ReportLab・pypdfとWindowsのBIZ UDゴシックを使用します。
+- Google公式のテスト要件・参加方法へのリンクをPDFに掲載。参加人数・期間を満たしただけで公開承認が保証されるとは案内していません。
+- 今回は資料追加のみで、アプリの動作・バージョンは変更していません。
